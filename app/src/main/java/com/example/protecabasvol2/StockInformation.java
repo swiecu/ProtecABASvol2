@@ -23,6 +23,9 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
+
 import java.math.BigDecimal;
 
 import de.abas.erp.db.DbContext;
@@ -89,14 +92,17 @@ public class StockInformation extends AppCompatActivity {
         intent.putExtra("password", getPassword());
         startActivity(intent);
     }
-    // CHECK STOCK
+
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void checkStock(View view){
         try{
-            Intent intent = new Intent("com.google.zxing.client.android.SCAN");
-            intent.putExtra("SCAN_MODE", "QR_CODE_MODE"); // "PRODUCT_MODE for bar codes
-            startActivityForResult(intent, 0);
-            onActivityResult(0, 0, intent);
+            IntentIntegrator integrator = new IntentIntegrator(this);
+            integrator.setPrompt("Proszę zeskanować artykuł");
+            integrator.setBeepEnabled(false);
+            integrator.setOrientationLocked(true);
+            integrator.setDesiredBarcodeFormats(IntentIntegrator.ALL_CODE_TYPES);
+            Intent intent = integrator.createScanIntent();
+            startActivityForResult(intent , 101);
         } catch (Exception e) {
             Uri marketUri = Uri.parse("market://details?id=com.google.zxing.client.android");
             Intent marketIntent = new Intent(Intent.ACTION_VIEW,marketUri);
@@ -106,16 +112,20 @@ public class StockInformation extends AppCompatActivity {
     // ON ACTIVITY RESULT
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 0) {
-            if (resultCode == RESULT_OK) {
-                String content = data.getStringExtra("SCAN_RESULT");
-                LoadingDialog = ProgressDialog.show(StockInformation.this, "",
-                        "Ładowanie. Proszę czekać...", true);
-                searchArticle(content);
+        IntentResult result = IntentIntegrator.parseActivityResult(IntentIntegrator.REQUEST_CODE, resultCode, data);
+        if(result!= null){
+            if (requestCode == 101) {
+                if (resultCode == RESULT_OK) {
+                    String content = result.getContents();
+                    LoadingDialog = ProgressDialog.show(StockInformation.this, "",
+                            "Ładowanie. Proszę czekać...", true);
+                    searchArticle(content);
+                }
             }
+            super.onActivityResult(requestCode, resultCode, data);
         }
     }
+
     //CHECK FREEHAND STOCK
     public void checkFreehandStock(View view){
         AlertDialog.Builder enterArticleDialog = new AlertDialog.Builder(StockInformation.this);
@@ -212,7 +222,17 @@ public class StockInformation extends AppCompatActivity {
                 dlgAlert.create().show();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            AlertDialog.Builder dbErrorAlert = new AlertDialog.Builder(this);
+            dbErrorAlert.setMessage("Nie można aktualnie połączyć z bazą.");
+            dbErrorAlert.setTitle("Brak połączenia!");
+            dbErrorAlert.setPositiveButton("Ok",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                        }
+                    });
+            dbErrorAlert.setCancelable(true);
+            dbErrorAlert.create().show();
+            LoadingDialog.dismiss();
         }
     }
 

@@ -1,7 +1,9 @@
 package com.example.protecabasvol2;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.StrictMode;
@@ -20,7 +22,6 @@ public class Menu extends AppCompatActivity {
     public void setPassword(String password) {
         this.password = password;
     }
-    DbContext ctx;
     String user = "";
 
     @Override
@@ -38,11 +39,28 @@ public class Menu extends AppCompatActivity {
         loggedUser.setText("Aktualnie zalogowany użytkownik: " + user);
         ctx.close();
     }
+    @Override
     public void onBackPressed(){
-        super.onBackPressed();
-        Intent intent = new Intent(Menu.this, MainActivity.class);
-        intent.putExtra("password", getPassword());
-        startActivity(intent);
+        AlertDialog.Builder loggOutAlert = new AlertDialog.Builder(this);
+        loggOutAlert.setMessage("Czy napewno chcesz się wylogować?");
+        loggOutAlert.setTitle("Wylogowanie");
+        loggOutAlert.setPositiveButton("Wyloguj",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                       Intent intent = new Intent(Menu.this, MainActivity.class);
+                       startActivity(intent);
+                    }
+                });
+        loggOutAlert.setNegativeButton("Anuluj",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        //dismiss the dialog
+                    }
+                });
+        loggOutAlert.setCancelable(true);
+        loggOutAlert.create().show();
+        return;
     }
 
     public void checkStock (View view){

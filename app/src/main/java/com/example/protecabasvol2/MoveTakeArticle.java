@@ -1,14 +1,11 @@
 package com.example.protecabasvol2;
 
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.net.InetAddresses;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -24,11 +21,26 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
-import java.math.BigDecimal;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
+
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+
+import de.abas.erp.common.type.AbasDate;
+import de.abas.erp.common.type.enums.EnumEntryTypeStockAdjustment;
 import de.abas.erp.db.DbContext;
+import de.abas.erp.db.EditorCommand;
+import de.abas.erp.db.EditorCommandFactory;
+import de.abas.erp.db.exception.CommandException;
+import de.abas.erp.db.exception.DBRuntimeException;
 import de.abas.erp.db.infosystem.standard.la.StockLevelInformation;
 import de.abas.erp.db.schema.part.Product;
+import de.abas.erp.db.schema.storagequantity.StockAdjustmentEditor;
 import de.abas.erp.db.schema.warehouse.WarehouseGroup;
 import de.abas.erp.db.util.ContextHelper;
 
@@ -50,7 +62,8 @@ public class MoveTakeArticle extends AppCompatActivity {
     EditText location_text;
     EditText qty_text;
     TextView unit_text;
-
+    String artIDNO;
+    String platz;
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,8 +81,8 @@ public class MoveTakeArticle extends AppCompatActivity {
         artInfo.setVisibility(View.INVISIBLE);
         lokInfo.setVisibility(View.INVISIBLE);
         qtyInfo.setVisibility(View.INVISIBLE);
-        location_text.setFocusable(false);
-        article_text.setFocusable(false);
+        location_text.setInputType(0);
+        article_text.setInputType(0);
         String back_article = (getIntent().getStringExtra("art_idno"));
         if(back_article != null) {
             String back_password = (getIntent().getStringExtra("password"));
@@ -91,14 +104,17 @@ public class MoveTakeArticle extends AppCompatActivity {
             LoadingDialog.dismiss();
         }
     }
-
+    // CHECK STOCK
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void checkStock(View view){
         try{
-            Intent intent = new Intent("com.google.zxing.client.android.SCAN");
-            intent.putExtra("SCAN_MODE", "QR_CODE_MODE"); // "PRODUCT_MODE for bar codes
-            startActivityForResult(intent, 0);
-            onActivityResult(0, 0, intent);
+            IntentIntegrator integrator = new IntentIntegrator(this);
+            integrator.setPrompt("Proszę zeskanować artykuł");
+            integrator.setBeepEnabled(false);
+            integrator.setOrientationLocked(true);
+            integrator.setDesiredBarcodeFormats(IntentIntegrator.ALL_CODE_TYPES);
+            Intent intent = integrator.createScanIntent();
+            startActivityForResult(intent , 101);
         } catch (Exception e) {
             Uri marketUri = Uri.parse("market://details?id=com.google.zxing.client.android");
             Intent marketIntent = new Intent(Intent.ACTION_VIEW,marketUri);
@@ -108,17 +124,19 @@ public class MoveTakeArticle extends AppCompatActivity {
     // ON ACTIVITY RESULT
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 0) {
+        IntentResult result = IntentIntegrator.parseActivityResult(IntentIntegrator.REQUEST_CODE, resultCode, data);
+        if(result!= null){
+        if (requestCode == 101) {
             if (resultCode == RESULT_OK) {
-                String content = data.getStringExtra("SCAN_RESULT");
-                //LoadingDialog = ProgressDialog.show(MoveTakeArticle.this, "",
-                //        "Ładowanie. Proszę czekać...", true);
+                String content = result.getContents();
+                qty_text.setText("");
                 searchArticle(content);
             }
         }
+            super.onActivityResult(requestCode, resultCode, data);
+        }
     }
-
+    //   ENTER FREEHAND ARTICLE
     public void enterFreehandArticle(View view){
         AlertDialog.Builder enterArticleDialog = new AlertDialog.Builder(MoveTakeArticle.this);
         ViewGroup viewGroup = findViewById(android.R.id.content);
@@ -163,6 +181,8 @@ public class MoveTakeArticle extends AppCompatActivity {
         articleDialog.show();
         articleDialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
     }
+
+    //      SEARCH ARTICLE
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void searchArticle(String content) {
         myGlob = new SearchArticleClass(getApplicationContext());
@@ -191,20 +211,31 @@ public class MoveTakeArticle extends AppCompatActivity {
                 // jeśli nie znajdzie ani tu ani tu
             } else {
                 LoadingDialog.dismiss();
-                AlertDialog.Builder dlgAlert = new AlertDialog.Builder(this);
-                dlgAlert.setMessage("W bazie nie ma takeigo artykłu!");
-                dlgAlert.setTitle("Brak artykułu!");
-                dlgAlert.setPositiveButton("Ok",
+                AlertDialog.Builder noArtAlert = new AlertDialog.Builder(this);
+                noArtAlert.setMessage("W bazie nie ma takeigo artykłu!");
+                noArtAlert.setTitle("Brak artykułu!");
+                noArtAlert.setPositiveButton("Ok",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
                                 //dismiss the dialog
                             }
                         });
-                dlgAlert.setCancelable(true);
-                dlgAlert.create().show();
+                noArtAlert.setCancelable(true);
+                noArtAlert.create().show();
             }
+           // ctx.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            AlertDialog.Builder noConnAlert = new AlertDialog.Builder(this);
+            noConnAlert.setMessage("Nie można aktualnie połączyć z bazą.");
+            noConnAlert.setTitle("Brak połączenia!");
+            noConnAlert.setPositiveButton("Ok",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            //dismiss the dialog
+                        }
+                    });
+            noConnAlert.setCancelable(true);
+            noConnAlert.create().show();
         }
     }
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -222,8 +253,6 @@ public class MoveTakeArticle extends AppCompatActivity {
         if(no_art != null){
             no_art.setVisibility(View.GONE);
         }
-
-        BigDecimal sum = BigDecimal.ZERO;
         StockLevelInformation sli = ctx.openInfosystem(StockLevelInformation.class);
         sli.setArtikel(FindProductByIdno(ctx, content));
         sli.setKlgruppe((WarehouseGroup) null);
@@ -234,156 +263,226 @@ public class MoveTakeArticle extends AppCompatActivity {
         Integer nr_Rows = sli.getRowCount();
         if (nr_Rows != 0) {
             for (StockLevelInformation.Row row : sliRows) {
-                TableRow tableRowStock = new TableRow(this);
-                //ustawianie wyglądu dla row
-                TableRow.LayoutParams rowParam = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT);
-                tableRowStock.setLayoutParams(rowParam);
-                tableRowStock.setBackgroundColor(Color.parseColor("#BDBBBB"));
+                if (!row.getLplatz().getSwd().equals("WDR")) {  // nie wyświetla lokalizacji WDR
+                    TableRow tableRowStock = new TableRow(this);
+                    //ustawianie wyglądu dla row
+                    TableRow.LayoutParams rowParam = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT);
+                    tableRowStock.setLayoutParams(rowParam);
+                    tableRowStock.setBackgroundColor(Color.parseColor("#BDBBBB"));
 
-                //ustawianie wyglądu dla table cell
-                TableRow.LayoutParams cellParam = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT);
-                cellParam.setMargins(1, 1, 1, 1);
+                    //ustawianie wyglądu dla table cell
+                    TableRow.LayoutParams cellParam = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT);
+                    cellParam.setMargins(1, 1, 1, 1);
 
-                TextView place = new TextView(this);
-                TextView article = new TextView(this);
-                TextView qty = new TextView(this);
-                TextView unit = new TextView(this);
-                String Unit;
+                    TextView place = new TextView(this);
+                    TextView article = new TextView(this);
+                    TextView qty = new TextView(this);
+                    TextView unit = new TextView(this);
+                    String Unit;
 
-                Integer j = stockLayout.getChildCount();
-                j = j - 1; //  table header nie ma być brany pod uwagę więc -1
+                    Integer j = stockLayout.getChildCount();
+                    j = j - 1; //  table header nie ma być brany pod uwagę więc -1
 
-                if (j % 2 == 0) {  // zmiana koloru w rowach dla parzystych
-                    place.setBackgroundColor(Color.parseColor("#E5E5E6"));
-                    qty.setBackgroundColor(Color.parseColor("#E5E5E6"));
-                    unit.setBackgroundColor(Color.parseColor("#E5E5E6"));
-                    article.setBackgroundColor(Color.parseColor("#E5E5E6"));
-                } else {
-                    place.setBackgroundColor(Color.parseColor("#FFFFFF"));
-                    qty.setBackgroundColor(Color.parseColor("#FFFFFF"));
-                    unit.setBackgroundColor(Color.parseColor("#FFFFFF"));
-                    article.setBackgroundColor(Color.parseColor("#FFFFFF"));
-                }
-
-                // Lokalizacja
-
-                place.setText(row.getLplatz().getSwd());
-                place.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                place.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                place.setPadding(5, 10, 5, 10);
-                place.setLayoutParams(cellParam);
-                //Artykuł
-                String art = FindProductByIdno(ctx, content).getSwd();
-                if (j == 1) {
-                    article.setText(art);
-                }  // ustawia Klucz artykułu tylko dla pierwszego wiersza
-                article.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                article.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                article.setTypeface(Typeface.DEFAULT_BOLD);
-                article.setPadding(5, 10, 5, 10);
-                article.setLayoutParams(cellParam);
-                //  Ilość
-                qty.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                qty.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                qty.setPadding(5, 10, 5, 10);
-                qty.setLayoutParams(cellParam);
-                //  Jednostka
-                unit.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                unit.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                unit.setPadding(5, 10, 5, 10);
-                unit.setLayoutParams(cellParam);
-                // Ilość i jednostka .setText na podstawie szt. kg kpl
-                String Qty = row.getLemge().toString();
-                Unit = row.getLeinheit().toString();
-                if (Unit.equals("(20)")) { // jeśli jednostka to szt.
-                    unit.setText("szt.");
-                    Unit = "szt.";
-                    Qty = Qty.substring(0, Qty.length() - 4);
-                    qty.setText(Qty); // usuwa 4 liczby po przecinku
-                } else if (Unit.equals("(7)")) { //jeśli jednostka to kg
-                    unit.setText("kg");
-                    Unit = "kg";
-                    qty.setText(Qty.substring(0, Qty.length()));
-                } else if (Unit.equals("(21)")) { // jeśli jednostka to kpl
-                    unit.setText("kpl");
-                    Unit = "kpl";
-                    qty.setText(Qty.substring(0, Qty.length()));
-                } else {
-                    qty.setText(row.getLemge().toString());
-                }
-                tableRowStock.addView(article);
-                tableRowStock.addView(qty);
-                tableRowStock.addView(unit);
-                tableRowStock.addView(place);
-                stockLayout.addView(tableRowStock, j);
-
-                sum = sum.add(new BigDecimal(Qty));
-                String articleName = ((Product) row.getTartikel()).getDescr6();
-                String sumString = sumString = "Suma: <b> " + sum + "<b> " + Unit;
-                //article_name.setText(Html.fromHtml("Nazwa: <b>" + articleName));
-               // article_name.setVisibility(View.VISIBLE);
-
-                //suma.setText(Html.fromHtml(sumString));
-                //suma.setVisibility(View.VISIBLE);
-                String finalUnit = Unit;
-                String finalQty = Qty;
-                tableRowStock.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        stockDialog.dismiss();
-                        AlertDialog.Builder dlgAlert = new AlertDialog.Builder(MoveTakeArticle.this);
-                        String platz = row.getLplatz().getSwd();
-                        String mge = row.getLemge().toString();
-                        String articleString = "<b>" + platz + "</b><br/>" + finalQty + " " +  finalUnit;
-                        dlgAlert.setMessage(Html.fromHtml(articleString));
-                        dlgAlert.setTitle("Wybrana lokalizacja: ");
-                        dlgAlert.setPositiveButton("Wybierz lokalizację",
-                                new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        //dismiss the dialog
-                                        location_text.setFocusable(false);
-                                        article_text.setFocusable(false);
-                                        location_text.setText(platz);
-                                        article_text.setText(art);
-                                        unit_text.setText(finalUnit);
-                                        qty_text.setHint(finalQty);
-                                        unit_text.setVisibility(View.VISIBLE);
-                                        artInfo.setVisibility(View.VISIBLE);
-                                        lokInfo.setVisibility(View.VISIBLE);
-                                        qtyInfo.setVisibility(View.VISIBLE);
-                                    }
-                                });
-                        dlgAlert.setNegativeButton("Anuluj",
-                                new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        //dismiss the dialog
-                                    }
-                                });
-                        dlgAlert.setCancelable(true);
-                        dlgAlert.create().show();
+                    if (j % 2 == 0) {  // zmiana koloru w rowach dla parzystych
+                        place.setBackgroundColor(Color.parseColor("#E5E5E6"));
+                        qty.setBackgroundColor(Color.parseColor("#E5E5E6"));
+                        unit.setBackgroundColor(Color.parseColor("#E5E5E6"));
+                        article.setBackgroundColor(Color.parseColor("#E5E5E6"));
+                    } else {
+                        place.setBackgroundColor(Color.parseColor("#FFFFFF"));
+                        qty.setBackgroundColor(Color.parseColor("#FFFFFF"));
+                        unit.setBackgroundColor(Color.parseColor("#FFFFFF"));
+                        article.setBackgroundColor(Color.parseColor("#FFFFFF"));
                     }
-                });
+
+                    // Lokalizacja
+                    place.setText(row.getLplatz().getSwd());
+                    place.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                    place.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
+                    place.setPadding(5, 10, 5, 10);
+                    place.setLayoutParams(cellParam);
+                    //Artykuł
+                    String art = FindProductByIdno(ctx, content).getSwd();
+                    String art_descr = FindProductByIdno(ctx, content).getDescr6();
+                    TextView articleName_text = (TextView) stockDialog.findViewById(R.id.articleName_textView);
+                    articleName_text.setText(Html.fromHtml("<b> " + art_descr + "<b> "));
+                    artIDNO = FindProductByIdno(ctx, content).getIdno();
+                    if (j == 1) {
+                        article.setText(art);
+                    }  // ustawia Klucz artykułu tylko dla pierwszego wiersza
+                    article.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                    article.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
+                    article.setTypeface(Typeface.DEFAULT_BOLD);
+                    article.setPadding(5, 10, 5, 10);
+                    article.setLayoutParams(cellParam);
+                    //  Jednostka
+                    unit.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                    unit.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
+                    unit.setPadding(5, 10, 5, 10);
+                    unit.setLayoutParams(cellParam);
+                    //  Ilość
+                    BigDecimal qtyDecimal = row.getLemge().stripTrailingZeros();  //by po przecinku usunąć niepotrzebne zera
+                    String Qty = qtyDecimal.toPlainString();    //by wyświetlało liczbę w formacie 20 a nie 2E+1
+                    qty.setText(Qty);
+                    qty.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                    qty.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
+                    qty.setPadding(5, 10, 5, 10);
+                    qty.setLayoutParams(cellParam);
+
+                    // Ilość i jednostka .setText na podstawie szt. kg kpl
+                    Unit = row.getLeinheit().toString();
+                    if (Unit.equals("(20)")) { // jeśli jednostka to szt.
+                        unit.setText("szt.");
+                        Unit = "szt.";
+                    } else if (Unit.equals("(7)")) { //jeśli jednostka to kg
+                        unit.setText("kg");
+                        Unit = "kg";
+                    } else if (Unit.equals("(21)")) { // jeśli jednostka to kpl
+                        unit.setText("kpl");
+                        Unit = "kpl";
+                    }
+                    tableRowStock.addView(article);
+                    tableRowStock.addView(qty);
+                    tableRowStock.addView(unit);
+                    tableRowStock.addView(place);
+                    stockLayout.addView(tableRowStock, j);
+
+                    String articleName = ((Product) row.getTartikel()).getDescr6();
+                    String finalUnit = Unit;
+                    String finalQty = Qty;
+                    tableRowStock.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            stockDialog.dismiss();
+                            AlertDialog.Builder dlgAlert = new AlertDialog.Builder(MoveTakeArticle.this);
+                            platz = row.getLplatz().getSwd();
+                            String mge = row.getLemge().toString();
+                            String articleString = "<b>" + platz + "</b><br/>" + finalQty + " " + finalUnit;
+                            dlgAlert.setMessage(Html.fromHtml(articleString));
+                            dlgAlert.setTitle("Wybrana lokalizacja: ");
+                            dlgAlert.setPositiveButton("Wybierz lokalizację",
+                                    new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            //dismiss the dialog
+                                            location_text.setFocusable(false);
+                                            article_text.setFocusable(false);
+                                            location_text.setText(platz);
+                                            article_text.setText(art);
+                                            unit_text.setText(finalUnit);
+                                            qty_text.setHint(finalQty);
+                                            unit_text.setVisibility(View.VISIBLE);
+                                            artInfo.setVisibility(View.VISIBLE);
+                                            lokInfo.setVisibility(View.VISIBLE);
+                                            qtyInfo.setVisibility(View.VISIBLE);
+                                        }
+                                    });
+                            dlgAlert.setNegativeButton("Anuluj",
+                                    new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            //dismiss the dialog
+                                        }
+                                    });
+                            dlgAlert.setCancelable(true);
+                            dlgAlert.create().show();
+                        }
+                    });
+                }
             }
         }else{
-            AlertDialog.Builder dlgAlert = new AlertDialog.Builder(this);
-            dlgAlert.setMessage("Artykuł ten nie jest obecnie w zapasie.");
-            dlgAlert.setTitle("Brak stanu!");
-            dlgAlert.setPositiveButton("Ok",
+            AlertDialog.Builder noStockAlert = new AlertDialog.Builder(this);
+            noStockAlert.setMessage("Artykuł ten nie jest obecnie w zapasie.");
+            noStockAlert.setTitle("Brak stanu!");
+            noStockAlert.setPositiveButton("Ok",
                     new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
                             //dismiss the dialog
                             stockDialog.dismiss();
                         }
                     });
-            dlgAlert.setCancelable(true);
-            dlgAlert.create().show();
+            noStockAlert.setCancelable(true);
+            noStockAlert.create().show();
         }
     }
 
     public void takeArticles(View view) {
         String qty = qty_text.getText().toString();
         if(qty.equals("")){
-            qty_text.setText(qty_text.getHint());
+            qty = qty_text.getHint().toString();
+            qty_text.setText(qty);
         }
+
+        //jeśli ilość wpisana jest WIĘKSZA niż na stanie
+       if(Integer.parseInt(qty) > Integer.parseInt(qty_text.getHint().toString())){
+            AlertDialog.Builder outOfQtyAlert = new AlertDialog.Builder(this);
+           outOfQtyAlert.setMessage("Wpisana ilość przekracza ilość dostępną na stanie.");
+           outOfQtyAlert.setTitle("Wykroczenie poza stan!");
+           outOfQtyAlert.setPositiveButton("Ok",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            //dismiss the dialog
+                        }
+                    });
+           outOfQtyAlert.setCancelable(true);
+           outOfQtyAlert.create().show();
+        }else {
+           try {
+               ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "test", getPassword(), "mobileApp");
+               EditorCommand cmd = EditorCommandFactory.typedCmd("Lbuchung", "");
+               StockAdjustmentEditor stockAdjustmentEditor = (StockAdjustmentEditor) ctx.openEditor(cmd);
+               AbasDate today = new AbasDate();
+               stockAdjustmentEditor.setString("product", artIDNO);
+               stockAdjustmentEditor.setDocNo("MOBILE");
+               stockAdjustmentEditor.setDateDoc(today);
+               stockAdjustmentEditor.setEntType(EnumEntryTypeStockAdjustment.Transfer);
+               StockAdjustmentEditor.Row sadRow = stockAdjustmentEditor.table().getRow(1);
+               sadRow.setUnitQty(Double.parseDouble(qty));
+               sadRow.setString("location", platz);
+               sadRow.setString("location2", "WDR");
+               stockAdjustmentEditor.commit();
+
+               AlertDialog.Builder successMoveAlert = new AlertDialog.Builder(this);
+               successMoveAlert.setMessage("Materiał został pobrany i dodany do bazy.");
+               successMoveAlert.setTitle("Pobrano!");
+               successMoveAlert.setPositiveButton("Ok",
+                       new DialogInterface.OnClickListener() {
+                           public void onClick(DialogInterface dialog, int which) {
+                               Intent intent = new Intent(MoveTakeArticle.this, Move.class);
+                               intent.putExtra("password", password);
+                               startActivity(intent);
+                           }
+                       });
+               successMoveAlert.setCancelable(true);
+               successMoveAlert.create().show();
+
+           } catch (NumberFormatException e) {
+               e.printStackTrace();
+               AlertDialog.Builder formatErrorAlert = new AlertDialog.Builder(this);
+               formatErrorAlert.setMessage("Podczas zmiany formatu wystąpił błąd.");
+               formatErrorAlert.setTitle("Błąd!");
+               formatErrorAlert.setPositiveButton("Ok",
+                       new DialogInterface.OnClickListener() {
+                           public void onClick(DialogInterface dialog, int which) {
+
+                           }
+                       });
+               formatErrorAlert.setCancelable(true);
+               formatErrorAlert.create().show();
+           } catch (DBRuntimeException e) {
+               AlertDialog.Builder dbErrorAlert = new AlertDialog.Builder(this);
+               dbErrorAlert.setMessage("Nie można aktualnie połączyć z bazą.");
+               dbErrorAlert.setTitle("Brak połączenia!");
+               dbErrorAlert.setPositiveButton("Ok",
+                       new DialogInterface.OnClickListener() {
+                           public void onClick(DialogInterface dialog, int which) {
+
+                           }
+                       });
+               dbErrorAlert.setCancelable(true);
+               dbErrorAlert.create().show();
+               e.printStackTrace();
+           } catch (CommandException e) {
+               e.printStackTrace();
+           }
+       }
     }
 }

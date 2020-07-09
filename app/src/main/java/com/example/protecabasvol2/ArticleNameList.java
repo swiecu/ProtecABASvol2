@@ -20,6 +20,8 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import java.math.BigDecimal;
+
 import de.abas.erp.db.DbContext;
 import de.abas.erp.db.Query;
 import de.abas.erp.db.exception.DBRuntimeException;
@@ -72,7 +74,9 @@ public class ArticleNameList extends AppCompatActivity {
         if (suma != null) {// jeśli suma istnieje to schowaj
             suma.setVisibility(View.GONE);
         }
-        Intent intent = new Intent(this, StockInformation.class); //cofnij do StockInformation
+        Intent intent = null; //cofnij do StockInformation
+        try {intent = new Intent(ArticleNameList.this, Class.forName("com.example.protecabasvol2." + destination));}
+        catch (ClassNotFoundException e) { e.printStackTrace();}
         intent.putExtra("password", getPassword());
         startActivity(intent);
     }
@@ -86,21 +90,27 @@ public class ArticleNameList extends AppCompatActivity {
         try{
             productSB.add(Conditions.matchIgCase(Product.META.descr6.toString(), name));
             for (Product product : productQuery) {
-                drawTable(product);
+                if(destination.equals("MoveTakeArticle")){
+                    if(product.getSchedStock().compareTo(BigDecimal.ZERO) == 1 ){
+                        drawTable(product);
+                    }
+                }else{
+                    drawTable(product);
+                }
             }
         }catch (DBRuntimeException e) {
             // Log.d("password DBRuntime", getPassword());
-            AlertDialog.Builder dlgAlert = new AlertDialog.Builder(this);
-            dlgAlert.setMessage("Nie można aktualnie połączyć z bazą.");
-            dlgAlert.setTitle("Brak połączenia! AticleNameList DESCR");
-            dlgAlert.setPositiveButton("Ok",
+            AlertDialog.Builder dbErrorAlert = new AlertDialog.Builder(this);
+            dbErrorAlert.setMessage("Nie można aktualnie połączyć z bazą.");
+            dbErrorAlert.setTitle("Brak połączenia!");
+            dbErrorAlert.setPositiveButton("Ok",
                     new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
                             //dismiss the dialog
                         }
                     });
-            dlgAlert.setCancelable(true);
-            dlgAlert.create().show();
+            dbErrorAlert.setCancelable(true);
+            dbErrorAlert.create().show();
         }
         ctx.close();
     }
@@ -117,17 +127,17 @@ public class ArticleNameList extends AppCompatActivity {
             }
         }catch (DBRuntimeException e) {
             // Log.d("password DBRuntime", getPassword());
-            AlertDialog.Builder dlgAlert = new AlertDialog.Builder(this);
-            dlgAlert.setMessage("Nie można aktualnie połączyć z bazą.");
-            dlgAlert.setTitle("Brak połączenia! AticleNameList DESCR");
-            dlgAlert.setPositiveButton("Ok",
+            AlertDialog.Builder dbErrorAlert = new AlertDialog.Builder(this);
+            dbErrorAlert.setMessage("Nie można aktualnie połączyć z bazą.");
+            dbErrorAlert.setTitle("Brak połączenia!");
+            dbErrorAlert.setPositiveButton("Ok",
                     new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
                             //dismiss the dialog
                         }
                     });
-            dlgAlert.setCancelable(true);
-            dlgAlert.create().show();
+            dbErrorAlert.setCancelable(true);
+            dbErrorAlert.create().show();
         }
         ctx.close();
     }
