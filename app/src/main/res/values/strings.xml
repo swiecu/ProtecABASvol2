@@ -1,0 +1,56 @@
+<resources>
+    <string name="app_name">ProtecABASvol2</string>
+    <string name="enter_password">Podaj hasło abas</string>
+    <string name="login_btn">Zaloguj</string>
+    <string name="qr_btn">QR</string>
+
+    <string name="protec_logo">Protec Logo</string>
+    <string name="password">Hasło:</string>
+    <string name="logged_user">Zalogowany użytkownik:</string>
+
+    <string name="stockInfo">Informacje o stanie</string>
+    <string name="stock_info_header">Informacja o stanie</string>
+    <string name="enter_product_qr">Zeskanuj indeks</string>
+    <string name="enter_product">Wprowadź artykuł ręcznie</string>
+    <string name="enter_product2">Wyszukaj artykuł</string>
+    <string name="add_article">Dodaj artykuł:</string>
+    <string name="table_article">ZAPAS NA MAGAZYNIE:</string>
+    <string name="table_header_id">id  </string>
+    <string name="table_header_article">Artykuł:  </string>
+    <string name="table_header_qty">Ilość:  </string>
+    <string name="table_header_unit">Jednostka:  </string>
+    <string name="table_header_unit_short">j.m:  </string>
+    <string name="table_header_lager">Lokalizacja: </string>
+    <string name="table_header_lager_short">Lok.: </string>
+    <string name="no_articles">Brak artykułów.  </string>
+    <string name="name">Nazwa artykułu</string>
+    <string name="sum">Suma: </string>
+
+    <string name="move_to">Pobierz</string>
+    <string name="move_from">Odłóż</string>
+    <string name="szt">szt.</string>
+
+
+    <string name="przesuniecia">Przesunięcia</string>
+    <string name="new_movement">Nowe przesunięcie</string>
+    <string name="what_article">Artykuł:</string>
+    <string name="from">Skąd</string>
+    <string name="to">Dokąd</string>
+    <string name="qty">Ilość</string>
+    <string name="move_article">Artykuł</string>
+    <string name="new_movement_btn">Wykonaj przesunięcie</string>
+    <string name="article_qr_btn">Zeskanuj artykuł</string>
+    <string name="from_qr_btn">Zeskanuj lokalizację</string>
+    <string name="to_qr_btn">Zeskanuj lokalizację</string>
+
+    <string name="menu">Menu</string>
+
+    <string name="set_article">Wpisz nazwę artykułu:</string>
+    <string name="ok">OK</string>
+    <string name="cancle">Anuluj</string>
+
+    <string name="articles">Artykuły:</string>
+    <string name="id_articleNameList">id</string>
+    <string name="article_articleNameList">Artykuł: </string>
+    <string name="articleName_articleNameList">Nazwa Artykułu: </string>
+</resources>

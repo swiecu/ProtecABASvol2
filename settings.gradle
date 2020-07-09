@@ -1,0 +1,3 @@
+include ':abas-axi'
+include ':app'
+rootProject.name = "ProtecABASvol2"
