@@ -171,24 +171,7 @@
                     android:baselineAligned="false"
                     android:clipChildren="true"
                     android:clipToPadding="true"
-                    android:gravity="center">
-
-                    <TextView
-                        android:layout_width="283dp"
-                        android:layout_height="176dp"
-                        android:layout_margin="1dp"
-                        android:layout_weight="1"
-                        android:background="#FFFFFF"
-                        android:gravity="center"
-                        android:padding="6dp"
-                        android:text="@string/no_articles"
-                        android:textAllCaps="false"
-                        android:textColor="#636363"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:typeface="normal"></TextView>
-
-                </TableRow>
+                    android:gravity="center"/>
 
 
             </TableLayout>

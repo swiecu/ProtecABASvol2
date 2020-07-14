@@ -8,7 +8,7 @@
     android:fadeScrollbars="false"
     android:scrollbarAlwaysDrawVerticalTrack="true"
     android:scrollbarStyle="outsideInset"
-    tools:context=".StockInformation">
+    tools:context="protec.pl.protecabasvol2.StockInformation">
 
     <Button
         android:id="@+id/checkFreeHand"

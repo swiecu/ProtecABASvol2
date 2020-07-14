@@ -4,8 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Move">
-
+    tools:context="protec.pl.protecabasvol2.MoveLeaveArticle">
 
     <EditText
         android:id="@+id/article_textEdit"
@@ -36,20 +35,20 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <EditText
-        android:id="@+id/qty_textEdit"
-        android:layout_width="204dp"
-        android:layout_height="50dp"
+        android:id="@+id/qty_TOtextEdit"
+        android:layout_width="140dp"
+        android:layout_height="0dp"
         android:layout_marginStart="16dp"
         android:layout_marginLeft="16dp"
         android:layout_marginTop="56dp"
         android:ems="10"
         android:hint="@string/qty"
         android:importantForAutofill="no"
-        android:inputType="textPersonName"
+        android:inputType="textPersonName|phone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/from_textEdit" />
+        app:layout_constraintTop_toBottomOf="@+id/to_textEdit" />
 
     <Button
         android:id="@+id/enterArticle_btn"
@@ -57,8 +56,9 @@
         android:layout_height="45dp"
         android:layout_marginTop="152dp"
         android:background="@color/colorProtec"
+        android:onClick="chooseArticle"
         android:singleLine="false"
-        android:text="@string/enter_product2"
+        android:text="@string/select_product"
         android:textColor="#FFFFFF"
         android:textSize="12sp"
         app:layout_constraintEnd_toStartOf="@+id/articleLeaveQr_btn"
@@ -67,7 +67,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <EditText
-        android:id="@+id/from_textEdit"
+        android:id="@+id/to_textEdit"
         android:layout_width="204dp"
         android:layout_height="49dp"
         android:layout_marginStart="16dp"
@@ -87,12 +87,13 @@
         android:layout_marginTop="40dp"
         android:layout_marginBottom="76dp"
         android:background="@color/colorProtec"
+        android:onClick="leaveArticles"
         android:text="@string/move_from"
         android:textColor="#FFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/qty_textEdit"
+        app:layout_constraintTop_toBottomOf="@+id/qty_TOtextEdit"
         app:layout_constraintVertical_bias="0.388" />
 
     <Button
@@ -103,6 +104,7 @@
         android:layout_marginEnd="16dp"
         android:layout_marginRight="16dp"
         android:background="@color/colorBlue"
+        android:onClick="scanArticle"
         android:text="@string/qr_btn"
         android:textColor="#FFFFFF"
         app:layout_constraintEnd_toEndOf="parent"
@@ -116,12 +118,64 @@
         android:layout_marginEnd="16dp"
         android:layout_marginRight="16dp"
         android:background="@color/colorBlue"
+        android:onClick="scanLocation"
         android:text="@string/qr_btn"
         android:textColor="#FFFFFF"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toEndOf="@+id/from_textEdit"
+        app:layout_constraintStart_toEndOf="@+id/to_textEdit"
         app:layout_constraintTop_toBottomOf="@+id/articleLeaveQr_btn" />
+
+    <TextView
+        android:id="@+id/unit_textView"
+        android:layout_width="57dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="60dp"
+        android:gravity="center_horizontal|center_vertical"
+        android:text="szt."
+        android:textColor="#2C2B2B"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/qty_TOtextEdit"
+        app:layout_constraintTop_toBottomOf="@+id/toQR_btn"
+        tools:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/article_textInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="19dp"
+        android:layout_marginLeft="19dp"
+        android:layout_marginBottom="8dp"
+        android:text="@string/article_articleNameList"
+        app:layout_constraintBottom_toTopOf="@+id/article_textEdit"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/location_textInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="19dp"
+        android:layout_marginLeft="19dp"
+        android:layout_marginBottom="8dp"
+        android:text="@string/table_header_lager"
+        app:layout_constraintBottom_toTopOf="@+id/to_textEdit"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/qty_textInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="19dp"
+        android:layout_marginLeft="19dp"
+        android:layout_marginBottom="8dp"
+        android:text="@string/table_header_qty"
+        app:layout_constraintBottom_toTopOf="@+id/qty_TOtextEdit"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:visibility="invisible" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -13,6 +13,7 @@
     <string name="enter_product_qr">Zeskanuj indeks</string>
     <string name="enter_product">Wprowadź artykuł ręcznie</string>
     <string name="enter_product2">Wyszukaj artykuł</string>
+    <string name="select_product">Wybierz artykuł</string>
     <string name="add_article">Dodaj artykuł:</string>
     <string name="table_article">ZAPAS NA MAGAZYNIE:</string>
     <string name="table_header_id">id  </string>
@@ -53,4 +54,27 @@
     <string name="id_articleNameList">id</string>
     <string name="article_articleNameList">Artykuł: </string>
     <string name="articleName_articleNameList">Nazwa Artykułu: </string>
+    <string name="art_name">Nazwa: </string>
+
+    <string name="QR_card_nr">Zeskanuj nr karty</string>
+    <string name="prod_card">Karta pracy:</string>
+    <string name="nr_card">Nr karty</string>
+    <string name="product">Artykuł: </string>
+    <string name="product_name">Nazwa artykułu: </string>
+    <string name="nr_zp">Nr zlecenia produkcyjnego: </string>
+    <string name="enter_message">Wprowadź wiadomość: </string>
+    <string name="send">Wyślij </string>
+    <string name="quality_control_header">KONTROLA JAKOŚCI PRODUKCJI </string>
+    <string name="message">Wiadomość:</string>
+    <string name="none"> - - -</string>
+
+    <string name="control_analysis"> Analiza zgłoszeń terminalowych</string>
+    <string name="employee">Pracownik:</string>
+    <string name="operation">Operacja:</string>
+    <string name="department">Wydział:</string>
+    <string name="machine_group">Gr. Maszyn:</string>
+
+
+
+    <string name="WDR_stock">STAN NA MAGAZYNIE WDR </string>
 </resources>
