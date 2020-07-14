@@ -1,9 +1,5 @@
 package protec.pl.protecabasvol2;
 
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -13,7 +9,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Html;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,6 +18,10 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
@@ -31,21 +30,15 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import de.abas.erp.db.DbContext;
-import de.abas.erp.db.infosystem.custom.owap.IsPrProdlist;
 import de.abas.erp.db.infosystem.custom.owfe.IsApPdcAnalysis;
-import de.abas.erp.db.infosystem.custom.owfe.IsApPdcTimeAndLaborData;
 import de.abas.erp.db.infosystem.custom.owpl.IsMailSender;
-import de.abas.erp.db.infosystem.standard.la.StockLevelInformation;
 import de.abas.erp.db.schema.capacity.WorkCenter;
-import de.abas.erp.db.schema.location.LocationHeader;
 import de.abas.erp.db.schema.part.Product;
 import de.abas.erp.db.schema.workorder.WorkOrders;
 import de.abas.erp.db.selection.Conditions;
 import de.abas.erp.db.selection.SelectionBuilder;
 import de.abas.erp.db.util.ContextHelper;
 import de.abas.erp.db.util.QueryUtil;
-
-import static protec.pl.protecabasvol2.GlobalClass.FindProductByIdno;
 
 public class QualityControl extends AppCompatActivity {
     private String password;

@@ -1,4 +1,5 @@
-include ':mylibrary'
-include ':abas-axi'
+include ':lib'
+include ':jedp'
 include ':app'
+include ':mylibrary'
 rootProject.name = "ProtecABASvol2"
