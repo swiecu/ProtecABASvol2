@@ -3,27 +3,16 @@ package protec.pl.protecabasvol2;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.graphics.Color;
-import android.graphics.Typeface;
 import android.os.Build;
-import android.text.Html;
-import android.util.TypedValue;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.TableLayout;
-import android.widget.TableRow;
-import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 
 import de.abas.erp.db.DbContext;
 import de.abas.erp.db.Query;
-import de.abas.erp.db.exception.DBRuntimeException;
 import de.abas.erp.db.schema.part.Product;
 import de.abas.erp.db.selection.Conditions;
 import de.abas.erp.db.selection.SelectionBuilder;
-import de.abas.erp.db.util.ContextHelper;
 import de.abas.erp.db.util.QueryUtil;
 
 public class GlobalClass {
@@ -64,7 +53,7 @@ public class GlobalClass {
         SelectionBuilder<Product> productSB = SelectionBuilder.create(Product.class);
         Query<Product> productQuery = ctx.createQuery(productSB.build());
         try {
-            productSB.add(Conditions.matchIgCase(Product.META.descrOperLang.toString(), name));
+            productSB.add(Conditions.matchIgCase(Product.META.descr6.toString(), name));
             product = QueryUtil.getFirst(ctx, productSB.build());
         } catch (Exception e) {
         }

@@ -170,5 +170,19 @@
         app:layout_constraintStart_toStartOf="parent"
         tools:visibility="invisible" />
 
+    <ImageView
+        android:id="@+id/imageView5"
+        android:layout_width="478dp"
+        android:layout_height="203dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
+        android:adjustViewBounds="true"
+        android:cropToPadding="true"
+        android:scaleX="-1.0"
+        android:scaleY="-1.0"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/gray" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

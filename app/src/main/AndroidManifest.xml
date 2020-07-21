@@ -14,9 +14,10 @@
         android:screenOrientation="portrait"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-
-        <activity android:name=".QualityControl"
-            android:screenOrientation="portrait"/>
+        <activity android:name=".Stocktaking"></activity>
+        <activity
+            android:name=".QualityControl"
+            android:screenOrientation="portrait" />
         <activity
             android:name="com.journeyapps.barcodescanner.CaptureActivity"
             android:screenOrientation="fullSensor"

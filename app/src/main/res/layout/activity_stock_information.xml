@@ -3,12 +3,25 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:background="#FFFFFF"
     android:fadeScrollbars="false"
     android:scrollbarAlwaysDrawVerticalTrack="true"
     android:scrollbarStyle="outsideInset"
     tools:context="protec.pl.protecabasvol2.StockInformation">
+
+    <ImageView
+        android:id="@+id/imageView3"
+        android:layout_width="507dp"
+        android:layout_height="237dp"
+        android:adjustViewBounds="true"
+        android:cropToPadding="true"
+        android:scaleX="-1.0"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.931"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/gray" />
 
     <Button
         android:id="@+id/checkFreeHand"
@@ -217,7 +230,7 @@
         android:layout_centerVertical="true"
         android:layout_marginTop="44dp"
         android:text="@string/table_article"
-        android:textColor="@color/colorPrimary"
+        android:textColor="#000000"
         android:textSize="24sp"
         android:textStyle="bold"
         app:drawableTint="#B34747"

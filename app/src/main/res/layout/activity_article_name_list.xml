@@ -6,6 +6,17 @@
     android:layout_height="match_parent"
     tools:context="protec.pl.protecabasvol2.ArticleNameList">
 
+    <ImageView
+        android:id="@+id/imageView4"
+        android:layout_width="448dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="36dp"
+        android:layout_marginLeft="36dp"
+        android:adjustViewBounds="true"
+        android:cropToPadding="true"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/gray" />
 
     <TextView
         android:id="@+id/textView4"
@@ -28,6 +39,7 @@
         android:layout_height="459dp"
         android:layout_marginStart="10dp"
         android:layout_marginLeft="5dp"
+        android:layout_marginTop="44dp"
         android:layout_marginEnd="5dp"
         android:layout_marginRight="5dp"
         android:layout_weight="1"
@@ -142,5 +154,7 @@
         </HorizontalScrollView>
 
     </ScrollView>
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

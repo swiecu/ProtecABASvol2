@@ -1,9 +1,5 @@
 package protec.pl.protecabasvol2;
 
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -18,7 +14,9 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
-import protec.pl.protecabasvol2.R;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 
 import java.math.BigDecimal;
 
@@ -54,7 +52,8 @@ public class ArticleNameList extends AppCompatActivity {
         LoadingDialog = ProgressDialog.show(ArticleNameList.this, "",
                 "Ładowanie. Proszę czekać...", true);
         setContentView(R.layout.activity_article_name_list);
-        setPassword(getIntent().getStringExtra(("password")));
+        password = (getIntent().getStringExtra("password"));
+        setPassword(password);
         destination = getIntent().getStringExtra("destination");
         doRestDescr();
         doRestSwd();
@@ -75,7 +74,7 @@ public class ArticleNameList extends AppCompatActivity {
             suma.setVisibility(View.GONE);
         }
         Intent intent = null; //cofnij do StockInformation
-        try {intent = new Intent(ArticleNameList.this, Class.forName("com.example.protecabasvol2." + destination));}
+        try {intent = new Intent(ArticleNameList.this, Class.forName("protec.pl.protecabasvol2." + destination));}
         catch (ClassNotFoundException e) { e.printStackTrace();}
         intent.putExtra("password", getPassword());
         startActivity(intent);

@@ -1,9 +1,5 @@
 package protec.pl.protecabasvol2;
 
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -23,7 +19,10 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
-import protec.pl.protecabasvol2.R;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
@@ -65,8 +64,8 @@ public class StockInformation extends AppCompatActivity {
         article_name.setVisibility(View.GONE);
         suma.setVisibility(View.GONE);
         no_art.setVisibility(View.VISIBLE);
-        String passwd = (getIntent().getStringExtra("password"));
-        setPassword(passwd);
+        password = (getIntent().getStringExtra("password"));
+        setPassword(password);
         String back_article = (getIntent().getStringExtra("art_idno"));
         //jeśli wraca z ArticleNameList
         if(back_article != null) {
@@ -200,7 +199,7 @@ public class StockInformation extends AppCompatActivity {
             } else {
                 LoadingDialog.dismiss();
                 no_art.setVisibility(View.VISIBLE);
-                GlobalClass.showDialog(this, "Brak artykułu!", "W bazie nie ma takeigo artykłu!", "OK",
+                GlobalClass.showDialog(this, "Brak artykułu!", "W bazie nie ma takiego artykłu!", "OK",
                     new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {} });
             }

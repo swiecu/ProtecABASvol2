@@ -4,7 +4,22 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#FFFFFF"
     tools:context=".QualityControl">
+
+    <ImageView
+        android:id="@+id/imageView8"
+        android:layout_width="wrap_content"
+        android:layout_height="154dp"
+        android:layout_marginStart="132dp"
+        android:layout_marginLeft="132dp"
+        android:layout_marginBottom="4dp"
+        android:adjustViewBounds="true"
+        android:cropToPadding="true"
+        android:scaleY="-1.0"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:srcCompat="@drawable/gray" />
 
     <TextView
         android:id="@+id/textView11"
@@ -60,7 +75,7 @@
         android:textColor="#302E2E"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.836"
-        app:layout_constraintStart_toEndOf="@+id/textView6"
+        app:layout_constraintStart_toEndOf="@+id/quality_cont_textView"
         app:layout_constraintTop_toBottomOf="@+id/nrZP_TextView" />
 
     <EditText
@@ -95,7 +110,7 @@
         app:layout_constraintTop_toBottomOf="@+id/textView8" />
 
     <TextView
-        android:id="@+id/textView6"
+        android:id="@+id/quality_cont_textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
@@ -131,6 +146,7 @@
         android:layout_marginTop="16dp"
         android:layout_marginEnd="24dp"
         android:layout_marginRight="24dp"
+        android:background="#00FFFFFF"
         android:ems="10"
         android:gravity="start|top"
         android:hint="Wiadomość:"
@@ -184,7 +200,7 @@
         android:textSize="15sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView6" />
+        app:layout_constraintTop_toBottomOf="@+id/quality_cont_textView" />
 
     <TextView
         android:id="@+id/artName_TextView"
@@ -199,4 +215,6 @@
         app:layout_constraintHorizontal_bias="0.785"
         app:layout_constraintStart_toEndOf="@+id/textView13"
         app:layout_constraintTop_toBottomOf="@+id/articleQuality_TextView" />
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

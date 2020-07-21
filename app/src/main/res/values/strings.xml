@@ -45,6 +45,12 @@
     <string name="to_qr_btn">Zeskanuj lokalizację</string>
 
     <string name="menu">Menu</string>
+    <string name="protecabasapp">Protec ABAS App</string>
+    <string name="menu_big">MENU</string>
+    <string name="stock_info">Informacja o stanie</string>
+    <string name="move">Przesunięcia</string>
+    <string name="quality_control">Kontrola Jakości Produkcji</string>
+    <string name="stocktaking">Inwentaryzacja</string>
 
     <string name="set_article">Wpisz nazwę artykułu:</string>
     <string name="ok">OK</string>
@@ -73,6 +79,13 @@
     <string name="operation">Operacja:</string>
     <string name="department">Wydział:</string>
     <string name="machine_group">Gr. Maszyn:</string>
+
+    <string name="stocktaking_item">Wprowadź artykuł</string>
+    <string name="location">Lokalizacja</string>
+    <string name="mylist">Moja lista</string>
+    <string name="save">Zapisz</string>
+
+
 
 
 

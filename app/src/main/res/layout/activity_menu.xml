@@ -1,43 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#FFFFFF"
     tools:context="protec.pl.protecabasvol2.Menu">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:background="#FFFFFF">
 
+        <ImageView
+            android:id="@+id/imageView2"
+            android:layout_width="511dp"
+            android:layout_height="304dp"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/stock_info"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.391"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/redmenu" />
 
         <TextView
             android:id="@+id/loggedUser"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginLeft="16dp"
             android:layout_marginTop="16dp"
+            android:layout_marginEnd="48dp"
+            android:layout_marginRight="48dp"
             android:text="@string/logged_user"
-            android:textColor="#4C4C4E"
+            android:textColor="#FFFFFF"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/textView"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="40dp"
-            android:layout_marginLeft="40dp"
-            android:layout_marginTop="32dp"
-            android:text="MENU"
-            android:textColor="#000000"
+            android:layout_marginStart="28dp"
+            android:layout_marginLeft="28dp"
+            android:layout_marginTop="20dp"
+            android:text="@string/menu_big"
+            android:textColor="#FFFFFF"
             android:textSize="30sp"
-            app:layout_constraintEnd_toStartOf="@+id/imageView"
+            android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/loggedUser" />
 
@@ -45,37 +55,24 @@
             android:id="@+id/textView2"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="40dp"
-            android:layout_marginLeft="40dp"
-            android:text="Protec ABAS App"
-            android:textColor="#4C4C4E"
-            app:layout_constraintEnd_toStartOf="@+id/imageView"
+            android:layout_marginStart="30dp"
+            android:layout_marginLeft="30dp"
+            android:text="@string/protecabasapp"
+            android:textColor="#FFFFFF"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textView" />
-
-        <ImageView
-            android:id="@+id/imageView"
-            android:layout_width="92dp"
-            android:layout_height="70dp"
-            android:layout_marginTop="32dp"
-            android:layout_marginEnd="35dp"
-            android:layout_marginRight="35dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/textView"
-            app:layout_constraintTop_toBottomOf="@+id/loggedUser"
-            app:srcCompat="@drawable/protec_logo_szare" />
 
         <LinearLayout
             android:id="@+id/linearLayout"
             android:layout_width="0dp"
             android:layout_height="175dp"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="150dp"
             android:orientation="horizontal"
             android:padding="10dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/imageView">
+            app:layout_constraintTop_toTopOf="parent">
 
             <androidx.cardview.widget.CardView
                 android:layout_width="0dp"
@@ -88,10 +85,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:clickable="true"
-                    android:elevation="2dp"
                     android:onClick="checkStock"
                     android:outlineProvider="bounds"
-                    android:translationZ="2dp">
+                    android:translationZ="2dp"
+                    android:focusable="true">
 
                     <TextView
                         android:id="@+id/textView3"
@@ -100,20 +97,22 @@
                         android:layout_below="@id/stock_info"
                         android:layout_alignParentEnd="true"
                         android:layout_alignParentRight="true"
-                        android:layout_marginTop="7dp"
-                        android:layout_marginEnd="9dp"
-                        android:layout_marginRight="9dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_marginRight="8dp"
                         android:gravity="center"
-                        android:text="Informacje o stanie"
+                        android:text="@string/stock_info"
                         android:textSize="18sp" />
 
                     <ImageView
                         android:id="@+id/stock_info"
-                        android:layout_width="80dp"
-                        android:layout_height="60dp"
+                        android:layout_width="73dp"
+                        android:layout_height="53dp"
                         android:layout_centerHorizontal="true"
-                        android:layout_marginTop="15dp"
-                        app:srcCompat="@drawable/ic_stock_info_icon_" />
+                        android:layout_marginTop="20dp"
+                        android:contentDescription="@string/stockInfo"
+                        app:srcCompat="@drawable/ic_new_stock_icon_"
+                        tools:ignore="VectorDrawableCompat" />
                 </RelativeLayout>
             </androidx.cardview.widget.CardView>
 
@@ -123,38 +122,42 @@
                 android:layout_margin="5dp"
                 android:layout_weight="1"
                 app:cardCornerRadius="10dp"
+                android:translationZ="2dp"
                 app:cardElevation="2dp">
 
                 <RelativeLayout
+                    android:id="@+id/move_relative_layout"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:clickable="true"
-                    android:elevation="2dp"
                     android:onClick="move"
                     android:outlineProvider="bounds"
                     android:translationZ="2dp">
 
                     <TextView
-                        android:id="@+id/textView4"
+                        android:id="@+id/move_textView"
                         android:layout_width="139dp"
-                        android:layout_height="48dp"
+                        android:layout_height="wrap_content"
                         android:layout_below="@id/move"
                         android:layout_alignParentEnd="true"
                         android:layout_alignParentRight="true"
-                        android:layout_marginTop="7dp"
-                        android:layout_marginEnd="11dp"
-                        android:layout_marginRight="11dp"
+                        android:layout_marginTop="17dp"
+                        android:layout_marginEnd="13dp"
+                        android:layout_marginRight="13dp"
                         android:gravity="center"
-                        android:text="Przesunięcia"
+                        android:text="@string/move"
                         android:textSize="18sp" />
 
                     <ImageView
                         android:id="@+id/move"
-                        android:layout_width="70dp"
-                        android:layout_height="66dp"
+                        android:layout_width="68dp"
+                        android:layout_height="59dp"
                         android:layout_centerHorizontal="true"
-                        android:layout_marginTop="15dp"
-                        app:srcCompat="@drawable/ic_move_icon_" />
+                        android:layout_marginTop="20dp"
+                        android:contentDescription="@string/move"
+                        app:srcCompat="@drawable/ic_new_move_icon_"
+                        tools:ignore="VectorDrawableCompat" />
+
                 </RelativeLayout>
             </androidx.cardview.widget.CardView>
         </LinearLayout>
@@ -177,68 +180,88 @@
                 android:layout_height="match_parent"
                 android:layout_margin="5dp"
                 android:layout_weight="1"
-                app:cardCornerRadius="10dp">
+                app:cardCornerRadius="10dp"
+                android:translationZ="2dp"
+                app:cardElevation="2dp">
 
                 <RelativeLayout
+                    android:id="@+id/quality_relative_layout"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:clickable="true"
-                    android:elevation="2dp"
                     android:onClick="qualityControl"
                     android:outlineProvider="bounds"
                     android:translationZ="2dp">
 
                     <TextView
-                        android:id="@+id/textView6"
+                        android:id="@+id/quality_cont_textView"
                         android:layout_width="141dp"
                         android:layout_height="42dp"
                         android:layout_below="@id/quality_control"
                         android:layout_alignParentEnd="true"
                         android:layout_alignParentRight="true"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginTop="13dp"
                         android:layout_marginEnd="9dp"
                         android:layout_marginRight="9dp"
                         android:gravity="center|center_horizontal|center_vertical"
-                        android:text="Kontrola Jakości Produkcji"
+                        android:text="@string/quality_control"
                         android:textSize="17sp" />
 
                     <ImageView
                         android:id="@+id/quality_control"
-                        android:layout_width="72dp"
-                        android:layout_height="59dp"
+                        android:layout_width="69dp"
+                        android:layout_height="54dp"
                         android:layout_centerHorizontal="true"
-                        android:layout_marginTop="15dp"
+                        android:layout_marginTop="20dp"
                         android:background="#00FFFFFF"
-                        app:srcCompat="@drawable/ic_quality_icon_new" />
+                        android:contentDescription="@string/quality_control"
+                        app:srcCompat="@drawable/ic_new_quality_icon_"
+                        tools:ignore="VectorDrawableCompat" />
                 </RelativeLayout>
             </androidx.cardview.widget.CardView>
 
             <androidx.cardview.widget.CardView
+                android:id="@+id/stocktaking_cardView"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_margin="10dp"
+                android:layout_margin="5dp"
                 android:layout_weight="1"
-                android:visibility="invisible">
+                app:cardCornerRadius="10dp">
 
                 <RelativeLayout
+                    android:id="@+id/stocktaking_relative_layout"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent">
+                    android:layout_height="match_parent"
+                    android:clickable="true"
+                    android:onClick="stocktaking"
+                    android:outlineProvider="bounds"
+                    android:translationZ="2dp">
 
                     <TextView
-                        android:id="@+id/textView7"
-                        android:layout_width="wrap_content"
+                        android:id="@+id/stocktaking_textView"
+                        android:layout_width="141dp"
                         android:layout_height="wrap_content"
-                        android:layout_centerHorizontal="true"
-                        android:layout_marginTop="10dp"
-                        android:text=""
-                        android:textSize="24sp" />
+                        android:layout_below="@id/stocktaking"
+                        android:layout_alignParentEnd="true"
+                        android:layout_alignParentRight="true"
+                        android:layout_marginTop="11dp"
+                        android:layout_marginEnd="12dp"
+                        android:layout_marginRight="12dp"
+                        android:gravity="center|center_horizontal|center_vertical"
+                        android:text="@string/stocktaking"
+                        android:textSize="17sp" />
 
                     <ImageView
-                        android:id="@+id/train"
-                        android:layout_width="75dp"
-                        android:layout_height="75dp"
+                        android:id="@+id/stocktaking"
+                        android:layout_width="69dp"
+                        android:layout_height="54dp"
+                        android:layout_alignParentTop="true"
                         android:layout_centerHorizontal="true"
-                        android:layout_marginTop="15dp" />
+                        android:layout_marginTop="30dp"
+                        android:background="#00FFFFFF"
+                        android:contentDescription="@string/stocktaking"
+                        app:srcCompat="@drawable/ic_new_stocktaking_icon"
+                        tools:ignore="VectorDrawableCompat" />
                 </RelativeLayout>
             </androidx.cardview.widget.CardView>
         </LinearLayout>

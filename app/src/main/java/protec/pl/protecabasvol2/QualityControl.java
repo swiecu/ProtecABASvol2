@@ -44,21 +44,13 @@ public class QualityControl extends AppCompatActivity {
     private String password;
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
-
     DbContext ctx;
     ProgressDialog LoadingDialog;
-    TextView message;
     EditText nrCard_TextEdit;
-    TextView artName_TextView;
-    TextView article_TextView;
-    TextView nrZP_TextView;
-    String user;
+    TextView artName_TextView, article_TextView, nrZP_TextView, message;
     WorkOrders card;
     TableLayout controlLayout;
-    String choosenEmployee;
-    String choosenDepartment;
-    String choosenOperation;
-    String choosenMachineGroup;
+    String user, choosenEmployee, choosenDepartment, choosenOperation, choosenMachineGroup;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -257,19 +249,18 @@ public class QualityControl extends AppCompatActivity {
                             choosenElementAlert.setMessage(Html.fromHtml(elementeString));
                             choosenElementAlert.setTitle("Wybrany element: ");
                             choosenElementAlert.setPositiveButton("Wybierz",
-                                    new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            //dismiss the dialog
-                                            // article_textEdit.setFocusable(false);
-                                        }
-                                    });
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    //dismiss the dialog
+                                }
+                            });
                             choosenElementAlert.setNegativeButton("Anuluj",
-                                    new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            //dismiss the dialog
-                                            controlDialog.show();
-                                        }
-                                    });
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    //dismiss the dialog
+                                    controlDialog.show();
+                                }
+                            });
                             choosenElementAlert.setCancelable(true);
                             choosenElementAlert.create().show();
                         }
@@ -308,10 +299,10 @@ public class QualityControl extends AppCompatActivity {
 
             IsMailSender sender = ctx.openInfosystem(IsMailSender.class);
             if(choosenOperation.equalsIgnoreCase("Pakowanie")) {
-                sender.setYto("julia.swiec@protec.pl;");  //odbiorcy z wydziału pakowania
+                sender.setYto("lukasz.smiarowski@protec.pl;krzysztof.grzonka@protec.pl;koordynator.produkcji@protec.pl;krystian.skrzypiec@protec.pl;kj2@protec.pl;kj1@protec.pl;magazyn-log@protec.pl;");  //odbiorcy z wydziału pakowania
                 //krzysztof.wolny@protec.pl
-            }else{
-                sender.setYto("julia.swiec@protec.pl;");
+            }else{ // produkcja w toku
+                sender.setYto("adrian.smieszkol@protec.pl;krzysztof.grzonka@protec.pl;koordynator.produkcji@protec.pl;produkcja1@protec.pl;krystian.skrzypiec@protec.pl;kj2@protec.pl;kj1@protec.pl");
             }
 
             sender.setYsubject("Nowa wiadomosc z kontroli jakosci produkcji!");
