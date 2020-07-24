@@ -31,26 +31,27 @@ public class Menu extends AppCompatActivity {
     public void setPassword(String password) {
         this.password = password;
     }
-    String user_short_name = "";
-    String user;
+    String user_short_name = "", user, database;
     DbContext ctx;
     RelativeLayout quality_relative_layout, move_relative_layout, stocktaking_relative_layout;
     TextView quality_cont_textView, move_textView, stocktaking_textView, loggedUser;
     ImageView quality_control, move, stocktaking;
     Employee employee;
+
     @SuppressLint("WrongViewCast")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu);
-        String password = (getIntent().getStringExtra("password"));
-        setPassword(password);
+
+        getElementsFromIntent();
+        getElementsById(); //pobieranie wszystkich elementów by id
+
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
-        DbContext ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "test", getPassword(), "mobileApp");
+        DbContext ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
         IsPrLoggedUsers lu = ctx.openInfosystem(IsPrLoggedUsers.class);
 
-        getElementsById(); //pobieranie wszystkich elementów by id
         user_short_name = lu.getYuser();
         employee = FindEmployeeBySwd(ctx, user_short_name);
         if(employee != null) {
@@ -58,6 +59,7 @@ public class Menu extends AppCompatActivity {
         }
         ctx.close();
     }
+
     @Override
     public void onBackPressed(){
         GlobalClass.showDialogTwoButtons(this, "Wylogowanie", "Czy napewno chcesz się wylogować?", "Wyloguj", "Anuluj",
@@ -70,6 +72,7 @@ public class Menu extends AppCompatActivity {
             }, new DialogInterface.OnClickListener() { //Anuluj button
             @Override public void onClick(DialogInterface dialogInterface, int i) { } });
     }
+
     public void getElementsById(){
         quality_relative_layout = findViewById(R.id.quality_relative_layout);
         move_relative_layout = findViewById(R.id.move_relative_layout);
@@ -82,6 +85,7 @@ public class Menu extends AppCompatActivity {
         stocktaking = findViewById((R.id.stocktaking));
         loggedUser = findViewById(R.id.loggedUser);
     }
+
     public void setMenuLook(Employee employee){
         user = employee.getAddr().toUpperCase();
         loggedUser.setText("Zalogowany użytkownik: " + user);
@@ -108,18 +112,32 @@ public class Menu extends AppCompatActivity {
         stocktaking.setAlpha((float) 0.25);
     }
 
+    public void getElementsFromIntent(){
+        String password = (getIntent().getStringExtra("password"));
+        database = (getIntent().getStringExtra("database"));
+        setPassword(password);
+    }
+
+    public void setIntent(String destination){
+        try {
+            Intent intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
+            intent.putExtra("password", getPassword());
+            intent.putExtra("database", database);
+            intent.putExtra("user", user);
+            startActivity(intent);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
 
     public void checkStock (View view){
-        Intent intent = new Intent(this, StockInformation.class );
-        intent.putExtra("password", getPassword());
-        startActivity(intent);
+        setIntent("StockInformation");
     }
+
     public void move (View view){
         if(employee != null) {
             if (employee.getYwarehouseman() == true) {
-                Intent intent = new Intent(this, Move.class);
-                intent.putExtra("password", getPassword());
-                startActivity(intent);
+                setIntent("Move");
             } else {
                 GlobalClass.showDialog(this, "Ta opcja jest niedostępna!", "Musisz być magazynierem aby korzystać z tej opcji.", "OK",
                 new DialogInterface.OnClickListener() {
@@ -130,14 +148,12 @@ public class Menu extends AppCompatActivity {
             }
         }
     }
+
     public void qualityControl (View view){
-        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "test", getPassword(), "mobileApp");
+        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
         if(employee != null) {
             if (employee.getYqm() == true) {
-                Intent intent = new Intent(this, QualityControl.class);
-                intent.putExtra("password", getPassword());
-                intent.putExtra("user", user);
-                startActivity(intent);
+                setIntent("QualityControl");
             } else {
                 GlobalClass.showDialog(this, "Ta opcja jest niedostępna!", "Musisz być kontrolerem jakości aby korzystać z tej opcji.", "OK",
                 new DialogInterface.OnClickListener() {
@@ -150,17 +166,15 @@ public class Menu extends AppCompatActivity {
     }
 
     public void stocktaking (View view){
-        /*ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "test", getPassword(), "mobileApp");
-        Intent intent = new Intent(this, Stocktaking.class);
-        intent.putExtra("password", getPassword());
-        startActivity(intent);*/
-        GlobalClass.showDialog(this, "Opcja niedostępna!", "Ta opcja jest jescze niedostępna.", "OK",
+        //setIntent("Stocktaking");
+        GlobalClass.showDialog(this, "Opcja niedostępna!", "Ta opcja jest jeszcze niedostępna.", "OK",
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                     }
                 });
     }
+
 
     public final Employee FindEmployeeBySwd(DbContext ctx, String name){
         Employee employee = null;

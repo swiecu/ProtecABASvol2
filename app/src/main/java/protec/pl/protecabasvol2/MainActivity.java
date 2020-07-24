@@ -27,13 +27,22 @@ import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
 import de.abas.erp.db.DbContext;
+import de.abas.erp.db.Query;
 import de.abas.erp.db.exception.DBRuntimeException;
+import de.abas.erp.db.infosystem.custom.owpl.IsPrLoggedUsers;
+import de.abas.erp.db.schema.employee.Employee;
+import de.abas.erp.db.schema.part.Product;
+import de.abas.erp.db.selection.Conditions;
+import de.abas.erp.db.selection.SelectionBuilder;
 import de.abas.erp.db.util.ContextHelper;
+import de.abas.erp.db.util.QueryUtil;
 
 public class MainActivity extends AppCompatActivity {
    DbContext ctx;
    ProgressDialog LoadingDialog;
-    private AppUpdateManager mAppUpdateManager;
+   private AppUpdateManager mAppUpdateManager;
+   Employee employee;
+   String user_short_name = "", password;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,11 +62,8 @@ public class MainActivity extends AppCompatActivity {
             } else if (appUpdateInfo.installStatus() == InstallStatus.DOWNLOADED){
                 //CHECK THIS if AppUpdateType.FLEXIBLE, otherwise you can skip
                 popupSnackbarForCompleteUpdate();
-            } else {
-                Log.e("message", "checkForAppUpdateAvailability: something else");
             }
         });
-
     }
     InstallStateUpdatedListener installStateUpdatedListener = new
             InstallStateUpdatedListener() {
@@ -92,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
         snackbar.show();
     }
 
-    //po wyjściu z ekranu chowa Loading Dialog
+    //po wyjściu z ekranu
     @Override
     protected void  onStop(){
         super.onStop();
@@ -136,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
             if (requestCode == 77) {
                 if (resultCode != RESULT_OK) {
                     GlobalClass.showDialog(this,"Błąd podczas aktuallizacji","Nie udało się zaktualizować aplikacji, proszę spróbować później.", "OK",new DialogInterface.OnClickListener() {
-                        @Override public void onClick(DialogInterface dialog, int which) { } });
+                    @Override public void onClick(DialogInterface dialog, int which) { } });
                 }
             }
             super.onActivityResult(requestCode, resultCode, data);
@@ -146,19 +152,15 @@ public class MainActivity extends AppCompatActivity {
     // on Login Button Click
    public void login(View view)  {
         EditText password_text = findViewById(R.id.password_text);
-        String password = password_text.getText().toString();
+        password = password_text.getText().toString();
         if(!password.equals("")){
             try {
                 StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
                 StrictMode.setThreadPolicy(policy);
-                ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "test", password, "mobileApp");
-                Intent intent = new Intent(this, Menu.class);
-                intent.putExtra("password", password);
-                startActivity(intent);
-                LoadingDialog =  ProgressDialog.show(MainActivity.this, "",
-                        "Ładowanie. Proszę czekać...", true);
-            }catch (DBRuntimeException e) {
+                ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", password, "mobileApp");  // musi być erp, na pierwszym logowaniu
+                checkUserDatabase(ctx);
 
+            }catch (DBRuntimeException e) {
                 //błędne hasło
                 if(e.getMessage().contains("password")){
                     GlobalClass.showDialog(this,"Błędne hasło!","Podane hasło jest błędne.", "OK",new DialogInterface.OnClickListener() {
@@ -176,4 +178,41 @@ public class MainActivity extends AppCompatActivity {
                 @Override public void onClick(DialogInterface dialog, int which) { } });
         }
    }
+   public void checkUserDatabase(DbContext ctx){
+       IsPrLoggedUsers lu = ctx.openInfosystem(IsPrLoggedUsers.class);
+       user_short_name = lu.getYuser();
+       employee = FindEmployeeBySwd(ctx, user_short_name);
+
+       if(employee.getYdatabase().isEmpty()){
+           GlobalClass.showDialog(this,"Brak dostępu!","Nie masz dostępu do tej aplikacji.", "OK",new DialogInterface.OnClickListener() {
+               @Override public void onClick(DialogInterface dialog, int which) { } });
+       }else {
+           Intent intent = new Intent(this, Menu.class);
+           intent.putExtra("password", password);
+
+           if (employee.getYdatabase().equalsIgnoreCase("test")) {
+               intent.putExtra("database", "test");
+               Log.d("database", "test");
+           }
+           if (employee.getYdatabase().equalsIgnoreCase("erp")) {
+               intent.putExtra("database", "erp");
+               Log.d("database", "erp");
+           }
+           startActivity(intent);
+           LoadingDialog =  ProgressDialog.show(MainActivity.this, "",
+                   "Ładowanie. Proszę czekać...", true);
+       }
+   }
+
+    public final Employee FindEmployeeBySwd(DbContext ctx, String name){
+        Employee employee = null;
+        SelectionBuilder<Employee> employeeSB = SelectionBuilder.create(Employee.class);
+        Query<Employee> employeeQuery = ctx.createQuery(employeeSB.build());
+        try {
+            employeeSB.add(Conditions.eq(Product.META.swd.toString(), name));
+            employee = QueryUtil.getFirst(ctx, employeeSB.build());
+        } catch (Exception e) {
+        }
+        return employee;
+    }
 }

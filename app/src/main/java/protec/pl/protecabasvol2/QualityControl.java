@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Html;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -50,7 +51,7 @@ public class QualityControl extends AppCompatActivity {
     TextView artName_TextView, article_TextView, nrZP_TextView, message;
     WorkOrders card;
     TableLayout controlLayout;
-    String user, choosenEmployee, choosenDepartment, choosenOperation, choosenMachineGroup;
+    String user, choosenEmployee, choosenDepartment, choosenOperation, choosenMachineGroup, database;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,14 +59,13 @@ public class QualityControl extends AppCompatActivity {
         setContentView(R.layout.activity_quality_control);
         String password = (getIntent().getStringExtra("password"));
         setPassword(password);
+        database = (getIntent().getStringExtra("database"));
     }
 
     // na kliknięcie cofnij
     public void onBackPressed() {
         super.onBackPressed();
-        Intent intent = new Intent(QualityControl.this, Menu.class);
-        intent.putExtra("password", getPassword());
-        startActivity(intent);
+        setIntent("Menu");
     }
 
     // na wyjście z actvity
@@ -77,6 +77,16 @@ public class QualityControl extends AppCompatActivity {
         }
     }
 
+    public void setIntent(String destination){
+        try {
+            Intent intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
+            intent.putExtra("password", getPassword());
+            intent.putExtra("database", database);
+            startActivity(intent);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
     public void scanWorkCard(View view) {
         try {
             IntentIntegrator integrator = new IntentIntegrator(this);
@@ -131,24 +141,31 @@ public class QualityControl extends AppCompatActivity {
             article_TextView.setText(article);
             artName_TextView.setText(article_name);
             nrZP_TextView.setText(nr_ZP);
-
         }
     }
 
     public WorkOrders CardNrExists(String card_nr) {
         card = null;
         try {
-            ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "test", getPassword(), "mobileApp");
+
+            ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
+            Log.d("try", "before");
             SelectionBuilder<WorkOrders> prodCardSB = SelectionBuilder.create(WorkOrders.class);
             prodCardSB.add(Conditions.eq(WorkOrders.META.idno, card_nr));
             card = QueryUtil.getFirst(ctx, prodCardSB.build());
+
         } catch (Exception e) {
+            nrZP_TextView.setText("");
+            article_TextView.setText("");
+            artName_TextView.setText("");
+            nrCard_TextEdit.setText("");
+            Log.d("catch", "after");
             GlobalClass.showDialog(this, "Brak karty pracy!", "Zeskanowany nr karty nie istnieje.", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                        }
-                    });
+            new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                }
+            });
             //LoadingDialog.dismiss();
         }
         return card;
@@ -266,13 +283,35 @@ public class QualityControl extends AppCompatActivity {
                         }
                     });
                 }
-        }else{
-            GlobalClass.showDialog(this, "Brak parcownika w terminalu!", "Pracownik nie odbił się i nie widnieje w systemie.", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                        }
-                    });
+        }else{ //sprawdza zgłoszenia zakończone
+            IsApPdcAnalysis terminalRequestAnalysisFinished = ctx.openInfosystem(IsApPdcAnalysis.class);
+            terminalRequestAnalysisFinished.setYworkslipsel(card);
+            terminalRequestAnalysisFinished.setYordertime(true);
+            terminalRequestAnalysisFinished.setYstarted(false);
+            terminalRequestAnalysisFinished.setYfinished(true);
+            terminalRequestAnalysisFinished.invokeStart();
+            Iterable<IsApPdcAnalysis.Row> terminalRequestAnalysisFinishedRows = terminalRequestAnalysisFinished.getTableRows();
+            Integer nrRowsFinished = terminalRequestAnalysisFinished.getRowCount();
+            if (nrRowsFinished != 0) {
+                GlobalClass.showDialog(this, "Zgłoszenie zakończone!", "Zgłoszenie zostało zakończone.", "OK",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                });
+                choosenEmployee = "brak danych - zgłoszenie zakończone";
+                choosenDepartment = "brak danych - zgłoszenie zakończone";
+                choosenOperation = "brak danych - zgłoszenie zakończone";
+                choosenMachineGroup = "brak danych - zgłoszenie zakończone";
+
+            }else{
+                GlobalClass.showDialog(this, "Brak informacji!", "Brak informacji o danym zgłoszeniu.", "OK",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                }); // ??????????????
+            }
         }
     }
 
@@ -299,9 +338,10 @@ public class QualityControl extends AppCompatActivity {
 
             IsMailSender sender = ctx.openInfosystem(IsMailSender.class);
             if(choosenOperation.equalsIgnoreCase("Pakowanie")) {
+                //sender.setYto("julia.swiec@protec.pl");
                 sender.setYto("lukasz.smiarowski@protec.pl;krzysztof.grzonka@protec.pl;koordynator.produkcji@protec.pl;krystian.skrzypiec@protec.pl;kj2@protec.pl;kj1@protec.pl;magazyn-log@protec.pl;");  //odbiorcy z wydziału pakowania
-                //krzysztof.wolny@protec.pl
             }else{ // produkcja w toku
+                //sender.setYto("julia.swiec@protec.pl");
                 sender.setYto("adrian.smieszkol@protec.pl;krzysztof.grzonka@protec.pl;koordynator.produkcji@protec.pl;produkcja1@protec.pl;krystian.skrzypiec@protec.pl;kj2@protec.pl;kj1@protec.pl");
             }
 
@@ -316,9 +356,7 @@ public class QualityControl extends AppCompatActivity {
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            Intent intent = new Intent(QualityControl.this, Menu.class);
-                            intent.putExtra("password", getPassword());
-                            startActivity(intent);
+                            setIntent("Menu");
                         }
                     });
             LoadingDialog.dismiss();

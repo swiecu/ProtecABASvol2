@@ -23,7 +23,6 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import protec.pl.protecabasvol2.R;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
@@ -53,35 +52,18 @@ public class MoveTakeArticle extends AppCompatActivity {
     TableLayout stockLayout;
     TableRow no_art;
     GlobalClass myGlob;  //zdeklarowanie globalnej klasy
-    TextView artInfo;
-    TextView lokInfo;
-    TextView qtyInfo;
-    EditText article_textEdit;
-    EditText location_textEdit;
-    EditText qty_textEdit;
-    TextView unit_textEdit;
-    String artIDNO;
-    String platz;
+    TextView artInfo, lokInfo, qtyInfo, unit_textEdit;
+    EditText article_textEdit, location_textEdit, qty_textEdit;
+    String artIDNO, platz, database, back_article;
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_move_take_article);
-        String password = (getIntent().getStringExtra("password"));
-        setPassword(password);
-        artInfo = findViewById(R.id.artInfo_textView);
-        lokInfo = findViewById(R.id.lokInfo_textView);
-        qtyInfo = findViewById(R.id.qtyInfo_textView);
-        article_textEdit = findViewById(R.id.article_textEdit);
-        location_textEdit = findViewById(R.id.from_textEdit);
-        qty_textEdit = findViewById(R.id.qty_textEdit);
-        unit_textEdit = findViewById(R.id.unit_textView);
-        artInfo.setVisibility(View.INVISIBLE);
-        lokInfo.setVisibility(View.INVISIBLE);
-        qtyInfo.setVisibility(View.INVISIBLE);
-        location_textEdit.setInputType(0);
-        article_textEdit.setInputType(0);
-        String back_article = (getIntent().getStringExtra("art_idno"));
+        getElementsFromIntent();
+        getElementsById();
+        setLook();
+
         if(back_article != null) {
             String back_password = (getIntent().getStringExtra("password"));
             setPassword(back_password);
@@ -91,9 +73,7 @@ public class MoveTakeArticle extends AppCompatActivity {
     //na kliknięcie cofnij
     public void onBackPressed(){
         super.onBackPressed();
-        Intent intent = new Intent(MoveTakeArticle.this, Move.class);
-        intent.putExtra("password", getPassword());
-        startActivity(intent);
+        setIntent("Move", "");
     }
     // na wyjście z actvity
     @Override
@@ -102,6 +82,40 @@ public class MoveTakeArticle extends AppCompatActivity {
         if (LoadingDialog != null){
             LoadingDialog.dismiss();
         }
+    }
+    public void setIntent(String destination, String content){
+        try {
+            Intent intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
+            intent.putExtra("password", getPassword());
+            intent.putExtra("database", database);
+            intent.putExtra("content", content);
+            intent.putExtra("destination", "MoveTakeArticle");
+            startActivity(intent);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+    public void getElementsById(){
+        artInfo = findViewById(R.id.artInfo_textView);
+        lokInfo = findViewById(R.id.lokInfo_textView);
+        qtyInfo = findViewById(R.id.qtyInfo_textView);
+        article_textEdit = findViewById(R.id.article_textEdit);
+        location_textEdit = findViewById(R.id.from_textEdit);
+        qty_textEdit = findViewById(R.id.qty_textEdit);
+        unit_textEdit = findViewById(R.id.unit_textView);
+    }
+    public void getElementsFromIntent(){
+        String password = (getIntent().getStringExtra("password"));
+        database = (getIntent().getStringExtra("database"));
+        back_article = (getIntent().getStringExtra("art_idno"));
+        setPassword(password);
+    }
+    public void setLook(){
+        artInfo.setVisibility(View.INVISIBLE);
+        lokInfo.setVisibility(View.INVISIBLE);
+        qtyInfo.setVisibility(View.INVISIBLE);
+        location_textEdit.setInputType(0);
+        article_textEdit.setInputType(0);
     }
     // CHECK STOCK
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -132,7 +146,7 @@ public class MoveTakeArticle extends AppCompatActivity {
                 searchArticle(content);
             }
         }
-            super.onActivityResult(requestCode, resultCode, data);
+        super.onActivityResult(requestCode, resultCode, data);
         }
     }
     //   ENTER FREEHAND ARTICLE
@@ -177,7 +191,7 @@ public class MoveTakeArticle extends AppCompatActivity {
     public void searchArticle(String content) {
         myGlob = new GlobalClass(getApplicationContext());
         try{
-            ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "test", getPassword(), "mobileApp");   //?? potrzebne policy?
+            ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");   //?? potrzebne policy?
             if(myGlob.FindProductByIdno(ctx, content) != null) {  //jeśli Find by IDNO nie równa się null
                 drawTable(ctx, content);
                 if (LoadingDialog != null){
@@ -185,21 +199,11 @@ public class MoveTakeArticle extends AppCompatActivity {
                 }
                 //jeśli nie znajdzie by IDNO
             }else if (myGlob.FindProductByDescr(ctx, content) != null){
-
-                Intent intent = new Intent(this, ArticleNameList.class);
-                intent.putExtra("password", getPassword());
-                intent.putExtra("content", content);
-                intent.putExtra("destination", "MoveTakeArticle");
-                startActivity(intent);
+                setIntent("ArticleNameList", content);
 
                 // jeśli nie znajdzie by DESCR
             } else if (myGlob.FindProductBySwd(ctx, content) != null) {   //jeśli Find by SWD nie równa się null
-
-                Intent intent = new Intent(this, ArticleNameList.class);
-                intent.putExtra("password", getPassword());
-                intent.putExtra("content", content);
-                intent.putExtra("destination", "MoveTakeArticle");
-                startActivity(intent);
+                setIntent("ArticleNameList", content);
 
                 // jeśli nie znajdzie ani tu ani tu
             } else {
@@ -209,7 +213,9 @@ public class MoveTakeArticle extends AppCompatActivity {
                      @Override public void onClick(DialogInterface dialog, int which) {} });
             }
         } catch (Exception e) {
-            LoadingDialog.dismiss();
+            if(LoadingDialog != null) {
+                LoadingDialog.dismiss();
+            }
             GlobalClass.showDialog(MoveTakeArticle.this, "Brak połączenia!", "Nie można aktualnie połączyć z bazą.", "OK",
                 new DialogInterface.OnClickListener() {
                 @Override public void onClick(DialogInterface dialog, int which) {} });
@@ -372,18 +378,18 @@ public class MoveTakeArticle extends AppCompatActivity {
         String loc = location_textEdit.getText().toString();
         if (art.equals("")) {
             GlobalClass.showDialog(this, "Brak artykułu!", "Proszę wprowadzić artykuł", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                        }
-                    });
+            new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                }
+            });
         } else if (loc.equals("")) {
             GlobalClass.showDialog(this, "Brak lokalizacji!", "Proszę wprowadzić lokalizację", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                        }
-                    });
+            new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                }
+            });
         } else {
             if (qty.equals("")) {
                 qty = qty_textEdit.getHint().toString();
@@ -392,14 +398,14 @@ public class MoveTakeArticle extends AppCompatActivity {
             //jeśli ilość wpisana jest WIĘKSZA niż na stanie
             if (Double.parseDouble(qty) > Double.parseDouble(qty_textEdit.getHint().toString())) {
                 GlobalClass.showDialog(this, "Wykroczenie poza stan!", "Wpisana ilość przekracza ilość dostępną na stanie.", "OK",
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                            }
-                        });
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                });
             } else {
                 try {
-                    ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "test", getPassword(), "mobileApp");
+                    ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
                     EditorCommand cmd = EditorCommandFactory.typedCmd("Lbuchung", "");
                     StockAdjustmentEditor stockAdjustmentEditor = (StockAdjustmentEditor) ctx.openEditor(cmd);
                     AbasDate today = new AbasDate();
@@ -417,9 +423,7 @@ public class MoveTakeArticle extends AppCompatActivity {
                             new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    Intent intent = new Intent(MoveTakeArticle.this, Move.class);
-                                    intent.putExtra("password", password);
-                                    startActivity(intent);
+                                    setIntent("Move", "");
                                 }
                             });
                 } catch (NumberFormatException e) {

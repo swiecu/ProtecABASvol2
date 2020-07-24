@@ -39,10 +39,7 @@ public class ArticleNameList extends AppCompatActivity {
     ProgressDialog LoadingDialog;
     GlobalClass SearchArticleGlob;
     DbContext ctx;
-    String destination;
-    //Context destinationcContext;
-
-
+    String destination, database;
 
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -53,8 +50,10 @@ public class ArticleNameList extends AppCompatActivity {
                 "Ładowanie. Proszę czekać...", true);
         setContentView(R.layout.activity_article_name_list);
         password = (getIntent().getStringExtra("password"));
-        setPassword(password);
         destination = getIntent().getStringExtra("destination");
+        database = (getIntent().getStringExtra("database"));
+        setPassword(password);
+
         doRestDescr();
         doRestSwd();
         LoadingDialog.dismiss();
@@ -77,12 +76,13 @@ public class ArticleNameList extends AppCompatActivity {
         try {intent = new Intent(ArticleNameList.this, Class.forName("protec.pl.protecabasvol2." + destination));}
         catch (ClassNotFoundException e) { e.printStackTrace();}
         intent.putExtra("password", getPassword());
+        intent.putExtra("database", database);
         startActivity(intent);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void doRestDescr(){
-        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "test", getPassword(), "mobileApp");
+        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
         SelectionBuilder<Product> productSB = SelectionBuilder.create(Product.class);
         Query<Product> productQuery = ctx.createQuery(productSB.build());
         String name = (getIntent().getStringExtra(("content")));
@@ -105,7 +105,7 @@ public class ArticleNameList extends AppCompatActivity {
     }
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void doRestSwd() {
-        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "test", getPassword(), "mobileApp");
+        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
         SelectionBuilder<Product> productSB = SelectionBuilder.create(Product.class);
         Query<Product> productQuery = ctx.createQuery(productSB.build());
         String name = (getIntent().getStringExtra("content"));
@@ -185,25 +185,6 @@ public class ArticleNameList extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 ctx.close();
-               /* String articleString = "<b>" + finalArticle + "</b><br/>" + finalArticle_name;   // działa ale nie pogrubia nazwy artykułu
-                GlobalClass.showDialogTwoButtons(ArticleNameList.this, "Wybrany artykuł: ", (Html.fromHtml(articleString)).toString(),
-                        "Sprawdź stan", "Anuluj", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = null;
-                        try {
-                            intent = new Intent(ArticleNameList.this, Class.forName("protec.pl.protecabasvol2." + destination));
-                        } catch (ClassNotFoundException e) {
-                            e.printStackTrace();
-                        }
-                        intent.putExtra("password", password);
-                        intent.putExtra("art_idno", finalArticleIDNO);
-                        startActivity(intent);
-                    }
-                }, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) { }
-                });*/
 
                 AlertDialog.Builder dlgAlert = new AlertDialog.Builder(ArticleNameList.this);
                 String articleString = "<b>" + finalArticle + "</b><br/>" + finalArticle_name;
@@ -221,6 +202,7 @@ public class ArticleNameList extends AppCompatActivity {
                                 }
                                 intent.putExtra("password", password);
                                 intent.putExtra("art_idno", finalArticleIDNO);
+                                intent.putExtra("database", database);
                                 startActivity(intent);
                             }
                         });

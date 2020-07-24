@@ -1,9 +1,5 @@
 package protec.pl.protecabasvol2;
 
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -23,6 +19,10 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
@@ -31,7 +31,6 @@ import de.abas.erp.common.type.enums.EnumEntryTypeStockAdjustment;
 import de.abas.erp.db.DbContext;
 import de.abas.erp.db.EditorCommand;
 import de.abas.erp.db.EditorCommandFactory;
-import de.abas.erp.db.Query;
 import de.abas.erp.db.exception.CommandException;
 import de.abas.erp.db.exception.DBRuntimeException;
 import de.abas.erp.db.infosystem.standard.la.StockLevelInformation;
@@ -42,8 +41,6 @@ import de.abas.erp.db.selection.Conditions;
 import de.abas.erp.db.selection.SelectionBuilder;
 import de.abas.erp.db.util.ContextHelper;
 import de.abas.erp.db.util.QueryUtil;
-import de.abas.erp.db.schema.infrastructure.Location;
-import protec.pl.protecabasvol2.R;
 
 import static protec.pl.protecabasvol2.GlobalClass.FindProductByIdno;
 
@@ -53,15 +50,9 @@ public class MoveLeaveArticle extends AppCompatActivity {
     public void setPassword(String password) {this.password = password; }
     DbContext ctx;
     ProgressDialog LoadingDialog;
-    TextView article_textEdit;
-    TextView location_textEdit;
-    TextView unit_textView;
-    TextView qty_textEdit;
-    TextView location_textInfo;
-    TextView qty_textInfo;
-    TextView article_textInfo;
+    TextView article_textEdit, location_textEdit, unit_textView, qty_textEdit, location_textInfo, qty_textInfo, article_textInfo;
     TableLayout WDRlayout;
-    String art_IDNO;
+    String art_IDNO, database;
     GlobalClass globFunctions;
 
     @Override
@@ -69,27 +60,16 @@ public class MoveLeaveArticle extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_move_leave_article);
         String password = (getIntent().getStringExtra("password"));
+        database = (getIntent().getStringExtra("database"));
         setPassword(password);
-        article_textEdit = findViewById(R.id.article_textEdit);
-        location_textEdit = findViewById(R.id.to_textEdit);
-        qty_textEdit = findViewById(R.id.qty_TOtextEdit);
-        unit_textView = findViewById(R.id.unit_textView);
-        location_textInfo = findViewById(R.id.location_textInfo);
-        qty_textInfo = findViewById(R.id.qty_textInfo);
-        article_textInfo = findViewById(R.id.article_textInfo);
-        unit_textView.setVisibility(View.INVISIBLE);
-        location_textInfo.setVisibility(View.INVISIBLE);
-        qty_textInfo.setVisibility(View.INVISIBLE);
-        article_textInfo.setVisibility(View.INVISIBLE);
-        article_textEdit.setInputType(0);
-        location_textEdit.setInputType(0);
+
+        getElementsById();
+        setLook();
     }
     // na kliknięcie cofnij
     public void onBackPressed(){
         super.onBackPressed();
-        Intent intent = new Intent(MoveLeaveArticle.this, Move.class);
-        intent.putExtra("password", getPassword());
-        startActivity(intent);
+        setIntent("Move");
     }
     // na wyjście z actvity
     @Override
@@ -98,6 +78,35 @@ public class MoveLeaveArticle extends AppCompatActivity {
         if (LoadingDialog != null){
             LoadingDialog.dismiss();
         }
+    }
+
+    public void setIntent(String destination){
+        try {
+            Intent intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
+            intent.putExtra("password", getPassword());
+            intent.putExtra("database", database);
+            startActivity(intent);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void getElementsById(){
+        article_textEdit = findViewById(R.id.article_textEdit);
+        location_textEdit = findViewById(R.id.to_textEdit);
+        qty_textEdit = findViewById(R.id.qty_TOtextEdit);
+        unit_textView = findViewById(R.id.unit_textView);
+        location_textInfo = findViewById(R.id.location_textInfo);
+        qty_textInfo = findViewById(R.id.qty_textInfo);
+        article_textInfo = findViewById(R.id.article_textInfo);
+    }
+    public void setLook(){
+        unit_textView.setVisibility(View.INVISIBLE);
+        location_textInfo.setVisibility(View.INVISIBLE);
+        qty_textInfo.setVisibility(View.INVISIBLE);
+        article_textInfo.setVisibility(View.INVISIBLE);
+        article_textEdit.setInputType(0);
+        location_textEdit.setInputType(0);
     }
 
     public void scanArticle(View view){
@@ -168,7 +177,7 @@ public class MoveLeaveArticle extends AppCompatActivity {
     public LocationHeader LocationExists(String location){
         LocationHeader loc = null;
         try {
-            ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "test", getPassword(), "mobileApp");
+            ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
             SelectionBuilder<LocationHeader> locationSB = SelectionBuilder.create(LocationHeader.class);
             locationSB.add(Conditions.eq(LocationHeader.META.idno, location));
             loc = QueryUtil.getFirst(ctx, locationSB.build());
@@ -185,7 +194,7 @@ public class MoveLeaveArticle extends AppCompatActivity {
     @SuppressLint("WrongViewCast")
     public void checkWDRStock(String content) {
         try {
-            ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "test", getPassword(), "mobileApp");
+            ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
             String articleSWD;
             String qty;
             String unit;
@@ -238,7 +247,7 @@ public class MoveLeaveArticle extends AppCompatActivity {
     @SuppressLint("WrongViewCast")
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void chooseArticle(View view){
-        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "test", getPassword(), "mobileApp");
+        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
         StockLevelInformation sli = ctx.openInfosystem(StockLevelInformation.class);
         sli.setString("klplatz", "WDR");
         sli.setNullmge(false);
@@ -321,7 +330,6 @@ public class MoveLeaveArticle extends AppCompatActivity {
                 qty_textViewTable.setLayoutParams(cellParam);
 
                 tableRowWDR.addView(article_textViewTable);
-                //tableRowWDR.addView(art_desc_textViewTable);
                 tableRowWDR.addView(qty_textViewTable);
                 tableRowWDR.addView(unit_textViewTable);
                 WDRlayout.addView(tableRowWDR, j);
@@ -363,6 +371,13 @@ public class MoveLeaveArticle extends AppCompatActivity {
                     }
                 });
             }
+        }else {
+            GlobalClass.showDialog(this, "Brak artykułów!", "Brak artykułów na miejscu składowania WDR.", "OK",
+            new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                }
+            });
         }
     }
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -373,11 +388,11 @@ public class MoveLeaveArticle extends AppCompatActivity {
         globFunctions = new GlobalClass(getApplicationContext());
         if (article.equals("")) {
             GlobalClass.showDialog(this, "Brak artykułu!", "Proszę wprowadzić artykuł", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                        }
-                    });
+            new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                }
+            });
         } else if (location.equals("")) {
             GlobalClass.showDialog(this, "Brak lokalizacji!", "Proszę wprowadzić lokalizację", "OK",
                     new DialogInterface.OnClickListener() {
@@ -385,66 +400,65 @@ public class MoveLeaveArticle extends AppCompatActivity {
                         public void onClick(DialogInterface dialog, int which) {
                         }
                     });
-        } else {
-            if (qty.equals("")) {
+        } else{
+            if(qty.equals("")){
                 qty = qty_textEdit.getHint().toString();
                 qty_textEdit.setText(qty);
-                //jeśli ilość wpisana jest WIĘKSZA niż na stanie
-                if (Double.parseDouble(qty) > Double.parseDouble(qty_textEdit.getHint().toString())) {
-                    GlobalClass.showDialog(this, "Wykroczenie poza stan!", "Wpisana ilość przekracza ilość dostępną na stanie.", "OK",
+            }
+            //jeśli ilość wpisana jest WIĘKSZA niż na stanie
+            if (Double.parseDouble(qty) > Double.parseDouble(qty_textEdit.getHint().toString())) {
+                GlobalClass.showDialog(this, "Wykroczenie poza stan!", "Wpisana ilość przekracza ilość dostępną na stanie.", "OK",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        });
+            } else {
+                try {
+                    ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
+                    EditorCommand cmd = EditorCommandFactory.typedCmd("Lbuchung", "");
+                    StockAdjustmentEditor stockAdjustmentEditor = (StockAdjustmentEditor) ctx.openEditor(cmd);
+                    AbasDate today = new AbasDate();
+                    Product art = globFunctions.FindProductBySwd(ctx, article);
+                    stockAdjustmentEditor.setString("product", art.getIdno());
+                    stockAdjustmentEditor.setDocNo("MOBILE");
+                    stockAdjustmentEditor.setDateDoc(today);
+                    stockAdjustmentEditor.setEntType(EnumEntryTypeStockAdjustment.Transfer);
+                    StockAdjustmentEditor.Row sadRow = stockAdjustmentEditor.table().getRow(1);
+                    Log.d("beforeParse", "before");
+                    sadRow.setUnitQty(Double.parseDouble(qty));
+                    Log.d("beforeParse", "after");
+                    sadRow.setString("location", "WDR");
+                    sadRow.setString("location2", location);
+                    stockAdjustmentEditor.commit();
+
+                    GlobalClass.showDialog(this, "Odłożono!", "Materiał został odłożony i dodany do bazy.", "OK",
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    setIntent("Move");
+                                }
+                            });
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                    GlobalClass.showDialog(this, "Błąd!", "Podczas zmiany formatu wystąpił błąd.", "OK",
                             new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                 }
                             });
-                } else {
-                    try {
-                        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "test", getPassword(), "mobileApp");
-                        EditorCommand cmd = EditorCommandFactory.typedCmd("Lbuchung", "");
-                        StockAdjustmentEditor stockAdjustmentEditor = (StockAdjustmentEditor) ctx.openEditor(cmd);
-                        AbasDate today = new AbasDate();
-                        Product art = globFunctions.FindProductBySwd(ctx, article);
-                        stockAdjustmentEditor.setString("product", art.getIdno());
-                        stockAdjustmentEditor.setDocNo("MOBILE");
-                        stockAdjustmentEditor.setDateDoc(today);
-                        stockAdjustmentEditor.setEntType(EnumEntryTypeStockAdjustment.Transfer);
-                        StockAdjustmentEditor.Row sadRow = stockAdjustmentEditor.table().getRow(1);
-                        sadRow.setUnitQty(Double.parseDouble(qty));
-                        sadRow.setString("location", "WDR");
-                        sadRow.setString("location2", location);
-                        stockAdjustmentEditor.commit();
-
-                        GlobalClass.showDialog(this, "Odłożono!", "Materiał został odłożony i dodany do bazy.", "OK",
-                                new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        Intent intent = new Intent(MoveLeaveArticle.this, Move.class);
-                                        intent.putExtra("password", password);
-                                        startActivity(intent);
-                                    }
-                                });
-                    } catch (NumberFormatException e) {
-                        e.printStackTrace();
-                        GlobalClass.showDialog(this, "Błąd!", "Podczas zmiany formatu wystąpił błąd.", "OK",
-                                new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                    }
-                                });
-                    } catch (DBRuntimeException e) {
-                        GlobalClass.showDialog(this, "Brak połączenia!", "Nie można aktualnie połączyć z bazą.", "OK",
-                                new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                    }
-                                });
-                        e.printStackTrace();
-                    } catch (CommandException e) {
-                        e.printStackTrace();
-                    }
+                } catch (DBRuntimeException e) {
+                    GlobalClass.showDialog(this, "Brak połączenia!", "Nie można aktualnie połączyć z bazą.", "OK",
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                }
+                            });
+                    e.printStackTrace();
+                } catch (CommandException e) {
+                    e.printStackTrace();
                 }
             }
-
         }
     }
 }

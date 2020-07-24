@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Html;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -47,26 +48,21 @@ public class StockInformation extends AppCompatActivity {
     DbContext ctx;
     ProgressDialog LoadingDialog;
     TableLayout layout;
-    TextView article_name;
-    TextView suma;
+    TextView article_name, suma;
     TableRow no_art;
     GlobalClass globFunctions;  //zdeklarowanie globalnej klasy
-//02040042/1
+    String database, back_article;
+
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_stock_information);
-        layout = (TableLayout) findViewById(R.id.articleNameTable); //tabelka
-        article_name = (TextView) findViewById(R.id.article_name); //nazwa artkułu nad tabelką
-        suma = (TextView) findViewById(R.id.suma); //suma ilości pod tabelką
-        no_art = (TableRow) findViewById(R.id.no_articles); //table row "Brak artykułów"
-        article_name.setVisibility(View.GONE);
-        suma.setVisibility(View.GONE);
-        no_art.setVisibility(View.VISIBLE);
-        password = (getIntent().getStringExtra("password"));
+        getElementsById();
+        setLook();
+        getElementsFromIntent();
         setPassword(password);
-        String back_article = (getIntent().getStringExtra("art_idno"));
+
         //jeśli wraca z ArticleNameList
         if(back_article != null) {
             String password = (getIntent().getStringExtra("password"));
@@ -88,11 +84,39 @@ public class StockInformation extends AppCompatActivity {
     @Override
     public void onBackPressed(){
         super.onBackPressed();
-        Intent intent = new Intent(StockInformation.this, Menu.class);
-        intent.putExtra("password", getPassword());
-        startActivity(intent);
+        setIntent("Menu", "");
     }
 
+    public void setIntent(String destination, String content){
+        try {
+            Intent intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
+            intent.putExtra("password", getPassword());
+            intent.putExtra("database", database);
+            intent.putExtra("content", content);
+            intent.putExtra("destination", "StockInformation");
+            startActivity(intent);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+    public void getElementsById(){
+        layout = (TableLayout) findViewById(R.id.articleNameTable); //tabelka
+        article_name = (TextView) findViewById(R.id.article_name); //nazwa artkułu nad tabelką
+        suma = (TextView) findViewById(R.id.suma); //suma ilości pod tabelką
+        no_art = (TableRow) findViewById(R.id.no_articles); //table row "Brak artykułów"
+    }
+
+    public void setLook(){
+        article_name.setVisibility(View.GONE);
+        suma.setVisibility(View.GONE);
+        no_art.setVisibility(View.VISIBLE);
+    }
+    public void getElementsFromIntent(){
+
+        password = (getIntent().getStringExtra("password"));
+        back_article = (getIntent().getStringExtra("art_idno"));
+        database = (getIntent().getStringExtra("database"));
+    }
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void checkStock(View view){
         try{
@@ -170,30 +194,20 @@ public class StockInformation extends AppCompatActivity {
         if (no_art != null) {
             no_art.setVisibility(View.GONE);
         }
-        layout.removeViews(1, (layout.getChildCount() -2)); //zmień liczbę View dla layoutu ("Brak artykułu" jest schowane ale dalej jest child od layout)
+        layout.removeViews(1, (layout.getChildCount() -2)); //zmienia liczbę View dla layoutu ("Brak artykułu" jest schowane ale dalej jest child od layout)
         try{
-            ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "test", getPassword(), "mobileApp");   //?? potrzebne policy?
+            ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");   //?? potrzebne policy?
 
             if(globFunctions.FindProductByIdno(ctx, content) != null) {  //jeśli Find by IDNO nie równa się null
                 drawTable(ctx, content);
                 LoadingDialog.dismiss();
                 //jeśli nie znajdzie by IDNO
             }else if (globFunctions.FindProductByDescr(ctx, content) != null){
-
-                Intent intent = new Intent(this, ArticleNameList.class);
-                intent.putExtra("password", getPassword());
-                intent.putExtra("content", content);
-                intent.putExtra("destination", "StockInformation");
-                startActivity(intent);
+                setIntent("ArticleNameList", content);
 
                 // jeśli nie znajdzie by DESCR
             } else if (globFunctions.FindProductBySwd(ctx, content) != null) {   //jeśli Find by SWD nie równa się null
-
-                Intent intent = new Intent(this, ArticleNameList.class);
-                intent.putExtra("password", getPassword());
-                intent.putExtra("content", content);
-                intent.putExtra("destination", "StockInformation");
-                startActivity(intent);
+                setIntent("ArticleNameList", content);
 
                 // jeśli nie znajdzie ani tu ani tu
             } else {
@@ -214,7 +228,8 @@ public class StockInformation extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void drawTable(DbContext ctx, String content){
         BigDecimal sum = BigDecimal.ZERO;
-        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "test", getPassword(), "mobileApp");
+        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
+        Log.d("stockInfoDB", database);
         StockLevelInformation sli = ctx.openInfosystem(StockLevelInformation.class);
         sli.setArtikel(FindProductByIdno(ctx, content));
         sli.setKlgruppe((WarehouseGroup) null);
