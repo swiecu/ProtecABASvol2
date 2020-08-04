@@ -1,5 +1,6 @@
 package protec.pl.protecabasvol2;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -22,7 +23,6 @@ import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
@@ -37,7 +37,7 @@ import de.abas.erp.db.util.ContextHelper;
 
 import static protec.pl.protecabasvol2.GlobalClass.FindProductByIdno;
 
-public class StockInformation extends AppCompatActivity {
+public class StockInformation extends Activity {
     private String password;
     public String getPassword() {
         return password;
@@ -217,6 +217,7 @@ public class StockInformation extends AppCompatActivity {
                     new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {} });
             }
+            ctx.close();
         } catch (Exception e) {
             GlobalClass.showDialog(this, "Brak połączenia!", "Nie można aktualnie połączyć z bazą.", "OK",
                 new DialogInterface.OnClickListener() {
@@ -316,6 +317,9 @@ public class StockInformation extends AppCompatActivity {
                 } else if (Unit.equals("(21)")) { // jeśli jednostka to kpl
                     unit_textViewTable.setText("kpl");
                     Unit = "kpl";
+                }else if (Unit.equals("(1)")) { // jeśli jednostka to kpl
+                    unit_textViewTable.setText("m");
+                    Unit = "m";
                 }
 
                 tableRow.addView(id_textViewTable);
@@ -339,5 +343,6 @@ public class StockInformation extends AppCompatActivity {
                 @Override public void onClick(DialogInterface dialog, int which) {} });
                 no_art.setVisibility(View.VISIBLE);
         }
+        ctx.close();
     }
 }

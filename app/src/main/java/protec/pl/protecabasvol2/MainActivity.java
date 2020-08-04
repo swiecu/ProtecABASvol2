@@ -159,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
                 StrictMode.setThreadPolicy(policy);
                 ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", password, "mobileApp");  // musi być erp, na pierwszym logowaniu
                 checkUserDatabase(ctx);
+                ctx.close();
 
             }catch (DBRuntimeException e) {
                 //błędne hasło
@@ -170,6 +171,13 @@ public class MainActivity extends AppCompatActivity {
                 }else if(e.getMessage().contains("failed")){
                     GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
                         @Override public void onClick(DialogInterface dialog, int which) { } });
+
+                    //przekroczona liczba licencji
+                }else if(e.getMessage().contains("FULL")){
+                    GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekrocona.", "OK",new DialogInterface.OnClickListener() {
+                        @Override public void onClick(DialogInterface dialog, int which) { } });
+                }else{
+                    Log.d("error", e.getMessage());
                 }
             }
          // brak wpisanego hasła
@@ -179,9 +187,11 @@ public class MainActivity extends AppCompatActivity {
         }
    }
    public void checkUserDatabase(DbContext ctx){
+        Log.d("inCheckUserDatabase", "before");
        IsPrLoggedUsers lu = ctx.openInfosystem(IsPrLoggedUsers.class);
        user_short_name = lu.getYuser();
        employee = FindEmployeeBySwd(ctx, user_short_name);
+       Log.d("inCheckUserDatabase", "after");
 
        if(employee.getYdatabase().isEmpty()){
            GlobalClass.showDialog(this,"Brak dostępu!","Nie masz dostępu do tej aplikacji.", "OK",new DialogInterface.OnClickListener() {
@@ -215,4 +225,5 @@ public class MainActivity extends AppCompatActivity {
         }
         return employee;
     }
+
 }

@@ -160,14 +160,19 @@ public class MoveLeaveArticle extends AppCompatActivity {
                 if (resultCode == RESULT_OK) {
                     String content = result.getContents();
                     String location_name = "";
-                    if(LocationExists(content) != null){
-                        location_name = LocationExists(content).getSwd();
+                    LocationHeader location = LocationExists(content);
+                    if(location != null){
+                        location_name = location.getSwd();
+                        ctx.close();
                         location_textEdit.setText(location_name);
                         article_textInfo.setVisibility(View.VISIBLE);
                         location_textInfo.setVisibility(View.VISIBLE);
                         qty_textInfo.setVisibility(View.VISIBLE);
                     }else{
                         location_textEdit.setText("");
+                        GlobalClass.showDialog(this, "Brak lokalizacji!", "Zeskanowana lokalizacja nie istnieje.", "OK",
+                                new DialogInterface.OnClickListener() {
+                                    @Override public void onClick(DialogInterface dialog, int which) {} });
                     }
                 }
             }
@@ -179,12 +184,13 @@ public class MoveLeaveArticle extends AppCompatActivity {
         try {
             ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
             SelectionBuilder<LocationHeader> locationSB = SelectionBuilder.create(LocationHeader.class);
-            locationSB.add(Conditions.eq(LocationHeader.META.idno, location));
+            locationSB.add(Conditions.eq(LocationHeader.META.swd, location));
             loc = QueryUtil.getFirst(ctx, locationSB.build());
+            Log.d("beforeClose", "BEFORE");
+            ctx.close();
+            Log.d("beforeClose", "AFTER");
         }catch (Exception e) {
-            GlobalClass.showDialog(this, "Brak lokalizacji!", "Zeskanowana lokalizacja nie istnieje.", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override public void onClick(DialogInterface dialog, int which) {} });
+            Log.d("error", e.getMessage());
         }
         return loc;
     }
@@ -220,6 +226,9 @@ public class MoveLeaveArticle extends AppCompatActivity {
                         } else if (unit.equals("(21)")) { // jeśli jednostka to kpl
                             unit_textView.setText("kpl");
                             unit = "kpl";
+                        } else if (unit.equals("(1)")) { // jeśli jednostka to kpl
+                            unit_textView.setText("m");
+                            unit = "m";
                         }
                         article_textEdit.setText(articleSWD);
                         unit_textView.setVisibility(View.VISIBLE);
@@ -237,6 +246,8 @@ public class MoveLeaveArticle extends AppCompatActivity {
                     @Override public void onClick(DialogInterface dialog, int which) {} });
             }
             LoadingDialog.dismiss();
+            ctx.close();
+
         }catch (DBRuntimeException e){
             LoadingDialog.dismiss();
             GlobalClass.showDialog(this, "Brak połączenia!", "Nie można aktualnie połączyć z bazą.", "OK",
@@ -368,6 +379,7 @@ public class MoveLeaveArticle extends AppCompatActivity {
                                 });
                         choosenArticleAlert.setCancelable(true);
                         choosenArticleAlert.create().show();
+                        ctx.close();
                     }
                 });
             }
@@ -378,7 +390,10 @@ public class MoveLeaveArticle extends AppCompatActivity {
                 public void onClick(DialogInterface dialog, int which) {
                 }
             });
+            ctx.close();
         }
+
+
     }
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void leaveArticles(View view) {
@@ -439,6 +454,8 @@ public class MoveLeaveArticle extends AppCompatActivity {
                                     setIntent("Move");
                                 }
                             });
+                    ctx.close();
+
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
                     GlobalClass.showDialog(this, "Błąd!", "Podczas zmiany formatu wystąpił błąd.", "OK",

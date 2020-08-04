@@ -8,6 +8,7 @@ import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Html;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.TableLayout;
@@ -39,54 +40,71 @@ public class ArticleNameList extends AppCompatActivity {
     ProgressDialog LoadingDialog;
     GlobalClass SearchArticleGlob;
     DbContext ctx;
-    String destination, database;
+    String destination, database, name, positiveButtonText;
+    TextView suma, article_name;
+    TableRow no_art;
 
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        LoadingDialog = ProgressDialog.show(ArticleNameList.this, "",
-                "Ładowanie. Proszę czekać...", true);
         setContentView(R.layout.activity_article_name_list);
-        password = (getIntent().getStringExtra("password"));
-        destination = getIntent().getStringExtra("destination");
-        database = (getIntent().getStringExtra("database"));
-        setPassword(password);
-
+       // LoadingDialog = ProgressDialog.show(ArticleNameList.this, "",
+            //    "Ładowanie. Proszę czekać...", true);
+        getElementsFromIntent();
+        getElementsById();
         doRestDescr();
         doRestSwd();
-        LoadingDialog.dismiss();
+       // LoadingDialog.dismiss();
     }
     //na cofnięcie Back do tyłu
     public void onBackPressed() {
-        TableRow no_art = (TableRow) findViewById(R.id.no_articles); //ustawianie widoczności "brak artykułów"
-        TextView article_name = (TextView) findViewById(R.id.article_name); // nazwa artykułu
-        TextView suma = (TextView) findViewById(R.id.suma); // suma artykułów
-        if(no_art != null) { //jeśli row "brak artykułów" istnieje
+        getElementsById();
+        if(no_art != null) {
             no_art.setVisibility(View.VISIBLE);
         }
         if (article_name != null) {
             article_name.setVisibility(View.GONE);
         }
-        if (suma != null) {// jeśli suma istnieje to schowaj
+        if (suma != null) {
             suma.setVisibility(View.GONE);
         }
-        Intent intent = null; //cofnij do StockInformation
-        try {intent = new Intent(ArticleNameList.this, Class.forName("protec.pl.protecabasvol2." + destination));}
-        catch (ClassNotFoundException e) { e.printStackTrace();}
-        intent.putExtra("password", getPassword());
-        intent.putExtra("database", database);
-        startActivity(intent);
+        setIntent(""); //cofnij do StockInformation
+    }
+
+    public void getElementsFromIntent() {
+        password = (getIntent().getStringExtra("password"));
+        setPassword(password);
+        destination = getIntent().getStringExtra("destination");
+        database = (getIntent().getStringExtra("database"));
+        name = (getIntent().getStringExtra("content"));
+    }
+
+    public void getElementsById(){
+         no_art = (TableRow) findViewById(R.id.no_articles);
+         article_name = (TextView) findViewById(R.id.article_name);
+         suma = (TextView) findViewById(R.id.suma);
+    }
+
+    public void setIntent(String finalArticleIDNO) {
+        try {
+            Intent intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
+            intent.putExtra("password", getPassword());
+            intent.putExtra("database", database);
+            intent.putExtra("art_idno", finalArticleIDNO);
+            startActivity(intent);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void doRestDescr(){
-        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
-        SelectionBuilder<Product> productSB = SelectionBuilder.create(Product.class);
-        Query<Product> productQuery = ctx.createQuery(productSB.build());
-        String name = (getIntent().getStringExtra(("content")));
         try{
+            ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
+            SelectionBuilder<Product> productSB = SelectionBuilder.create(Product.class);
+            Query<Product> productQuery = ctx.createQuery(productSB.build());
             productSB.add(Conditions.matchIgCase(Product.META.descr6.toString(), name));
             for (Product product : productQuery) {
                 if(destination.equals("MoveTakeArticle")){
@@ -108,24 +126,26 @@ public class ArticleNameList extends AppCompatActivity {
         ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
         SelectionBuilder<Product> productSB = SelectionBuilder.create(Product.class);
         Query<Product> productQuery = ctx.createQuery(productSB.build());
-        String name = (getIntent().getStringExtra("content"));
+
         try {
             productSB.add(Conditions.matchIgCase(Product.META.swd.toString(), name));
             for (Product product : productQuery) {
                 drawTable(product);
             }
+            ctx.close();
         }catch (DBRuntimeException e) {
+            Log.d("error", e.getMessage());
             GlobalClass.showDialog(this, "Brak połączenia!", "Nie można aktualnie połączyć z bazą.", "OK", new DialogInterface.OnClickListener() {
                 @Override public void onClick(DialogInterface dialog, int which) {} });
         }
-        ctx.close();
+
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void drawTable(Product product){
-        String article = product.getSwd().toString();
-        String article_name = product.getDescr6().toString();
-        String articleIDNO = product.getIdno().toString();
+        String article = product.getSwd();
+        String article_name = product.getDescr6();
+        String articleIDNO = product.getIdno();
 
         TableLayout layoutList = (TableLayout) findViewById(R.id.articleNameTable);
         TableRow tableRowList = new TableRow(this);
@@ -156,12 +176,14 @@ public class ArticleNameList extends AppCompatActivity {
 
         id.setText((j).toString());
         id.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        id.setTextColor(Color.parseColor("#808080"));
         id.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12f);
         id.setPadding(5, 10, 5, 10);
         id.setLayoutParams(params);
 
         articleView.setText(article);
         articleView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        articleView.setTextColor(Color.parseColor("#808080"));
         articleView.setTypeface(Typeface.DEFAULT_BOLD);
         articleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12f);
         articleView.setPadding(5, 10, 5, 10);
@@ -169,6 +191,7 @@ public class ArticleNameList extends AppCompatActivity {
 
         article_nameView.setText(article_name);
         article_nameView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        article_nameView.setTextColor(Color.parseColor("#808080"));
         article_nameView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12f);
         article_nameView.setPadding(5, 10, 5, 10);
         article_nameView.setLayoutParams(params);
@@ -185,25 +208,21 @@ public class ArticleNameList extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 ctx.close();
+                if(destination.equals("Stocktaking")){
+                    positiveButtonText = "Wybierz";
+                }else{
+                    positiveButtonText = "Sprawdź stan";
+                }
 
-                AlertDialog.Builder dlgAlert = new AlertDialog.Builder(ArticleNameList.this);
+                AlertDialog.Builder dlgAlert = new AlertDialog.Builder(ArticleNameList.this, R.style.Theme_AppCompat_Light_Dialog_Alert);
                 String articleString = "<b>" + finalArticle + "</b><br/>" + finalArticle_name;
                 dlgAlert.setMessage(Html.fromHtml(articleString));
                 dlgAlert.setTitle("Wybrany artykuł: ");
-                dlgAlert.setPositiveButton("Sprawdź stan",
+                dlgAlert.setPositiveButton(positiveButtonText,
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
                                 //dismiss the dialog
-                                Intent intent = null;
-                                try {
-                                    intent = new Intent(ArticleNameList.this, Class.forName("protec.pl.protecabasvol2." + destination));
-                                } catch (ClassNotFoundException e) {
-                                    e.printStackTrace();
-                                }
-                                intent.putExtra("password", password);
-                                intent.putExtra("art_idno", finalArticleIDNO);
-                                intent.putExtra("database", database);
-                                startActivity(intent);
+                                setIntent(finalArticleIDNO);
                             }
                         });
                 dlgAlert.setNegativeButton("Anuluj",

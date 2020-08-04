@@ -34,6 +34,7 @@ import de.abas.erp.db.DbContext;
 import de.abas.erp.db.infosystem.custom.owfe.IsApPdcAnalysis;
 import de.abas.erp.db.infosystem.custom.owpl.IsMailSender;
 import de.abas.erp.db.schema.capacity.WorkCenter;
+import de.abas.erp.db.schema.custom.protec.AppConfigValues;
 import de.abas.erp.db.schema.part.Product;
 import de.abas.erp.db.schema.workorder.WorkOrders;
 import de.abas.erp.db.selection.Conditions;
@@ -52,6 +53,7 @@ public class QualityControl extends AppCompatActivity {
     WorkOrders card;
     TableLayout controlLayout;
     String user, choosenEmployee, choosenDepartment, choosenOperation, choosenMachineGroup, database;
+    AppConfigValues appConfigValues;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -142,6 +144,14 @@ public class QualityControl extends AppCompatActivity {
             artName_TextView.setText(article_name);
             nrZP_TextView.setText(nr_ZP);
         }
+        else{
+            GlobalClass.showDialog(this, "Brak karty pracy!", "Zeskanowany nr karty nie istnieje.", "OK",
+            new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                }
+            });
+        }
     }
 
     public WorkOrders CardNrExists(String card_nr) {
@@ -153,19 +163,15 @@ public class QualityControl extends AppCompatActivity {
             SelectionBuilder<WorkOrders> prodCardSB = SelectionBuilder.create(WorkOrders.class);
             prodCardSB.add(Conditions.eq(WorkOrders.META.idno, card_nr));
             card = QueryUtil.getFirst(ctx, prodCardSB.build());
-
+            ctx.close();
         } catch (Exception e) {
             nrZP_TextView.setText("");
             article_TextView.setText("");
             artName_TextView.setText("");
             nrCard_TextEdit.setText("");
             Log.d("catch", "after");
-            GlobalClass.showDialog(this, "Brak karty pracy!", "Zeskanowany nr karty nie istnieje.", "OK",
-            new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                }
-            });
+            GlobalClass.showDialog(this, "Brak połączenia!", "Nie można aktualnie połączyć z bazą.", "OK", new DialogInterface.OnClickListener() {
+                @Override public void onClick(DialogInterface dialog, int which) {}});
             //LoadingDialog.dismiss();
         }
         return card;
@@ -269,6 +275,7 @@ public class QualityControl extends AppCompatActivity {
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int which) {
                                     //dismiss the dialog
+                                    ctx.close();
                                 }
                             });
                             choosenElementAlert.setNegativeButton("Anuluj",
@@ -276,6 +283,7 @@ public class QualityControl extends AppCompatActivity {
                                 public void onClick(DialogInterface dialog, int which) {
                                     //dismiss the dialog
                                     controlDialog.show();
+                                    ctx.close();
                                 }
                             });
                             choosenElementAlert.setCancelable(true);
@@ -297,6 +305,7 @@ public class QualityControl extends AppCompatActivity {
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        ctx.close();
                     }
                 });
                 choosenEmployee = "brak danych - zgłoszenie zakończone";
@@ -309,6 +318,7 @@ public class QualityControl extends AppCompatActivity {
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        ctx.close();
                     }
                 }); // ??????????????
             }
@@ -328,21 +338,23 @@ public class QualityControl extends AppCompatActivity {
         String nrCard_text = nrCard_TextEdit.getText().toString();
         if (nrCard_text.equals("")) {
             GlobalClass.showDialog(this, "Brak karty pracy!", "Proszę wprowadzić nr karty.", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                        }
-                    });
+            new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                }
+            });
 
         } else if (!mess_text.equals("")) {
-
+            appConfigValues = getAppConfigValues();
             IsMailSender sender = ctx.openInfosystem(IsMailSender.class);
             if(choosenOperation.equalsIgnoreCase("Pakowanie")) {
+                sender.setYto(appConfigValues.getYqualitycontrpack()); //pobieranie emaili z abasa
                 //sender.setYto("julia.swiec@protec.pl");
-                sender.setYto("lukasz.smiarowski@protec.pl;krzysztof.grzonka@protec.pl;koordynator.produkcji@protec.pl;krystian.skrzypiec@protec.pl;kj2@protec.pl;kj1@protec.pl;magazyn-log@protec.pl;");  //odbiorcy z wydziału pakowania
+                //sender.setYto("lukasz.smiarowski@protec.pl;krzysztof.grzonka@protec.pl;koordynator.produkcji@protec.pl;krystian.skrzypiec@protec.pl;kj2@protec.pl;kj1@protec.pl;magazyn-log@protec.pl;");  //odbiorcy z wydziału pakowania
             }else{ // produkcja w toku
-                //sender.setYto("julia.swiec@protec.pl");
-                sender.setYto("adrian.smieszkol@protec.pl;krzysztof.grzonka@protec.pl;koordynator.produkcji@protec.pl;produkcja1@protec.pl;krystian.skrzypiec@protec.pl;kj2@protec.pl;kj1@protec.pl");
+                sender.setYto(appConfigValues.getYqualitycontrprod()); //pobieranie emaili z abasa
+               // sender.setYto("julia.swiec@protec.pl");
+                //sender.setYto("adrian.smieszkol@protec.pl;krzysztof.grzonka@protec.pl;koordynator.produkcji@protec.pl;produkcja1@protec.pl;krystian.skrzypiec@protec.pl;kj2@protec.pl;kj1@protec.pl");
             }
 
             sender.setYsubject("Nowa wiadomosc z kontroli jakosci produkcji!");
@@ -352,22 +364,31 @@ public class QualityControl extends AppCompatActivity {
             sender.setYtrext(text);
             sender.invokeStart();
             sender.close();
-            GlobalClass.showDialog(this, "Wysłano!", "Wiadomość została pomyślnie wysłana", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            setIntent("Menu");
-                        }
-                    });
+            GlobalClass.showDialog(this, "Wysłano!", "Wiadomość została pomyślnie wysłana.", "OK",
+            new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    setIntent("Menu");
+                }
+            });
             LoadingDialog.dismiss();
+            ctx.close();
         } else {
             GlobalClass.showDialog(this, "Brak wiadomości!", "Proszę wpisać wiadomość.", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                        }
-                    });
+            new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                }
+            });
         }
         LoadingDialog.dismiss();
+    }
+    public AppConfigValues getAppConfigValues() {
+        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
+        SelectionBuilder<AppConfigValues> stocktakingSB = SelectionBuilder.create(AppConfigValues.class);
+        stocktakingSB.add(Conditions.eq(AppConfigValues.META.swd, "OGOLNE"));
+        appConfigValues = QueryUtil.getFirst(ctx, stocktakingSB.build());
+        ctx.close();
+        return appConfigValues;
     }
 }

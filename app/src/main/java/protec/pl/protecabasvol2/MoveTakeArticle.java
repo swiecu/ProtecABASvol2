@@ -1,5 +1,6 @@
 package protec.pl.protecabasvol2;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -21,7 +22,6 @@ import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
@@ -43,7 +43,7 @@ import de.abas.erp.db.util.ContextHelper;
 
 import static protec.pl.protecabasvol2.GlobalClass.FindProductByIdno;
 
-public class MoveTakeArticle extends AppCompatActivity {
+public class MoveTakeArticle extends Activity {
     private String password;
     public String getPassword() { return password;}
     public void setPassword(String password) {this.password = password; }
@@ -199,19 +199,23 @@ public class MoveTakeArticle extends AppCompatActivity {
                 }
                 //jeśli nie znajdzie by IDNO
             }else if (myGlob.FindProductByDescr(ctx, content) != null){
+                ctx.close();
                 setIntent("ArticleNameList", content);
 
                 // jeśli nie znajdzie by DESCR
             } else if (myGlob.FindProductBySwd(ctx, content) != null) {   //jeśli Find by SWD nie równa się null
+                ctx.close();
                 setIntent("ArticleNameList", content);
 
                 // jeśli nie znajdzie ani tu ani tu
             } else {
+                ctx.close();
                 LoadingDialog.dismiss();
                 GlobalClass.showDialog(MoveTakeArticle.this, "Brak artykułu!", "W bazie nie ma takeigo artykłu!", "OK",
                      new DialogInterface.OnClickListener() {
                      @Override public void onClick(DialogInterface dialog, int which) {} });
             }
+
         } catch (Exception e) {
             if(LoadingDialog != null) {
                 LoadingDialog.dismiss();
@@ -319,6 +323,9 @@ public class MoveTakeArticle extends AppCompatActivity {
                     } else if (unit.equals("(21)")) { // jeśli jednostka to kpl
                         unit_textViewTable.setText("kpl");
                         unit = "kpl";
+                    } else if (unit.equals("(1)")) { // jeśli jednostka to kpl
+                        unit_textViewTable.setText("m");
+                        unit = "m";
                     }
                     tableRowStock.addView(article_textViewTable);
                     tableRowStock.addView(qty_textViewTable);
@@ -361,6 +368,7 @@ public class MoveTakeArticle extends AppCompatActivity {
                                     });
                             choosedLocAlert.setCancelable(true);
                             choosedLocAlert.create().show();
+                            ctx.close();
                         }
                     });
                 }
@@ -369,7 +377,9 @@ public class MoveTakeArticle extends AppCompatActivity {
             GlobalClass.showDialog(this, "Brak stanu!", "Artykuł ten nie jest obecnie w zapasie.", "OK",
                 new DialogInterface.OnClickListener() {
                 @Override public void onClick(DialogInterface dialog, int which) {} });
+            ctx.close();
         }
+
     }
 
     public void takeArticles(View view) {
@@ -423,9 +433,11 @@ public class MoveTakeArticle extends AppCompatActivity {
                             new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
+                                    ctx.close();
                                     setIntent("Move", "");
                                 }
                             });
+                    //
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
                     GlobalClass.showDialog(this, "Błąd!", "Podczas zmiany formatu wystąpił błąd.", "OK",

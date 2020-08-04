@@ -14,7 +14,13 @@
         android:screenOrientation="portrait"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-        <activity android:name=".Stocktaking"></activity>
+        <activity android:name=".DialogMap"></activity>
+        <activity
+            android:name=".MyStocktakingList"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".Stocktaking"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".QualityControl"
             android:screenOrientation="portrait" />
@@ -30,7 +36,8 @@
             android:screenOrientation="portrait" />
         <activity
             android:name=".ArticleNameList"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Translucent" />
         <activity
             android:name=".Move"
             android:screenOrientation="portrait" />

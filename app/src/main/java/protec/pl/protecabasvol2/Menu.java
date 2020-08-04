@@ -1,21 +1,32 @@
 package protec.pl.protecabasvol2;
 
 import android.annotation.SuppressLint;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
+
 import de.abas.erp.db.DbContext;
-import de.abas.erp.db.Query;
 import de.abas.erp.db.infosystem.custom.owpl.IsPrLoggedUsers;
+import de.abas.erp.db.schema.custom.protec.StocktakingProtec;
 import de.abas.erp.db.schema.employee.Employee;
 import de.abas.erp.db.schema.part.Product;
 import de.abas.erp.db.selection.Conditions;
@@ -37,6 +48,7 @@ public class Menu extends AppCompatActivity {
     TextView quality_cont_textView, move_textView, stocktaking_textView, loggedUser;
     ImageView quality_control, move, stocktaking;
     Employee employee;
+    ProgressDialog LoadingDialog;
 
     @SuppressLint("WrongViewCast")
     @Override
@@ -49,7 +61,7 @@ public class Menu extends AppCompatActivity {
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
-        DbContext ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
+        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
         IsPrLoggedUsers lu = ctx.openInfosystem(IsPrLoggedUsers.class);
 
         user_short_name = lu.getYuser();
@@ -107,9 +119,12 @@ public class Menu extends AppCompatActivity {
             move_textView.setAlpha((float) 1);
             move.setAlpha((float) 1);
         }
-        stocktaking_relative_layout.setBackgroundColor(Color.parseColor("#41EFEEEE"));
+        /*stocktaking_relative_layout.setBackgroundColor(Color.parseColor("#41EFEEEE"));  // pole enabled dla inwentaryzacji
         stocktaking_textView.setAlpha((float) 0.35);
-        stocktaking.setAlpha((float) 0.25);
+        stocktaking.setAlpha((float) 0.25);*/
+        stocktaking_relative_layout.setBackgroundColor(Color.parseColor("#FFFFFF"));  // pole enabled dla inwentaryzacji
+        stocktaking_textView.setAlpha((float) 1);
+        stocktaking.setAlpha((float) 1);
     }
 
     public void getElementsFromIntent(){
@@ -118,12 +133,13 @@ public class Menu extends AppCompatActivity {
         setPassword(password);
     }
 
-    public void setIntent(String destination){
+    public void setIntent(String destination, String content){
         try {
             Intent intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
             intent.putExtra("password", getPassword());
             intent.putExtra("database", database);
             intent.putExtra("user", user);
+            intent.putExtra("stockID", content);
             startActivity(intent);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
@@ -131,60 +147,145 @@ public class Menu extends AppCompatActivity {
     }
 
     public void checkStock (View view){
-        setIntent("StockInformation");
+        setIntent("StockInformation", "");
     }
 
     public void move (View view){
         if(employee != null) {
             if (employee.getYwarehouseman() == true) {
-                setIntent("Move");
+                setIntent("Move", "");
             } else {
                 GlobalClass.showDialog(this, "Ta opcja jest niedostępna!", "Musisz być magazynierem aby korzystać z tej opcji.", "OK",
                 new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                    }
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                }
                 });
             }
         }
     }
 
     public void qualityControl (View view){
-        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
+       // ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
         if(employee != null) {
             if (employee.getYqm() == true) {
-                setIntent("QualityControl");
+                setIntent("QualityControl", "");
             } else {
                 GlobalClass.showDialog(this, "Ta opcja jest niedostępna!", "Musisz być kontrolerem jakości aby korzystać z tej opcji.", "OK",
                 new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                    }
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                }
                 });
             }
         }
+
     }
 
     public void stocktaking (View view){
+        AlertDialog.Builder scanCommitteeDialog = new AlertDialog.Builder(Menu.this);
+        ViewGroup viewGroup = findViewById(android.R.id.content);
+        View dialogView = LayoutInflater.from(view.getContext()).inflate(R.layout.dialog_stocktaking_committee_scan, viewGroup, false);
+        scanCommitteeDialog.setView(dialogView);
+        AlertDialog committeeDialog = scanCommitteeDialog.create();
+        Button button_cancel = (Button)dialogView.findViewById(R.id.button_cancel);
+        button_cancel .setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                committeeDialog.dismiss();}
+        });
+        Button button_qr = (Button)dialogView.findViewById(R.id.button_qr);
+        button_qr.setOnClickListener(new View.OnClickListener(){
+            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+            @Override
+            public void onClick(View v){
+                ScanQR();
+            }
+        });
+        committeeDialog.show();
+        committeeDialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         //setIntent("Stocktaking");
-        GlobalClass.showDialog(this, "Opcja niedostępna!", "Ta opcja jest jeszcze niedostępna.", "OK",
+        /*GlobalClass.showDialog(this, "Opcja niedostępna!", "Ta opcja jest jeszcze niedostępna.", "OK",
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                     }
-                });
+                });*/
+
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+    public void ScanQR(){
+        try{
+            IntentIntegrator integrator = new IntentIntegrator(this);
+            integrator.setPrompt("Proszę zeskanować nr komisji");
+            integrator.setBeepEnabled(false);
+            integrator.setOrientationLocked(true);
+            integrator.setDesiredBarcodeFormats(IntentIntegrator.ALL_CODE_TYPES);
+            Intent intent = integrator.createScanIntent();
+            startActivityForResult(intent , 101);
+        } catch (Exception e) {
+            Uri marketUri = Uri.parse("market://details?id=com.google.zxing.client.android");
+            Intent marketIntent = new Intent(Intent.ACTION_VIEW,marketUri);
+            startActivity(marketIntent);
+        }
+    }
+    // ON ACTIVITY RESULT
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        IntentResult result = IntentIntegrator.parseActivityResult(IntentIntegrator.REQUEST_CODE, resultCode, data);
+        if(result!= null){
+            if (requestCode == 101) {
+                if (resultCode == RESULT_OK) {
+                    String content = result.getContents();
+                    //String name = dem.getYauthorname();
+                    ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
+                    StocktakingProtec stock = FindStocktakingByIdno(ctx, content);
+                    ctx.close();
+                    if(stock != null){
+                        setIntent("Stocktaking", content);
+                    }else{
+                        GlobalClass.showDialog(Menu.this, "Błędny numer komisji", "Podany numer komisji nie istnieje.", "OK", new DialogInterface.OnClickListener() {
+                            @Override public void onClick(DialogInterface dialog, int which) {} });
+                    }
+                }
+            }
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
 
     public final Employee FindEmployeeBySwd(DbContext ctx, String name){
         Employee employee = null;
         SelectionBuilder<Employee> employeeSB = SelectionBuilder.create(Employee.class);
-        Query<Employee> employeeQuery = ctx.createQuery(employeeSB.build());
         try {
             employeeSB.add(Conditions.eq(Product.META.swd.toString(), name));
             employee = QueryUtil.getFirst(ctx, employeeSB.build());
         } catch (Exception e) {
         }
         return employee;
+    }
+
+    public final StocktakingProtec FindStocktakingByIdno(DbContext ctx, String idno){
+        StocktakingProtec stocktaking = null;
+        SelectionBuilder<StocktakingProtec> stocktakingSB = SelectionBuilder.create(StocktakingProtec.class);
+        try {
+            stocktakingSB.add(Conditions.eq(Product.META.idno.toString(), idno));
+            stocktaking = QueryUtil.getFirst(ctx, stocktakingSB.build());
+        } catch (Exception e) {
+        }
+        return stocktaking;
+    }
+
+    public void showMap(View view){
+        setIntent("DialogMap", "");
+       /* AlertDialog.Builder mapDialog = new AlertDialog.Builder(Menu.this);
+        ViewGroup viewGroup = findViewById(android.R.id.content);
+        View dialogView = LayoutInflater.from(view.getContext()).inflate(R.layout.activity_dialog_map, viewGroup, false);
+        mapDialog.setView(dialogView);
+        AlertDialog articleDialog = mapDialog.create();
+        articleDialog.show();
+        articleDialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        ImageView mImageView = findViewById(R.id.map_imageView);*/
+
     }
 }
