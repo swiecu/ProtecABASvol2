@@ -19,10 +19,9 @@ public class Move extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_move);
-        String password = (getIntent().getStringExtra("password"));
-        setPassword(password);
-        database = (getIntent().getStringExtra("database"));
+        getElementsFromIntent();
     }
+
     public void onBackPressed(){
         super.onBackPressed();
         Intent intent = new Intent(Move.this, Menu.class);
@@ -30,16 +29,28 @@ public class Move extends AppCompatActivity {
         intent.putExtra("database", database);
         startActivity(intent);
     }
+
+    public void getElementsFromIntent(){
+        String password = (getIntent().getStringExtra("password"));
+        database = (getIntent().getStringExtra("database"));
+        setPassword(password);
+    }
+
+    public void setIntent(String destination){
+        try {
+            Intent intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
+            intent.putExtra("password", getPassword());
+            intent.putExtra("database", database);
+            startActivity(intent);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void takeArticles(View view){
-        Intent intent = new Intent(Move.this, MoveTakeArticle.class);
-        intent.putExtra("password", getPassword());
-        intent.putExtra("database", database);
-        startActivity(intent);
+        setIntent("MoveTakeArticle");
     }
     public void leaveArticles(View view){
-        Intent intent = new Intent(Move.this, MoveLeaveArticle.class);
-        intent.putExtra("password", getPassword());
-        intent.putExtra("database", database);
-        startActivity(intent);
+        setIntent("MoveLeaveArticle");
     }
 }

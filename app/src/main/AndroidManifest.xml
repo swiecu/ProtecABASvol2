@@ -14,7 +14,9 @@
         android:screenOrientation="portrait"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-        <activity android:name=".DialogMap"></activity>
+        <activity android:name=".MaintenanceReportNote"></activity>
+        <activity android:name=".Maintenance" />
+        <activity android:name=".DialogMap" />
         <activity
             android:name=".MyStocktakingList"
             android:screenOrientation="portrait" />

@@ -20,6 +20,7 @@ import android.widget.TextView;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
@@ -44,11 +45,12 @@ public class Menu extends AppCompatActivity {
     }
     String user_short_name = "", user, database;
     DbContext ctx;
-    RelativeLayout quality_relative_layout, move_relative_layout, stocktaking_relative_layout;
+    RelativeLayout quality_relative_layout, move_relative_layout, stocktaking_relative_layout,maintenance_relative_layout;
     TextView quality_cont_textView, move_textView, stocktaking_textView, loggedUser;
     ImageView quality_control, move, stocktaking;
     Employee employee;
     ProgressDialog LoadingDialog;
+    CardView cardView;
 
     @SuppressLint("WrongViewCast")
     @Override
@@ -61,9 +63,8 @@ public class Menu extends AppCompatActivity {
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
-        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
+        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", getPassword(), "mobileApp");
         IsPrLoggedUsers lu = ctx.openInfosystem(IsPrLoggedUsers.class);
-
         user_short_name = lu.getYuser();
         employee = FindEmployeeBySwd(ctx, user_short_name);
         if(employee != null) {
@@ -96,6 +97,8 @@ public class Menu extends AppCompatActivity {
         move = findViewById((R.id.move));
         stocktaking = findViewById((R.id.stocktaking));
         loggedUser = findViewById(R.id.loggedUser);
+        cardView = findViewById(R.id.invisible_cardView);
+        maintenance_relative_layout = findViewById(R.id.maintenance_relative_layout);
     }
 
     public void setMenuLook(Employee employee){
@@ -122,9 +125,14 @@ public class Menu extends AppCompatActivity {
         /*stocktaking_relative_layout.setBackgroundColor(Color.parseColor("#41EFEEEE"));  // pole enabled dla inwentaryzacji
         stocktaking_textView.setAlpha((float) 0.35);
         stocktaking.setAlpha((float) 0.25);*/
+        maintenance_relative_layout.setBackgroundColor(Color.parseColor("#FFFFFF"));  // pole enabled dla inwentaryzacji
+        maintenance_relative_layout.setAlpha((float) 1);
+        maintenance_relative_layout.setAlpha((float) 1);
+
         stocktaking_relative_layout.setBackgroundColor(Color.parseColor("#FFFFFF"));  // pole enabled dla inwentaryzacji
         stocktaking_textView.setAlpha((float) 1);
         stocktaking.setAlpha((float) 1);
+        cardView.setVisibility(View.INVISIBLE);
     }
 
     public void getElementsFromIntent(){
@@ -179,7 +187,11 @@ public class Menu extends AppCompatActivity {
                 });
             }
         }
+    }
 
+    public void maintenance (View view){
+        // ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
+         setIntent("Maintenance", "");
     }
 
     public void stocktaking (View view){
@@ -286,6 +298,5 @@ public class Menu extends AppCompatActivity {
         articleDialog.show();
         articleDialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         ImageView mImageView = findViewById(R.id.map_imageView);*/
-
     }
 }

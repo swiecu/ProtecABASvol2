@@ -126,7 +126,7 @@ public class QualityControl extends AppCompatActivity {
         String article = "";
         String article_name = "";
         String nr_ZP = "";
-        nrCard_TextEdit = findViewById(R.id.nrCard_TextEdit);
+        nrCard_TextEdit = findViewById(R.id.machine_TextEdit);
         artName_TextView = findViewById(R.id.artName_TextView);
         article_TextView = findViewById(R.id.articleQuality_TextView);
         nrZP_TextView = findViewById(R.id.nrZP_TextView);
@@ -334,7 +334,7 @@ public class QualityControl extends AppCompatActivity {
         user = (getIntent().getStringExtra("user"));
         DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         Date today = new Date();
-        EditText nrCard_TextEdit = findViewById(R.id.nrCard_TextEdit);
+        EditText nrCard_TextEdit = findViewById(R.id.machine_TextEdit);
         String nrCard_text = nrCard_TextEdit.getText().toString();
         if (nrCard_text.equals("")) {
             GlobalClass.showDialog(this, "Brak karty pracy!", "Proszę wprowadzić nr karty.", "OK",
