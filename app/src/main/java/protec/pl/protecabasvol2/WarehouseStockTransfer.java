@@ -50,7 +50,7 @@ public class WarehouseStockTransfer extends AppCompatActivity {
     public void setPassword(String password) {
         this.password = password;
     }
-    DbContext ctx;
+    DbContext ctx ;
     ProgressDialog LoadingDialog;
     String database, back_article, artIDNO, platz;
     CheckBox lockIcon;
