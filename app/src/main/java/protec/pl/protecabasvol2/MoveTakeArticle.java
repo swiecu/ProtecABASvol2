@@ -377,6 +377,7 @@ public class MoveTakeArticle extends Activity {
             GlobalClass.showDialog(this, "Brak stanu!", "Artykuł ten nie jest obecnie w zapasie.", "OK",
                 new DialogInterface.OnClickListener() {
                 @Override public void onClick(DialogInterface dialog, int which) {} });
+            stockDialog.dismiss();
             ctx.close();
         }
 

@@ -1,0 +1,116 @@
+<resources>
+    <string name="app_name">ProtecABASvol2</string>
+    <string name="enter_password">Podaj hasło abas</string>
+    <string name="login_btn">Zaloguj</string>
+    <string name="qr_btn">QR</string>
+
+    <string name="protec_logo">Protec Logo</string>
+    <string name="password">Hasło:</string>
+    <string name="logged_user">Zalogowany użytkownik:</string>
+
+    <string name="stockInfo">Informacje o stanie</string>
+    <string name="stock_info_header">Informacja o stanie</string>
+    <string name="enter_product_qr">Zeskanuj indeks</string>
+    <string name="enter_product">Wprowadź artykuł ręcznie</string>
+    <string name="enter_product2">Wyszukaj artykuł</string>
+    <string name="select_product">Wybierz artykuł</string>
+    <string name="add_article">Dodaj artykuł:</string>
+    <string name="table_article">ZAPAS NA MAGAZYNIE:</string>
+    <string name="table_header_id">id  </string>
+    <string name="table_header_article">Artykuł:  </string>
+    <string name="table_header_qty">Ilość:  </string>
+    <string name="table_header_unit">Jednostka:  </string>
+    <string name="table_header_unit_short">j.m:  </string>
+    <string name="table_header_lager">Lokalizacja: </string>
+    <string name="table_header_lager_short">Lok.: </string>
+    <string name="no_articles">Brak artykułów.  </string>
+    <string name="name">Nazwa artykułu</string>
+    <string name="sum">Suma: </string>
+
+    <string name="move_to">Pobierz</string>
+    <string name="move_from">Odłóż</string>
+    <string name="szt">szt.</string>
+
+
+    <string name="przesuniecia">Przesunięcia</string>
+    <string name="new_movement">Nowe przesunięcie</string>
+    <string name="what_article">Artykuł:</string>
+    <string name="from">Skąd</string>
+    <string name="to">Dokąd</string>
+    <string name="qty">Ilość</string>
+    <string name="move_article">Artykuł</string>
+    <string name="new_movement_btn">Wykonaj przesunięcie</string>
+    <string name="article_qr_btn">Zeskanuj artykuł</string>
+    <string name="from_qr_btn">Zeskanuj lokalizację</string>
+    <string name="to_qr_btn">Zeskanuj lokalizację</string>
+
+    <string name="menu">Menu</string>
+    <string name="protecabasapp">Protec ABAS App</string>
+    <string name="menu_big">MENU</string>
+    <string name="stock_info">Informacja o stanie</string>
+    <string name="move">Przesunięcia</string>
+    <string name="quality_control">Kontrola Jakości Produkcji</string>
+    <string name="stocktaking">Inwentaryzacja</string>
+
+    <string name="set_article">Wpisz nazwę artykułu:</string>
+    <string name="ok">OK</string>
+    <string name="cancle">Anuluj</string>
+
+    <string name="articles">Artykuły:</string>
+    <string name="id_articleNameList">id</string>
+    <string name="article_articleNameList">Artykuł: </string>
+    <string name="articleName_articleNameList">Nazwa Artykułu: </string>
+    <string name="art_name">Nazwa: </string>
+
+    <string name="WDR_stock">STAN NA MAGAZYNIE WDR </string>
+
+    <string name="QR_card_nr">Zeskanuj nr karty</string>
+    <string name="prod_card">Karta pracy:</string>
+    <string name="nr_card">Nr karty</string>
+    <string name="product">Artykuł: </string>
+    <string name="product_name">Nazwa artykułu: </string>
+    <string name="nr_zp">Nr zlecenia produkcyjnego: </string>
+    <string name="enter_message">Wprowadź wiadomość: </string>
+    <string name="send">Wyślij </string>
+    <string name="quality_control_header">KONTROLA JAKOŚCI PRODUKCJI </string>
+    <string name="message">Wiadomość:</string>
+    <string name="none"> - - -</string>
+
+    <string name="control_analysis"> Analiza zgłoszeń terminalowych</string>
+    <string name="employee">Pracownik:</string>
+    <string name="operation">Operacja:</string>
+    <string name="department">Wydział:</string>
+    <string name="machine_group">Gr. Maszyn:</string>
+
+    <string name="stocktaking_item">Wprowadź artykuł</string>
+    <string name="location">Lokalizacja</string>
+    <string name="mylist">Moja lista</string>
+    <string name="save">Zapisz</string>
+    <string name="remember_loc">Zapamiętaj</string>
+    <string name="scan_committee">Zeskanuj ID komisji</string>
+    <string name="info">Info:</string>
+    <string name="info2">Wiadomość</string>
+
+    <string name="my_list">Moja Lista</string>
+    <string name="unit_stockList">j.m.</string>
+    <string name="article_stockList">Artykuł</string>
+    <string name="counted_qty_stockList">Ilość</string>
+    <string name="stock_place_stockList">M-sce</string>
+    <string name="artName_stockList">Nazwa</string>
+    <string name="searchArt_stockList">Wyszukaj artykuł</string>
+
+    <string name="map_warehouse">Mapa</string>
+
+    <string name="maintenance">Utrzymanie ruchu</string>
+    <string name="reportNote">Zgłoś uwagę</string>
+    <string name="machine">Maszyna</string>
+    <string name="machineName">Nazwa maszyny:</string>
+    <string name="machineSWD">Klucz maszyny</string>
+    <string name="machineScan">Zeskanuj maszynę</string>
+
+    <string name="warehouseStockTransfer">Przeksięgowanie stanu magazynowego</string>
+    <string name="warehouseStockTransfer_short">Przeksięgowanie stanu</string>
+    <string name="from_warehouse">Skąd:</string>
+    <string name="to_warehouse">Dokąd:</string>
+
+</resources>

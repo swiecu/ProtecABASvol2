@@ -45,9 +45,9 @@ public class Menu extends AppCompatActivity {
     }
     String user_short_name = "", user, database;
     DbContext ctx;
-    RelativeLayout quality_relative_layout, move_relative_layout, stocktaking_relative_layout,maintenance_relative_layout;
-    TextView quality_cont_textView, move_textView, stocktaking_textView, loggedUser;
-    ImageView quality_control, move, stocktaking;
+    RelativeLayout quality_relative_layout, move_relative_layout, stocktaking_relative_layout,maintenance_relative_layout, warehouseTransfer_relative_layout, stockInfo_relative_layout;
+    TextView quality_cont_textView, move_textView, stocktaking_textView, stockInfo_textView, maintenance_textView, warehosueTransfer_textView, loggedUser;
+    ImageView quality_control, move, stocktaking, stockInfo, maintenance, warehosueTransfer;
     Employee employee;
     ProgressDialog LoadingDialog;
     CardView cardView;
@@ -87,18 +87,27 @@ public class Menu extends AppCompatActivity {
     }
 
     public void getElementsById(){
+        stockInfo_relative_layout = findViewById(R.id.stockInfo_relative_layout);
         quality_relative_layout = findViewById(R.id.quality_relative_layout);
         move_relative_layout = findViewById(R.id.move_relative_layout);
         stocktaking_relative_layout = findViewById(R.id.stocktaking_relative_layout);
+        maintenance_relative_layout = findViewById(R.id.maintenance_relative_layout);
+        warehouseTransfer_relative_layout = findViewById(R.id.warehosueTransfer_relative_layout);
+
         quality_cont_textView = findViewById((R.id.quality_cont_textView));
         move_textView = findViewById((R.id.move_textView));
         stocktaking_textView = findViewById((R.id.stocktaking_textView));
+        stockInfo_textView = findViewById(R.id.stockInfo_textView);
+        maintenance_textView = findViewById(R.id.maintenance_textView);
+        warehosueTransfer_textView = findViewById(R.id.warehosueTransfer_textView);
+
         quality_control= findViewById((R.id.quality_control));
         move = findViewById((R.id.move));
         stocktaking = findViewById((R.id.stocktaking));
+        stockInfo = findViewById((R.id.stockInfo));
+        maintenance = findViewById((R.id.maintenance));
+        warehosueTransfer = findViewById((R.id.warehosueTransfer));
         loggedUser = findViewById(R.id.loggedUser);
-        cardView = findViewById(R.id.invisible_cardView);
-        maintenance_relative_layout = findViewById(R.id.maintenance_relative_layout);
     }
 
     public void setMenuLook(Employee employee){
@@ -122,17 +131,25 @@ public class Menu extends AppCompatActivity {
             move_textView.setAlpha((float) 1);
             move.setAlpha((float) 1);
         }
-        /*stocktaking_relative_layout.setBackgroundColor(Color.parseColor("#41EFEEEE"));  // pole enabled dla inwentaryzacji
+        /*stocktaking_relative_layout.setBackgroundColor(Color.parseColor("#41EFEEEE"));  // pole disabled dla inwentaryzacji
         stocktaking_textView.setAlpha((float) 0.35);
-        stocktaking.setAlpha((float) 0.25);*/
-        maintenance_relative_layout.setBackgroundColor(Color.parseColor("#FFFFFF"));  // pole enabled dla inwentaryzacji
-        maintenance_relative_layout.setAlpha((float) 1);
-        maintenance_relative_layout.setAlpha((float) 1);
+        stocktaking.setAlpha((float) 0.25);*/  //ważny kod!
+
+        stockInfo_relative_layout.setBackgroundColor(Color.parseColor("#FFFFFF"));  // pole enabled dla informacji o stanie
+        stockInfo_textView.setAlpha((float) 1);
+        stockInfo.setAlpha((float) 1);
+
+        maintenance_relative_layout.setBackgroundColor(Color.parseColor("#FFFFFF"));  // pole enabled dla utrzymania ruch
+        maintenance_textView.setAlpha((float) 1);
+        maintenance.setAlpha((float) 1);
 
         stocktaking_relative_layout.setBackgroundColor(Color.parseColor("#FFFFFF"));  // pole enabled dla inwentaryzacji
         stocktaking_textView.setAlpha((float) 1);
         stocktaking.setAlpha((float) 1);
-        cardView.setVisibility(View.INVISIBLE);
+
+        warehouseTransfer_relative_layout.setBackgroundColor(Color.parseColor("#FFFFFF"));  // pole enabled dla inwentaryzacji
+        warehosueTransfer_textView.setAlpha((float) 1);
+        warehosueTransfer.setAlpha((float) 1);
     }
 
     public void getElementsFromIntent(){
@@ -174,7 +191,6 @@ public class Menu extends AppCompatActivity {
     }
 
     public void qualityControl (View view){
-       // ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
         if(employee != null) {
             if (employee.getYqm() == true) {
                 setIntent("QualityControl", "");
@@ -190,8 +206,11 @@ public class Menu extends AppCompatActivity {
     }
 
     public void maintenance (View view){
-        // ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
          setIntent("Maintenance", "");
+    }
+
+    public void warehouseStockTranfer(View view){
+        setIntent("WarehouseStockTransfer", "");
     }
 
     public void stocktaking (View view){
@@ -216,14 +235,6 @@ public class Menu extends AppCompatActivity {
         });
         committeeDialog.show();
         committeeDialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        //setIntent("Stocktaking");
-        /*GlobalClass.showDialog(this, "Opcja niedostępna!", "Ta opcja jest jeszcze niedostępna.", "OK",
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                    }
-                });*/
-
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -250,16 +261,16 @@ public class Menu extends AppCompatActivity {
             if (requestCode == 101) {
                 if (resultCode == RESULT_OK) {
                     String content = result.getContents();
-                    //String name = dem.getYauthorname();
                     ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
                     StocktakingProtec stock = FindStocktakingByIdno(ctx, content);
-                    ctx.close();
                     if(stock != null){
+                        ctx.close();
                         setIntent("Stocktaking", content);
                     }else{
                         GlobalClass.showDialog(Menu.this, "Błędny numer komisji", "Podany numer komisji nie istnieje.", "OK", new DialogInterface.OnClickListener() {
-                            @Override public void onClick(DialogInterface dialog, int which) {} });
+                        @Override public void onClick(DialogInterface dialog, int which) {} });
                     }
+                    ctx.close();
                 }
             }
             super.onActivityResult(requestCode, resultCode, data);
@@ -283,6 +294,7 @@ public class Menu extends AppCompatActivity {
         try {
             stocktakingSB.add(Conditions.eq(Product.META.idno.toString(), idno));
             stocktaking = QueryUtil.getFirst(ctx, stocktakingSB.build());
+            ctx.close();
         } catch (Exception e) {
         }
         return stocktaking;
@@ -290,13 +302,5 @@ public class Menu extends AppCompatActivity {
 
     public void showMap(View view){
         setIntent("DialogMap", "");
-       /* AlertDialog.Builder mapDialog = new AlertDialog.Builder(Menu.this);
-        ViewGroup viewGroup = findViewById(android.R.id.content);
-        View dialogView = LayoutInflater.from(view.getContext()).inflate(R.layout.activity_dialog_map, viewGroup, false);
-        mapDialog.setView(dialogView);
-        AlertDialog articleDialog = mapDialog.create();
-        articleDialog.show();
-        articleDialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        ImageView mImageView = findViewById(R.id.map_imageView);*/
     }
 }

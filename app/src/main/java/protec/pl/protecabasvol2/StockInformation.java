@@ -317,7 +317,7 @@ public class StockInformation extends Activity {
                 } else if (Unit.equals("(21)")) { // jeśli jednostka to kpl
                     unit_textViewTable.setText("kpl");
                     Unit = "kpl";
-                }else if (Unit.equals("(1)")) { // jeśli jednostka to kpl
+                }else if (Unit.equals("(1)")) { // jeśli jednostka to m
                     unit_textViewTable.setText("m");
                     Unit = "m";
                 }

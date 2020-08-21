@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    tools:context=".Stocktaking">
+
+    <ImageView
+        android:id="@+id/imageView7"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="72dp"
+        android:layout_marginLeft="72dp"
+        android:adjustViewBounds="true"
+        android:cropToPadding="true"
+        android:rotation="0"
+        android:scaleY="-1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:srcCompat="@drawable/gray" />
+
+    <TextView
+        android:id="@+id/stockInfo_textView"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:layout_marginTop="48dp"
+        android:text="@string/stocktaking_item"
+        android:textAllCaps="true"
+        android:textColor="#1C1B1B"
+        android:textSize="24sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.504"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/button2"
+        android:layout_width="110dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="56dp"
+        android:layout_marginLeft="56dp"
+        android:layout_marginTop="24dp"
+        android:background="#87857B"
+        android:onClick="showMyList"
+        android:text="@string/mylist"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/info_textEdit" />
+
+    <TextView
+        android:id="@+id/unit_textView"
+        android:layout_width="57dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginTop="36dp"
+        android:gravity="center_horizontal|center_vertical"
+        android:text="szt."
+        android:textColor="#2C2B2B"
+        android:textSize="18sp"
+        app:layout_constraintStart_toEndOf="@+id/qty_TOtextEdit"
+        app:layout_constraintTop_toBottomOf="@+id/toQR_btn"
+        tools:visibility="invisible" />
+
+    <Button
+        android:id="@+id/toQR_btn"
+        android:layout_width="90dp"
+        android:layout_height="45dp"
+        android:layout_marginTop="56dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginRight="10dp"
+        android:background="@color/colorBlue"
+        android:onClick="scanLocation"
+        android:text="@string/qr_btn"
+        android:textColor="#FFFFFF"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@+id/to_textEdit"
+        app:layout_constraintTop_toBottomOf="@+id/articleLeaveQr_btn" />
+
+    <TextView
+        android:id="@+id/qty_textInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginLeft="24dp"
+        android:layout_marginTop="21dp"
+        android:text="@string/table_header_qty"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/to_textEdit"
+        tools:visibility="visible" />
+
+    <EditText
+        android:id="@+id/to_textEdit"
+        android:layout_width="140dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="4dp"
+        android:autofillHints=""
+        android:editable="false"
+        android:ems="10"
+        android:hint="@string/location"
+        android:inputType="textPersonName"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/location_textInfo" />
+
+    <EditText
+        android:id="@+id/qty_TOtextEdit"
+        android:layout_width="140dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="4dp"
+        android:ems="10"
+        android:hint="@string/qty"
+        android:importantForAutofill="no"
+        android:inputType="textPersonName|phone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/qty_textInfo" />
+
+    <Button
+        android:id="@+id/articleLeaveQr_btn"
+        android:layout_width="80dp"
+        android:layout_height="45dp"
+        android:layout_marginTop="128dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginRight="10dp"
+        android:background="@color/colorBlue"
+        android:onClick="scanArticle"
+        android:text="@string/qr_btn"
+        android:textColor="#FFFFFF"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/location_textInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginLeft="24dp"
+        android:layout_marginTop="21dp"
+        android:text="@string/table_header_lager"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/article_textEdit"
+        tools:visibility="visible" />
+
+    <EditText
+        android:id="@+id/article_textEdit"
+        android:layout_width="140dp"
+        android:layout_height="47dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="128dp"
+        android:editable="false"
+        android:ems="10"
+        android:hint="@string/move_article"
+        android:importantForAutofill="no"
+        android:inputType="textPersonName"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/article_textInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginLeft="24dp"
+        android:layout_marginBottom="4dp"
+        android:text="@string/article_articleNameList"
+        app:layout_constraintBottom_toTopOf="@+id/article_textEdit"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:visibility="visible" />
+
+    <Button
+        android:id="@+id/leave_btn"
+        android:layout_width="110dp"
+        android:layout_height="50dp"
+        android:background="@color/colorProtec"
+        android:onClick="saveStockEntry"
+        android:text="@string/save"
+        android:textColor="#FFFFFF"
+        app:layout_constraintBaseline_toBaselineOf="@+id/button2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.772"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <CheckBox
+        android:id="@+id/lockIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
+        android:button="@drawable/ic_new_lock_icon"
+        android:checked="false"
+        android:focusable="false"
+        android:onClick="lockLocation"
+        android:textSize="12sp"
+        app:layout_constraintStart_toEndOf="@+id/to_textEdit"
+        app:layout_constraintTop_toBottomOf="@+id/location_textInfo" />
+
+    <EditText
+        android:id="@+id/info_textEdit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="4dp"
+        android:ems="10"
+        android:gravity="start|top"
+        android:hint="@string/info2"
+        android:inputType="textMultiLine"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/info_textInfo" />
+
+    <TextView
+        android:id="@+id/info_textInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginLeft="24dp"
+        android:layout_marginTop="21dp"
+        android:text="@string/info"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/qty_TOtextEdit" />
+
+    <Button
+        android:id="@+id/button4"
+        android:layout_width="80dp"
+        android:layout_height="45dp"
+        android:layout_marginTop="128dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginRight="10dp"
+        android:background="@color/colorProtec"
+        android:onClick="enterFreehandArticle"
+        android:text="@string/searchArt_stockList"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toStartOf="@+id/articleLeaveQr_btn"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

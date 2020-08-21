@@ -320,7 +320,7 @@ public class QualityControl extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         ctx.close();
                     }
-                }); // ??????????????
+                });
             }
         }
     }
@@ -349,12 +349,8 @@ public class QualityControl extends AppCompatActivity {
             IsMailSender sender = ctx.openInfosystem(IsMailSender.class);
             if(choosenOperation.equalsIgnoreCase("Pakowanie")) {
                 sender.setYto(appConfigValues.getYqualitycontrpack()); //pobieranie emaili z abasa
-                //sender.setYto("julia.swiec@protec.pl");
-                //sender.setYto("lukasz.smiarowski@protec.pl;krzysztof.grzonka@protec.pl;koordynator.produkcji@protec.pl;krystian.skrzypiec@protec.pl;kj2@protec.pl;kj1@protec.pl;magazyn-log@protec.pl;");  //odbiorcy z wydziału pakowania
             }else{ // produkcja w toku
                 sender.setYto(appConfigValues.getYqualitycontrprod()); //pobieranie emaili z abasa
-               // sender.setYto("julia.swiec@protec.pl");
-                //sender.setYto("adrian.smieszkol@protec.pl;krzysztof.grzonka@protec.pl;koordynator.produkcji@protec.pl;produkcja1@protec.pl;krystian.skrzypiec@protec.pl;kj2@protec.pl;kj1@protec.pl");
             }
 
             sender.setYsubject("Nowa wiadomosc z kontroli jakosci produkcji!");

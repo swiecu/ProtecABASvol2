@@ -1,0 +1,419 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    tools:context="protec.pl.protecabasvol2.Menu">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF">
+
+        <ImageView
+            android:id="@+id/imageView2"
+            android:layout_width="511dp"
+            android:layout_height="304dp"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/stock_info"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.391"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/redmenu" />
+
+        <TextView
+            android:id="@+id/loggedUser"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="48dp"
+            android:layout_marginRight="48dp"
+            android:text="@string/logged_user"
+            android:textColor="#FFFFFF"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="28dp"
+            android:layout_marginLeft="28dp"
+            android:layout_marginTop="10dp"
+            android:onClick="showMap"
+            android:text="@string/menu_big"
+            android:textColor="#FFFFFF"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/loggedUser" />
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="30dp"
+            android:layout_marginLeft="30dp"
+            android:text="@string/protecabasapp"
+            android:textColor="#FFFFFF"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView" />
+
+        <LinearLayout
+            android:id="@+id/linearLayout"
+            android:layout_width="0dp"
+            android:layout_height="175dp"
+            android:layout_marginTop="150dp"
+            android:orientation="horizontal"
+            android:padding="10dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                app:cardCornerRadius="10dp">
+
+                <RelativeLayout
+                    android:id="@+id/stockInfo_relative_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:onClick="checkStock"
+                    android:outlineProvider="bounds"
+                    android:translationZ="2dp">
+
+                    <TextView
+                        android:id="@+id/stockInfo_textView"
+                        android:layout_width="142dp"
+                        android:layout_height="47dp"
+                        android:layout_below="@id/stockInfo"
+                        android:layout_alignParentEnd="true"
+                        android:layout_alignParentRight="true"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_marginRight="8dp"
+                        android:gravity="center"
+                        android:text="@string/stock_info"
+                        android:textSize="18sp" />
+
+                    <ImageView
+                        android:id="@+id/stockInfo"
+                        android:layout_width="73dp"
+                        android:layout_height="53dp"
+                        android:layout_centerHorizontal="true"
+                        android:layout_marginTop="20dp"
+                        android:contentDescription="@string/stockInfo"
+                        app:srcCompat="@drawable/ic_new_stock_icon_"
+                        tools:ignore="VectorDrawableCompat" />
+                </RelativeLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:translationZ="2dp"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="2dp">
+
+                <RelativeLayout
+                    android:id="@+id/move_relative_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clickable="true"
+                    android:onClick="move"
+                    android:outlineProvider="bounds"
+                    android:translationZ="2dp">
+
+                    <TextView
+                        android:id="@+id/move_textView"
+                        android:layout_width="139dp"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/move"
+                        android:layout_alignParentEnd="true"
+                        android:layout_alignParentRight="true"
+                        android:layout_marginTop="17dp"
+                        android:layout_marginEnd="13dp"
+                        android:layout_marginRight="13dp"
+                        android:gravity="center"
+                        android:text="@string/move"
+                        android:textSize="18sp" />
+
+                    <ImageView
+                        android:id="@+id/move"
+                        android:layout_width="68dp"
+                        android:layout_height="59dp"
+                        android:layout_centerHorizontal="true"
+                        android:layout_marginTop="20dp"
+                        android:contentDescription="@string/move"
+                        app:srcCompat="@drawable/ic_new_move_icon_"
+                        tools:ignore="VectorDrawableCompat" />
+
+                </RelativeLayout>
+            </androidx.cardview.widget.CardView>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/linearLayout2"
+            android:layout_width="0dp"
+            android:layout_height="175dp"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal"
+            android:padding="10dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/linearLayout">
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/quality_cardView"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:translationZ="2dp"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="2dp">
+
+                <RelativeLayout
+                    android:id="@+id/quality_relative_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clickable="true"
+                    android:onClick="qualityControl"
+                    android:outlineProvider="bounds"
+                    android:translationZ="2dp">
+
+                    <TextView
+                        android:id="@+id/quality_cont_textView"
+                        android:layout_width="141dp"
+                        android:layout_height="42dp"
+                        android:layout_below="@id/quality_control"
+                        android:layout_alignParentStart="true"
+                        android:layout_alignParentLeft="true"
+                        android:layout_alignParentEnd="true"
+                        android:layout_alignParentRight="true"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginTop="13dp"
+                        android:layout_marginEnd="9dp"
+                        android:layout_marginRight="10dp"
+                        android:gravity="center|center_horizontal|center_vertical"
+                        android:text="@string/quality_control"
+                        android:textSize="17sp" />
+
+                    <ImageView
+                        android:id="@+id/quality_control"
+                        android:layout_width="69dp"
+                        android:layout_height="54dp"
+                        android:layout_centerHorizontal="true"
+                        android:layout_marginTop="20dp"
+                        android:background="#00FFFFFF"
+                        android:contentDescription="@string/quality_control"
+                        app:srcCompat="@drawable/ic_new_quality_icon_"
+                        tools:ignore="VectorDrawableCompat" />
+                </RelativeLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/stocktaking_cardView"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:translationZ="2dp"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="2dp">
+
+                <RelativeLayout
+                    android:id="@+id/stocktaking_relative_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clickable="true"
+                    android:onClick="stocktaking"
+                    android:outlineProvider="bounds"
+                    android:translationZ="2dp">
+
+                    <TextView
+                        android:id="@+id/stocktaking_textView"
+                        android:layout_width="141dp"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/stocktaking"
+                        android:layout_alignParentEnd="true"
+                        android:layout_alignParentRight="true"
+                        android:layout_marginTop="11dp"
+                        android:layout_marginEnd="12dp"
+                        android:layout_marginRight="12dp"
+                        android:gravity="center|center_horizontal|center_vertical"
+                        android:text="@string/stocktaking"
+                        android:textSize="17sp" />
+
+                    <ImageView
+                        android:id="@+id/stocktaking"
+                        android:layout_width="69dp"
+                        android:layout_height="54dp"
+                        android:layout_alignParentTop="true"
+                        android:layout_centerHorizontal="true"
+                        android:layout_marginTop="30dp"
+                        android:background="#00FFFFFF"
+                        android:contentDescription="@string/stocktaking"
+                        app:srcCompat="@drawable/ic_new_stocktaking_icon"
+                        tools:ignore="VectorDrawableCompat" />
+                </RelativeLayout>
+            </androidx.cardview.widget.CardView>
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/linearLayout3"
+            android:layout_width="0dp"
+            android:layout_height="175dp"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal"
+            android:padding="10dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/linearLayout2">
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/maintenance_cardView3"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:translationZ="2dp"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="2dp">
+
+                <RelativeLayout
+                    android:id="@+id/maintenance_relative_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clickable="true"
+                    android:onClick="maintenance"
+                    android:outlineProvider="bounds"
+                    android:translationZ="2dp">
+
+                    <TextView
+                        android:id="@+id/maintenance_textView"
+                        android:layout_width="141dp"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/maintenance"
+                        android:layout_alignParentStart="true"
+                        android:layout_alignParentLeft="true"
+                        android:layout_alignParentEnd="true"
+                        android:layout_alignParentRight="true"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginTop="13dp"
+                        android:layout_marginEnd="9dp"
+                        android:layout_marginRight="10dp"
+                        android:gravity="center|center_horizontal|center_vertical"
+                        android:text="@string/maintenance"
+                        android:textSize="17sp" />
+
+                    <ImageView
+                        android:id="@+id/maintenance"
+                        android:layout_width="68dp"
+                        android:layout_height="60dp"
+                        android:layout_alignParentTop="true"
+                        android:layout_centerHorizontal="true"
+                        android:layout_marginTop="25dp"
+                        android:background="#00FFFFFF"
+                        android:contentDescription="@string/quality_control"
+                        app:srcCompat="@drawable/ic_maintenance"
+                        tools:ignore="VectorDrawableCompat" />
+                </RelativeLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/warehouseStockTransfer"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:translationZ="2dp"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="2dp">
+
+                <RelativeLayout
+                    android:id="@+id/warehosueTransfer_relative_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clickable="true"
+                    android:onClick="warehouseStockTranfer"
+                    android:outlineProvider="bounds"
+                    android:translationZ="2dp">
+
+                    <TextView
+                        android:id="@+id/warehosueTransfer_textView"
+                        android:layout_width="143dp"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/warehosueTransfer"
+                        android:layout_alignParentStart="true"
+                        android:layout_alignParentLeft="true"
+                        android:layout_alignParentEnd="true"
+                        android:layout_alignParentRight="true"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginTop="13dp"
+                        android:layout_marginEnd="7dp"
+                        android:layout_marginRight="7dp"
+                        android:gravity="center|center_horizontal|center_vertical"
+                        android:text="@string/warehouseStockTransfer_short"
+                        android:textSize="17sp" />
+
+                    <ImageView
+                        android:id="@+id/warehosueTransfer"
+                        android:layout_width="60dp"
+                        android:layout_height="53dp"
+                        android:layout_alignParentTop="true"
+                        android:layout_centerHorizontal="true"
+                        android:layout_marginTop="25dp"
+                        android:background="#00FFFFFF"
+                        android:contentDescription="@string/quality_control"
+                        app:srcCompat="@drawable/ic_transfer_stock"
+                        tools:ignore="VectorDrawableCompat" />
+                </RelativeLayout>
+            </androidx.cardview.widget.CardView>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/textView6"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="28dp"
+            android:layout_marginLeft="28dp"
+            android:layout_marginTop="20dp"
+            android:onClick="showMap"
+            android:text="@string/map_warehouse"
+            android:textColor="#FFFFFF"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView2" />
+
+        <ImageView
+            android:id="@+id/imageView12"
+            android:layout_width="20dp"
+            android:layout_height="16dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginTop="22dp"
+            android:contentDescription="@string/map_warehouse"
+            android:onClick="showMap"
+            app:layout_constraintStart_toEndOf="@+id/textView6"
+            app:layout_constraintTop_toBottomOf="@+id/textView2"
+            card_view:srcCompat="@drawable/ic_new_map_icon_white" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
