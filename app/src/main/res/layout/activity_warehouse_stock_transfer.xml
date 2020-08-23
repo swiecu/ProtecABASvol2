@@ -166,6 +166,7 @@
         android:layout_width="110dp"
         android:layout_height="50dp"
         android:background="@color/colorProtec"
+        android:onClick="save"
         android:text="@string/save"
         android:textColor="#FFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -184,6 +185,7 @@
         android:button="@drawable/ic_new_lock_icon"
         android:checked="false"
         android:focusable="false"
+        android:onClick="lockLocation"
         android:textSize="12sp"
         app:layout_constraintStart_toEndOf="@+id/toLocation_textEdit"
         app:layout_constraintTop_toBottomOf="@+id/textView3" />

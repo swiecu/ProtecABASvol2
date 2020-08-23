@@ -8,8 +8,8 @@ android {
         applicationId "protec.pl.protecabasvol2"
         minSdkVersion 16
         targetSdkVersion 30
-        versionCode 7
-        versionName "1.7"
+        versionCode 8
+        versionName "1.8"
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
 

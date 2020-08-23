@@ -1,5 +1,6 @@
 package protec.pl.protecabasvol2;
 
+import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -30,10 +31,22 @@ import com.google.zxing.integration.android.IntentResult;
 
 import java.math.BigDecimal;
 
+import de.abas.erp.common.type.AbasDate;
+import de.abas.erp.common.type.enums.EnumEntryTypeStockAdjustment;
 import de.abas.erp.db.DbContext;
+import de.abas.erp.db.EditorAction;
+import de.abas.erp.db.EditorCommand;
+import de.abas.erp.db.EditorCommandFactory;
+import de.abas.erp.db.Query;
+import de.abas.erp.db.exception.CommandException;
+import de.abas.erp.db.exception.DBRuntimeException;
+import de.abas.erp.db.infosystem.custom.owpl.IsPrLoggedUsers;
 import de.abas.erp.db.infosystem.standard.la.StockLevelInformation;
+import de.abas.erp.db.schema.employee.Employee;
+import de.abas.erp.db.schema.employee.EmployeeEditor;
 import de.abas.erp.db.schema.location.LocationHeader;
 import de.abas.erp.db.schema.part.Product;
+import de.abas.erp.db.schema.storagequantity.StockAdjustmentEditor;
 import de.abas.erp.db.schema.warehouse.WarehouseGroup;
 import de.abas.erp.db.selection.Conditions;
 import de.abas.erp.db.selection.SelectionBuilder;
@@ -52,12 +65,13 @@ public class WarehouseStockTransfer extends AppCompatActivity {
     }
     DbContext ctx ;
     ProgressDialog LoadingDialog;
-    String database, back_article, artIDNO, platz;
+    String database, back_article, artIDNO, platzFrom, platzTo, user_short_name = "";
     CheckBox lockIcon;
     TextView unit_textView, article_textInfo, location_textInfo, qty_textInfo;
     EditText article_textEdit, fromLocation_textEdit, toLocation_textEdit, qty_textEdit;
     GlobalClass myGlob;
     TableLayout stockLayout;
+    Employee employee;
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
@@ -94,6 +108,16 @@ public class WarehouseStockTransfer extends AppCompatActivity {
         }
     }
 
+    @SuppressLint("WrongViewCast")
+    public void lockLocation(View view) {
+        lockIcon = (CheckBox) view;
+        if (lockIcon.isChecked()) {
+            lockIcon.setBackgroundResource(R.drawable.ic_new_lock_closed_icon);
+        } else {
+            lockIcon.setBackgroundResource(R.drawable.ic_new_lock_icon);  //Ok
+        }
+    }
+
     public void getElementsById() {
         lockIcon = (CheckBox) findViewById(R.id.lockIcon);
         unit_textView = (TextView) findViewById(R.id.unit_textView);
@@ -114,6 +138,22 @@ public class WarehouseStockTransfer extends AppCompatActivity {
         fromLocation_textEdit.setInputType(0);
         toLocation_textEdit.setInputType(0);
         article_textEdit.setInputType(0);
+        lockIcon.setVisibility(View.INVISIBLE);
+
+        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");   //?? potrzebne policy?
+        IsPrLoggedUsers lu = ctx.openInfosystem(IsPrLoggedUsers.class);
+        user_short_name = lu.getYuser();
+        employee = FindEmployeeBySwd(ctx, user_short_name);
+        if(!employee.getYapplocklocation().equals("")){
+            lockIcon.setChecked(true);
+            toLocation_textEdit.setHint(employee.getYapplocklocation());
+            lockIcon.setBackgroundResource(R.drawable.ic_new_lock_closed_icon);   //OK
+        }else{
+            lockIcon.setChecked(false);
+            toLocation_textEdit.setHint("Lokalizacja");
+            lockIcon.setBackgroundResource(R.drawable.ic_new_lock_icon);
+        }
+        ctx.close();
     }
 
     public void getElementsFromIntent() {
@@ -382,16 +422,16 @@ public class WarehouseStockTransfer extends AppCompatActivity {
                         public void onClick(View view) {
                             stockDialog.dismiss();
                             AlertDialog.Builder choosedLocAlert = new AlertDialog.Builder(WarehouseStockTransfer.this);
-                            platz = row.getLplatz().getSwd();
+                            platzFrom = row.getLplatz().getSwd();
                             String mge = row.getLemge().toString();
-                            String articleString = "<b>" + platz + "</b><br/>" + finalQty + " " + finalUnit;
+                            String articleString = "<b>" + platzFrom + "</b><br/>" + finalQty + " " + finalUnit;
                             choosedLocAlert.setMessage(Html.fromHtml(articleString));
                             choosedLocAlert.setTitle("Wybrana lokalizacja: ");
                             choosedLocAlert.setPositiveButton("Wybierz lokalizację",
                                     new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int which) {
                                             //dismiss the dialog
-                                            fromLocation_textEdit.setText(platz);
+                                            fromLocation_textEdit.setText(platzFrom);
                                             article_textEdit.setText(art);
                                             unit_textView.setText(finalUnit);
                                             qty_textEdit.setHint(finalQty);
@@ -421,13 +461,13 @@ public class WarehouseStockTransfer extends AppCompatActivity {
             stockDialog.dismiss();
             ctx.close();
         }
-
     }
 
     public void getLocation(String content) {
         LocationHeader location = LocationExists(content);
         if (location != null) {
             String location_name = location.getSwd();
+            platzTo = location_name;
             toLocation_textEdit.setText(location_name);
             article_textInfo.setVisibility(View.VISIBLE);
             qty_textInfo.setVisibility(View.VISIBLE);
@@ -453,5 +493,127 @@ public class WarehouseStockTransfer extends AppCompatActivity {
             Log.d("error", e.getMessage());
         }
         return loc;
+    }
+
+    public void save(View view) {
+        String qty = qty_textEdit.getText().toString();
+        String art = article_textEdit.getText().toString();
+        String loc = toLocation_textEdit.getText().toString();
+        if (art.equals("")) {
+            GlobalClass.showDialog(this, "Brak artykułu!", "Proszę wprowadzić artykuł", "OK",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                        }
+                    });
+        } else if (loc.equals("")) {
+            GlobalClass.showDialog(this, "Brak lokalizacji!", "Proszę wprowadzić lokalizację", "OK",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                        }
+                    });
+        } else {
+            if (qty.equals("")) {
+                qty = qty_textEdit.getHint().toString();
+                qty_textEdit.setText(qty);
+            }
+            //jeśli ilość wpisana jest WIĘKSZA niż na stanie
+            if (Double.parseDouble(qty) > Double.parseDouble(qty_textEdit.getHint().toString())) {
+                GlobalClass.showDialog(this, "Wykroczenie poza stan!", "Wpisana ilość przekracza ilość dostępną na stanie.", "OK",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        });
+            } else {
+                    EmployeeEditor employeeEditor = employee.createEditor();
+                    try {
+                        employeeEditor.open(EditorAction.UPDATE);
+                    if(lockIcon.isChecked()){
+                        employeeEditor.setYapplocklocation(toLocation_textEdit.getText().toString());
+                    }else{
+                        employeeEditor.setYapplocklocation("");
+                    }
+                    ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
+                    EditorCommand cmd = EditorCommandFactory.typedCmd("Lbuchung", "");
+                    StockAdjustmentEditor stockAdjustmentEditor = (StockAdjustmentEditor) ctx.openEditor(cmd);
+                    AbasDate today = new AbasDate();
+                    stockAdjustmentEditor.setString("product", artIDNO);
+                    stockAdjustmentEditor.setDocNo("MOBILE");
+                    stockAdjustmentEditor.setDateDoc(today);
+                    stockAdjustmentEditor.setEntType(EnumEntryTypeStockAdjustment.Transfer);
+                    StockAdjustmentEditor.Row sadRow = stockAdjustmentEditor.table().getRow(1);
+                    sadRow.setUnitQty(Double.parseDouble(qty));
+                    sadRow.setString("location", platzFrom);
+                    sadRow.setString("location2", platzTo);
+                    stockAdjustmentEditor.commit();
+
+                    AlertDialog.Builder stockAddAlert = new AlertDialog.Builder(WarehouseStockTransfer.this);
+                    stockAddAlert.setMessage("Produkt został pomyślnie przeksięgowany.");
+                    stockAddAlert.setTitle("Zapisano!");
+                    stockAddAlert.setPositiveButton("Dodaj nowy artykuł",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    //dismiss the dialog
+                                    article_textEdit.setText("");
+                                    fromLocation_textEdit.setText("");
+                                    qty_textEdit.setText("");
+                                    toLocation_textEdit.setText("");
+                                    if (!employee.getYapplocklocation().equals("")) {
+                                        toLocation_textEdit.setHint(employee.getYapplocklocation());
+                                        lockIcon.setBackgroundResource(R.drawable.ic_new_lock_closed_icon);
+                                        lockIcon.setChecked(true);
+                                    } else {
+                                        toLocation_textEdit.setHint("Lokalizacja");
+                                        lockIcon.setBackgroundResource(R.drawable.ic_new_lock_icon);
+                                        lockIcon.setChecked(false);
+                                    }
+                                    ctx.close();
+                                }
+                            });
+                    stockAddAlert.setNegativeButton("Menu",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    //dismiss the dialog
+                                    setIntent("Menu", "");
+                                }
+                            });
+                    stockAddAlert.setCancelable(true);
+                    stockAddAlert.create().show();
+                    //
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                    GlobalClass.showDialog(this, "Błąd!", "Podczas zmiany formatu wystąpił błąd.", "OK",
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                }
+                            });
+                } catch (DBRuntimeException e) {
+                    GlobalClass.showDialog(this, "Brak połączenia!", "Nie można aktualnie połączyć z bazą.", "OK",
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                }
+                            });
+                    e.printStackTrace();
+                } catch (CommandException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public final Employee FindEmployeeBySwd(DbContext ctx, String name){
+        Employee employee = null;
+        SelectionBuilder<Employee> employeeSB = SelectionBuilder.create(Employee.class);
+        Query<Employee> employeeQuery = ctx.createQuery(employeeSB.build());
+        try {
+            employeeSB.add(Conditions.eq(Product.META.swd.toString(), name));
+            employee = QueryUtil.getFirst(ctx, employeeSB.build());
+        } catch (Exception e) {
+        }
+        return employee;
     }
 }

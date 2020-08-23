@@ -176,7 +176,7 @@ public class MaintenanceReportNote extends AppCompatActivity {
             sender.setYto(appConfigValues.getYmaintenancereport()); //pobieranie emaili z abasa
             sender.setYsubject("Nowa wiadomosc odnosnie utrzymania ruchu!");
             String text = ("Dzień dobry! <br/> Użytkownik " + user + " wysłał w dniu " + dateFormat.format(today) + " następnującą wiadomość: <br/><p> " + mess_text + "</p><b>Maszyna: </b>" +  machine_TextEdit.getText()
-                    +"<br/><b>Nazwa maszyna: </b>" + machineName_TextView.getText());
+                    +"<br/><b>Nazwa maszyny: </b>" + machineName_TextView.getText());
             sender.setYtrext(text);
             sender.invokeStart();
             sender.close();
