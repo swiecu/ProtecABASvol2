@@ -208,6 +208,10 @@ public class MainActivity extends AppCompatActivity {
                intent.putExtra("database", "erp");
                Log.d("database", "erp");
            }
+           if (employee.getYdatabase().equalsIgnoreCase("demo")) {
+               intent.putExtra("database", "demo");
+               Log.d("database", "demo");
+           }
            startActivity(intent);
            LoadingDialog =  ProgressDialog.show(MainActivity.this, "",
                    "Ładowanie. Proszę czekać...", true);

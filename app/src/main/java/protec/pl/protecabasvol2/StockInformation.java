@@ -50,7 +50,7 @@ public class StockInformation extends Activity {
     TableLayout layout;
     TextView article_name, suma;
     TableRow no_art;
-    GlobalClass globFunctions;  //zdeklarowanie globalnej klasy
+    GlobalClass globFunctions;  //zadeklarowanie globalnej klasy
     String database, back_article;
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
