@@ -1,6 +1,7 @@
 package protec.pl.protecabasvol2;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -15,6 +16,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -126,15 +128,12 @@ public class WarehouseStockTransfer extends AppCompatActivity {
         toLocation_textEdit = (EditText) findViewById(R.id.toLocation_textEdit);
         qty_textEdit = (EditText) findViewById(R.id.qty_TOtextEdit);
         article_textInfo = (TextView) findViewById(R.id.article_textInfo);
-        location_textInfo = (TextView) findViewById(R.id.location_textInfo);
+        location_textInfo = (TextView) findViewById(R.id.locationFrom_textInfo);
         qty_textInfo = (TextView) findViewById(R.id.qty_textInfo);
     }
 
     public void setLook() {
         unit_textView.setVisibility(View.INVISIBLE);
-        article_textInfo.setVisibility(View.INVISIBLE);
-        location_textInfo.setVisibility(View.INVISIBLE);
-        qty_textInfo.setVisibility(View.INVISIBLE);
         fromLocation_textEdit.setInputType(0);
         toLocation_textEdit.setInputType(0);
         article_textEdit.setInputType(0);
@@ -174,6 +173,11 @@ public class WarehouseStockTransfer extends AppCompatActivity {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+    public void hideKeyboard(View view) {
+        InputMethodManager inputMethodManager =(InputMethodManager)getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
     // CHECK STOCK
@@ -535,6 +539,10 @@ public class WarehouseStockTransfer extends AppCompatActivity {
                     }else{
                         employeeEditor.setYapplocklocation("");
                     }
+                    employeeEditor.commit();
+                    if(employeeEditor.active()) {
+                            employeeEditor.abort();
+                        }
                     ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
                     EditorCommand cmd = EditorCommandFactory.typedCmd("Lbuchung", "");
                     StockAdjustmentEditor stockAdjustmentEditor = (StockAdjustmentEditor) ctx.openEditor(cmd);
@@ -559,7 +567,10 @@ public class WarehouseStockTransfer extends AppCompatActivity {
                                     article_textEdit.setText("");
                                     fromLocation_textEdit.setText("");
                                     qty_textEdit.setText("");
+                                    qty_textEdit.setHint("Ilość");
+                                    unit_textView.setVisibility(View.INVISIBLE);
                                     toLocation_textEdit.setText("");
+
                                     if (!employee.getYapplocklocation().equals("")) {
                                         toLocation_textEdit.setHint(employee.getYapplocklocation());
                                         lockIcon.setBackgroundResource(R.drawable.ic_new_lock_closed_icon);

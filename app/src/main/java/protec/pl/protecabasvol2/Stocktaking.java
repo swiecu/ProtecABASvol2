@@ -1,6 +1,7 @@
 package protec.pl.protecabasvol2;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -11,6 +12,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -63,6 +65,8 @@ public class Stocktaking extends AppCompatActivity {
         getElementsById();
         setLook();
         stocktaking = getStocktaing();
+        Log.d("ycuurLockation", stocktaking.getYcurrlocation());
+        Log.d("idno", stocktaking.getSwd());
        if(!stocktaking.getYcurrlocation().equals("")){
             lockIcon.setChecked(true);
             location_textEdit.setHint(stocktaking.getYcurrlocation());
@@ -107,7 +111,7 @@ public class Stocktaking extends AppCompatActivity {
         location_textEdit = (EditText) findViewById(R.id.to_textEdit);
         qty_textEdit = (EditText) findViewById(R.id.qty_TOtextEdit);
         article_textInfo = (TextView) findViewById(R.id.article_textInfo);
-        location_textInfo = (TextView) findViewById(R.id.location_textInfo);
+        location_textInfo = (TextView) findViewById(R.id.locationFrom_textInfo);
         qty_textInfo = (TextView) findViewById(R.id.qty_textInfo);
         info_textInfo = (TextView) findViewById(R.id.info_textInfo);
         info_textEdit= (EditText) findViewById(R.id.info_textEdit);
@@ -155,6 +159,11 @@ public class Stocktaking extends AppCompatActivity {
         } else {
             lockIcon.setBackgroundResource(R.drawable.ic_new_lock_icon);  //Ok
         }
+    }
+
+    public void hideKeyboard(View view) {
+        InputMethodManager inputMethodManager =(InputMethodManager)getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
     // CHECK STOCK
@@ -307,12 +316,12 @@ public class Stocktaking extends AppCompatActivity {
                 //jeśli nie znajdzie by IDNO
             } else if (myGlob.FindProductByDescr(ctx, content) != null) {
                 ctx.close();
-                setIntent("ArticleNameList", "", content);
+                setIntent("ArticleNameList", stockID, content);
 
                 // jeśli nie znajdzie by DESCR
             } else if (myGlob.FindProductBySwd(ctx, content) != null) {   //jeśli Find by SWD nie równa się null
                 ctx.close();
-                setIntent("ArticleNameList", "", content);
+                setIntent("ArticleNameList", stockID, content);
 
                 // jeśli nie znajdzie ani tu ani tu
             } else {
@@ -423,7 +432,7 @@ public class Stocktaking extends AppCompatActivity {
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         //dismiss the dialog
-                        setIntent("Menu", "", "");
+                        setIntent("Menu", stockID, "");
                     }
                 });
         stockAddAlert.setCancelable(true);

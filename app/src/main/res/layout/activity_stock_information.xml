@@ -14,10 +14,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#FFFFFF">
+
         <ImageView
             android:id="@+id/imageView3"
-            android:layout_width="507dp"
-            android:layout_height="237dp"
+            android:layout_width="549dp"
+            android:layout_height="259dp"
             android:adjustViewBounds="true"
             android:cropToPadding="true"
             android:scaleX="-1.0"

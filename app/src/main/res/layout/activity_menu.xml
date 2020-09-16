@@ -15,8 +15,8 @@
 
         <ImageView
             android:id="@+id/imageView2"
-            android:layout_width="511dp"
-            android:layout_height="304dp"
+            android:layout_width="564dp"
+            android:layout_height="340dp"
             android:adjustViewBounds="true"
             android:contentDescription="@string/stock_info"
             app:layout_constraintEnd_toEndOf="parent"
@@ -76,16 +76,18 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <androidx.cardview.widget.CardView
+                android:id="@+id/stockInfo_cardView"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_margin="5dp"
                 android:layout_weight="1"
-                app:cardCornerRadius="10dp">
+                app:cardBackgroundColor="#00FFFFFF">
 
                 <RelativeLayout
                     android:id="@+id/stockInfo_relative_layout"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:background="#FFFFFF"
                     android:clickable="true"
                     android:focusable="true"
                     android:onClick="checkStock"
@@ -94,14 +96,18 @@
 
                     <TextView
                         android:id="@+id/stockInfo_textView"
-                        android:layout_width="142dp"
-                        android:layout_height="47dp"
+                        android:layout_width="95dp"
+                        android:layout_height="43dp"
                         android:layout_below="@id/stockInfo"
+                        android:layout_alignParentStart="true"
+                        android:layout_alignParentLeft="true"
                         android:layout_alignParentEnd="true"
                         android:layout_alignParentRight="true"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="8dp"
-                        android:layout_marginRight="8dp"
+                        android:layout_marginStart="32dp"
+                        android:layout_marginLeft="32dp"
+                        android:layout_marginTop="12dp"
+                        android:layout_marginEnd="33dp"
+                        android:layout_marginRight="33dp"
                         android:gravity="center"
                         android:text="@string/stock_info"
                         android:textSize="18sp" />
@@ -124,13 +130,14 @@
                 android:layout_margin="5dp"
                 android:layout_weight="1"
                 android:translationZ="2dp"
-                app:cardCornerRadius="10dp"
+                app:cardBackgroundColor="#00ffffff"
                 app:cardElevation="2dp">
 
                 <RelativeLayout
                     android:id="@+id/move_relative_layout"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:background="#FFFFFF"
                     android:clickable="true"
                     android:onClick="move"
                     android:outlineProvider="bounds"
@@ -141,11 +148,11 @@
                         android:layout_width="139dp"
                         android:layout_height="wrap_content"
                         android:layout_below="@id/move"
+                        android:layout_alignParentStart="true"
+                        android:layout_alignParentLeft="true"
                         android:layout_alignParentEnd="true"
                         android:layout_alignParentRight="true"
-                        android:layout_marginTop="17dp"
-                        android:layout_marginEnd="13dp"
-                        android:layout_marginRight="13dp"
+                        android:layout_marginTop="13dp"
                         android:gravity="center"
                         android:text="@string/move"
                         android:textSize="18sp" />
@@ -183,13 +190,14 @@
                 android:layout_margin="5dp"
                 android:layout_weight="1"
                 android:translationZ="2dp"
-                app:cardCornerRadius="10dp"
+                app:cardBackgroundColor="#00FFFFFF"
                 app:cardElevation="2dp">
 
                 <RelativeLayout
                     android:id="@+id/quality_relative_layout"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:background="#FFFFFF"
                     android:clickable="true"
                     android:onClick="qualityControl"
                     android:outlineProvider="bounds"
@@ -204,11 +212,7 @@
                         android:layout_alignParentLeft="true"
                         android:layout_alignParentEnd="true"
                         android:layout_alignParentRight="true"
-                        android:layout_marginStart="10dp"
-                        android:layout_marginLeft="10dp"
                         android:layout_marginTop="13dp"
-                        android:layout_marginEnd="9dp"
-                        android:layout_marginRight="10dp"
                         android:gravity="center|center_horizontal|center_vertical"
                         android:text="@string/quality_control"
                         android:textSize="17sp" />
@@ -233,13 +237,14 @@
                 android:layout_margin="5dp"
                 android:layout_weight="1"
                 android:translationZ="2dp"
-                app:cardCornerRadius="10dp"
+                app:cardBackgroundColor="#00FFFFFF"
                 app:cardElevation="2dp">
 
                 <RelativeLayout
                     android:id="@+id/stocktaking_relative_layout"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:background="#FFFFFF"
                     android:clickable="true"
                     android:onClick="stocktaking"
                     android:outlineProvider="bounds"
@@ -250,11 +255,11 @@
                         android:layout_width="141dp"
                         android:layout_height="wrap_content"
                         android:layout_below="@id/stocktaking"
+                        android:layout_alignParentStart="true"
+                        android:layout_alignParentLeft="true"
                         android:layout_alignParentEnd="true"
                         android:layout_alignParentRight="true"
-                        android:layout_marginTop="11dp"
-                        android:layout_marginEnd="12dp"
-                        android:layout_marginRight="12dp"
+                        android:layout_marginTop="12dp"
                         android:gravity="center|center_horizontal|center_vertical"
                         android:text="@string/stocktaking"
                         android:textSize="17sp" />
@@ -292,13 +297,14 @@
                 android:layout_margin="5dp"
                 android:layout_weight="1"
                 android:translationZ="2dp"
-                app:cardCornerRadius="10dp"
+                app:cardBackgroundColor="#00FFFFFF"
                 app:cardElevation="2dp">
 
                 <RelativeLayout
                     android:id="@+id/maintenance_relative_layout"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:background="#FFFFFF"
                     android:clickable="true"
                     android:onClick="maintenance"
                     android:outlineProvider="bounds"
@@ -313,11 +319,7 @@
                         android:layout_alignParentLeft="true"
                         android:layout_alignParentEnd="true"
                         android:layout_alignParentRight="true"
-                        android:layout_marginStart="10dp"
-                        android:layout_marginLeft="10dp"
-                        android:layout_marginTop="13dp"
-                        android:layout_marginEnd="9dp"
-                        android:layout_marginRight="10dp"
+                        android:layout_marginTop="11dp"
                         android:gravity="center|center_horizontal|center_vertical"
                         android:text="@string/maintenance"
                         android:textSize="17sp" />
@@ -343,13 +345,14 @@
                 android:layout_margin="5dp"
                 android:layout_weight="1"
                 android:translationZ="2dp"
-                app:cardCornerRadius="10dp"
+                app:cardBackgroundColor="#00FFFFFF"
                 app:cardElevation="2dp">
 
                 <RelativeLayout
                     android:id="@+id/warehosueTransfer_relative_layout"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:background="#FFFFFF"
                     android:clickable="true"
                     android:onClick="warehouseStockTranfer"
                     android:outlineProvider="bounds"
@@ -357,18 +360,18 @@
 
                     <TextView
                         android:id="@+id/warehosueTransfer_textView"
-                        android:layout_width="143dp"
-                        android:layout_height="wrap_content"
+                        android:layout_width="160dp"
+                        android:layout_height="43dp"
                         android:layout_below="@id/warehosueTransfer"
                         android:layout_alignParentStart="true"
                         android:layout_alignParentLeft="true"
                         android:layout_alignParentEnd="true"
                         android:layout_alignParentRight="true"
-                        android:layout_marginStart="10dp"
-                        android:layout_marginLeft="10dp"
-                        android:layout_marginTop="13dp"
-                        android:layout_marginEnd="7dp"
-                        android:layout_marginRight="7dp"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginLeft="12dp"
+                        android:layout_marginTop="11dp"
+                        android:layout_marginEnd="13dp"
+                        android:layout_marginRight="13dp"
                         android:gravity="center|center_horizontal|center_vertical"
                         android:text="@string/warehouseStockTransfer_short"
                         android:textSize="17sp" />

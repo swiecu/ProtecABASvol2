@@ -176,7 +176,7 @@ public class StockInformation extends Activity {
                         @Override public void onClick(DialogInterface dialog, int which) {} });
                 }else {
                     articleDialog.dismiss();
-                    LoadingDialog = ProgressDialog.show(StockInformation.this, "",
+                   LoadingDialog = ProgressDialog.show(StockInformation.this, "",
                             "Ładowanie. Proszę czekać...", true);
                     searchArticle(article_name);
                 }

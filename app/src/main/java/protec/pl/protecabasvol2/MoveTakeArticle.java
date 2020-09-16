@@ -14,6 +14,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TableLayout;
@@ -117,6 +118,12 @@ public class MoveTakeArticle extends Activity {
         location_textEdit.setInputType(0);
         article_textEdit.setInputType(0);
     }
+
+    public void hideKeyboard(View view) {
+        InputMethodManager inputMethodManager =(InputMethodManager)getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    }
+
     // CHECK STOCK
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void checkStock(View view){

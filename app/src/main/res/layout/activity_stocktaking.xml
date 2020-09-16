@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFFFFF"
+    android:onClick="hideKeyboard"
     tools:context=".Stocktaking">
 
     <ImageView
@@ -106,7 +107,7 @@
         android:hint="@string/location"
         android:inputType="textPersonName"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/location_textInfo" />
+        app:layout_constraintTop_toBottomOf="@+id/locationFrom_textInfo" />
 
     <EditText
         android:id="@+id/qty_TOtextEdit"
@@ -139,7 +140,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/location_textInfo"
+        android:id="@+id/locationFrom_textInfo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
@@ -204,7 +205,7 @@
         android:onClick="lockLocation"
         android:textSize="12sp"
         app:layout_constraintStart_toEndOf="@+id/to_textEdit"
-        app:layout_constraintTop_toBottomOf="@+id/location_textInfo" />
+        app:layout_constraintTop_toBottomOf="@+id/locationFrom_textInfo" />
 
     <EditText
         android:id="@+id/info_textEdit"

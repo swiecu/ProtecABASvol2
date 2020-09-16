@@ -40,7 +40,7 @@ public class ArticleNameList extends AppCompatActivity {
     ProgressDialog LoadingDialog;
     GlobalClass SearchArticleGlob;
     DbContext ctx;
-    String destination, database, name, positiveButtonText;
+    String destination, database, name, positiveButtonText, stockID;
     TextView suma, article_name;
     TableRow no_art;
 
@@ -79,6 +79,7 @@ public class ArticleNameList extends AppCompatActivity {
         destination = getIntent().getStringExtra("destination");
         database = (getIntent().getStringExtra("database"));
         name = (getIntent().getStringExtra("content"));
+        stockID = (getIntent().getStringExtra("stockID"));
     }
 
     public void getElementsById(){
@@ -93,6 +94,7 @@ public class ArticleNameList extends AppCompatActivity {
             intent.putExtra("password", getPassword());
             intent.putExtra("database", database);
             intent.putExtra("art_idno", finalArticleIDNO);
+            intent.putExtra("stockID", stockID);
             startActivity(intent);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();

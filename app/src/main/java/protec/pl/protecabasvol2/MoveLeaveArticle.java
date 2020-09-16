@@ -1,6 +1,7 @@
 package protec.pl.protecabasvol2;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -15,6 +16,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -96,7 +98,7 @@ public class MoveLeaveArticle extends AppCompatActivity {
         location_textEdit = findViewById(R.id.to_textEdit);
         qty_textEdit = findViewById(R.id.qty_TOtextEdit);
         unit_textView = findViewById(R.id.unit_textView);
-        location_textInfo = findViewById(R.id.location_textInfo);
+        location_textInfo = findViewById(R.id.locationFrom_textInfo);
         qty_textInfo = findViewById(R.id.qty_textInfo);
         article_textInfo = findViewById(R.id.article_textInfo);
     }
@@ -107,6 +109,11 @@ public class MoveLeaveArticle extends AppCompatActivity {
         article_textInfo.setVisibility(View.INVISIBLE);
         article_textEdit.setInputType(0);
         location_textEdit.setInputType(0);
+    }
+
+    public void hideKeyboard(View view) {
+        InputMethodManager inputMethodManager =(InputMethodManager)getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
     public void scanArticle(View view){

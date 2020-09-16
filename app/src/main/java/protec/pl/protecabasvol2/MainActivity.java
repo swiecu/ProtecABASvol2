@@ -1,5 +1,6 @@
 package protec.pl.protecabasvol2;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -10,6 +11,7 @@ import android.os.Bundle;
 import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
 import androidx.annotation.RequiresApi;
@@ -109,6 +111,11 @@ public class MainActivity extends AppCompatActivity {
             mAppUpdateManager.unregisterListener(installStateUpdatedListener);
         }
     }
+
+    public void hideKeyboard(View view) {
+        InputMethodManager inputMethodManager =(InputMethodManager)getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    }
     // CHECK STOCK
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void ScanQR(View view){
@@ -174,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
 
                     //przekroczona liczba licencji
                 }else if(e.getMessage().contains("FULL")){
-                    GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekrocona.", "OK",new DialogInterface.OnClickListener() {
+                    GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekroczona.", "OK",new DialogInterface.OnClickListener() {
                         @Override public void onClick(DialogInterface dialog, int which) { } });
                 }else{
                     Log.d("error", e.getMessage());

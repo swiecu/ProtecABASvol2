@@ -4,6 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    android:onClick="hideKeyboard"
     tools:context=".WarehouseStockTransfer">
 
     <ImageView
@@ -24,7 +26,7 @@
         android:id="@+id/stockInfo_textView"
         android:layout_width="312dp"
         android:layout_height="60dp"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="36dp"
         android:gravity="center"
         android:text="@string/warehouseStockTransfer"
         android:textAllCaps="true"
@@ -90,7 +92,7 @@
         android:hint="@string/location"
         android:inputType="textPersonName"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/location_textInfo" />
+        app:layout_constraintTop_toBottomOf="@+id/locationFrom_textInfo" />
 
     <EditText
         android:id="@+id/qty_TOtextEdit"
@@ -123,7 +125,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/location_textInfo"
+        android:id="@+id/locationFrom_textInfo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
@@ -153,8 +155,8 @@
         android:id="@+id/article_textInfo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginLeft="20dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginLeft="24dp"
         android:layout_marginBottom="4dp"
         android:text="@string/article_articleNameList"
         app:layout_constraintBottom_toTopOf="@+id/article_textEdit"
@@ -188,7 +190,7 @@
         android:onClick="lockLocation"
         android:textSize="12sp"
         app:layout_constraintStart_toEndOf="@+id/toLocation_textEdit"
-        app:layout_constraintTop_toBottomOf="@+id/textView3" />
+        app:layout_constraintTop_toBottomOf="@+id/locationTo_textInfo" />
 
     <Button
         android:id="@+id/button4"
@@ -206,7 +208,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/textView3"
+        android:id="@+id/locationTo_textInfo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
@@ -227,6 +229,6 @@
         android:hint="@string/location"
         android:inputType="textPersonName"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView3" />
+        app:layout_constraintTop_toBottomOf="@+id/locationTo_textInfo" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

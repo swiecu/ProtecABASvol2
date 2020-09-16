@@ -1,5 +1,6 @@
 package protec.pl.protecabasvol2;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -8,6 +9,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -46,6 +48,7 @@ public class MaintenanceReportNote extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maintenance_report_note);
         getElementsFromIntent();
+        getElementsById();
     }
 
     public void onBackPressed(){
@@ -67,6 +70,12 @@ public class MaintenanceReportNote extends AppCompatActivity {
         user = (getIntent().getStringExtra("user"));
     }
 
+    public void getElementsById(){
+        machine_TextEdit = findViewById(R.id.machine_TextEdit);
+        machineName_TextView = findViewById(R.id.machineName_textView);
+        message = findViewById(R.id.message_MultiLine);
+    }
+
     public void setIntent(String destination){
         try {
             Intent intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
@@ -76,6 +85,11 @@ public class MaintenanceReportNote extends AppCompatActivity {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+    public void hideKeyboard(View view) {
+        InputMethodManager inputMethodManager =(InputMethodManager)getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
     public void scanMachine(View view) {
@@ -113,8 +127,7 @@ public class MaintenanceReportNote extends AppCompatActivity {
     public void checkMachine(String content) {
         String machine_swd = "";
         String machine_name = "";
-        machine_TextEdit = findViewById(R.id.machine_TextEdit);
-        machineName_TextView = findViewById(R.id.machineName_textView);
+
 
         if (MachineExists(content) != null) {
             machine = MachineExists(content);
@@ -156,7 +169,6 @@ public class MaintenanceReportNote extends AppCompatActivity {
     public void Send(View view) {
         LoadingDialog = ProgressDialog.show(MaintenanceReportNote.this, "",
                 "Ładowanie. Proszę czekać...", true);
-        message = findViewById(R.id.message_MultiLine);
         String mess_text = message.getText().toString();
         DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         Date today = new Date();

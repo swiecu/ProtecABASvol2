@@ -113,4 +113,16 @@
     <string name="from_warehouse">Skąd:</string>
     <string name="to_warehouse">Dokąd:</string>
 
+    <string name="machine_map">Mapa maszyn</string>
+
+    <string name="reportNonCompliance">Zgłoś Niezgodność</string>
+    <string name="productionControl">Kontrola Produkcji</string>
+    <string name="controlledQty">Ilość skontrolowana: </string>
+    <string name="goodQty">Ilość zgodnych: </string>
+    <string name="badQty">Ilość niezgodnych: </string>
+
+
+
+
+
 </resources>

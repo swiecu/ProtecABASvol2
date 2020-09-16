@@ -81,6 +81,7 @@ public class MyStocktakingList extends AppCompatActivity {
             Intent intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
             intent.putExtra("password", getPassword());
             intent.putExtra("database", database);
+            intent.putExtra("stockID", stockID);
             startActivity(intent);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();

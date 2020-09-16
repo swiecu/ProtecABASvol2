@@ -115,39 +115,47 @@ public class Menu extends AppCompatActivity {
         loggedUser.setText("Zalogowany użytkownik: " + user);
         if (employee.getYqm() == false) {  // jeśli NIE jest kontrolerem jakości ustaw button jako disabled
             quality_relative_layout.setBackgroundColor(Color.parseColor("#41EFEEEE"));
+            quality_relative_layout.setBackgroundResource(R.drawable.card_edge);
             quality_cont_textView.setAlpha((float) 0.35);
             quality_control.setAlpha((float) 0.25);
         }else if(employee.getYqm() == true){
             quality_relative_layout.setBackgroundColor(Color.parseColor("#FFFFFF"));
+            quality_relative_layout.setBackgroundResource(R.drawable.card_edge);
             quality_cont_textView.setAlpha((float) 1);
             quality_control.setAlpha((float) 1);
         }
         if (employee.getYwarehouseman() == false) {  // jeśli NIE jest magazynierem ustaw button jako disabled
             move_relative_layout.setBackgroundColor(Color.parseColor("#41EFEEEE"));
+            move_relative_layout.setBackgroundResource(R.drawable.card_edge);
             move_textView.setAlpha((float) 0.35);
             move.setAlpha((float) 0.25);
         }else if(employee.getYwarehouseman() == true){
             move_relative_layout.setBackgroundColor(Color.parseColor("#FFFFFF"));
+            move_relative_layout.setBackgroundResource(R.drawable.card_edge);
             move_textView.setAlpha((float) 1);
             move.setAlpha((float) 1);
         }
-        /*stocktaking_relative_layout.setBackgroundColor(Color.parseColor("#41EFEEEE"));  // pole disabled dla inwentaryzacji
+        /*stocktaking_relative_layout.setBackgroundColor(Color.parseColor("#41EFEEEE"));  // pole disabled dla inwentaryzacji  //WAŻNY KOD!
         stocktaking_textView.setAlpha((float) 0.35);
-        stocktaking.setAlpha((float) 0.25);*/  //ważny kod!
+        stocktaking.setAlpha((float) 0.25);*/
 
         stockInfo_relative_layout.setBackgroundColor(Color.parseColor("#FFFFFF"));  // pole enabled dla informacji o stanie
+        stockInfo_relative_layout.setBackgroundResource(R.drawable.card_edge);
         stockInfo_textView.setAlpha((float) 1);
         stockInfo.setAlpha((float) 1);
 
         maintenance_relative_layout.setBackgroundColor(Color.parseColor("#FFFFFF"));  // pole enabled dla utrzymania ruch
+        maintenance_relative_layout.setBackgroundResource(R.drawable.card_edge);
         maintenance_textView.setAlpha((float) 1);
         maintenance.setAlpha((float) 1);
 
         stocktaking_relative_layout.setBackgroundColor(Color.parseColor("#FFFFFF"));  // pole enabled dla inwentaryzacji
+        stocktaking_relative_layout.setBackgroundResource(R.drawable.card_edge);
         stocktaking_textView.setAlpha((float) 1);
         stocktaking.setAlpha((float) 1);
 
         warehouseTransfer_relative_layout.setBackgroundColor(Color.parseColor("#FFFFFF"));  // pole enabled dla inwentaryzacji
+        warehouseTransfer_relative_layout.setBackgroundResource(R.drawable.card_edge);
         warehosueTransfer_textView.setAlpha((float) 1);
         warehosueTransfer.setAlpha((float) 1);
     }

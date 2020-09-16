@@ -2,6 +2,7 @@ package protec.pl.protecabasvol2;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 
@@ -59,5 +60,11 @@ public class Maintenance extends AppCompatActivity {
 
     public void reportNote(View view){
         setIntent("MaintenanceReportNote");
+    }
+
+    public void openMachineURL(View view){
+        Uri uri = Uri.parse("http://192.168.1.134/machine/");
+        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        startActivity(intent);
     }
 }

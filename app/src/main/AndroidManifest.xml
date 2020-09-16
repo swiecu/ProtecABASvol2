@@ -8,15 +8,17 @@
 
     <application
         android:allowBackup="true"
+        android:hardwareAccelerated="false"
         android:icon="@mipmap/protec_logo"
         android:label="Protec ABAS"
+        android:largeHeap="true"
         android:roundIcon="@mipmap/protec_logo_round"
         android:screenOrientation="portrait"
         android:supportsRtl="true"
-        android:largeHeap="true"
-        android:hardwareAccelerated="false"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-        <activity android:name=".WarehouseStockTransfer"></activity>
+        <activity android:name=".QualityControlReportNonCompliance"></activity>
+        <activity android:name=".QualityControlProduction" />
+        <activity android:name=".WarehouseStockTransfer" />
         <activity
             android:name=".MaintenanceReportNote"
             android:screenOrientation="portrait" />
