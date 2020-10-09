@@ -121,7 +121,10 @@
     <string name="goodQty">Ilość zgodnych: </string>
     <string name="badQty">Ilość niezgodnych: </string>
 
-
+    <string name="toControl">Zlecenia do kontroli</string>
+    <string name="workCard">Karta Pracy</string>
+    <string name="machineGroup">Gr. Maszyn</string>
+    <string name="employeeQuality">Pracownik</string>
 
 
 

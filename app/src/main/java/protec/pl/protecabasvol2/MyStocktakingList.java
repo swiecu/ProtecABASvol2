@@ -59,6 +59,9 @@ public class MyStocktakingList extends AppCompatActivity {
         if (LoadingDialog != null) {
             LoadingDialog.dismiss();
         }
+        if(ctx.isActive()) {
+            ctx.close();
+        }
     }
 
     public void getElementsById() {
@@ -95,7 +98,6 @@ public class MyStocktakingList extends AppCompatActivity {
         Integer nrRows = stocktaking.getRowCount();
         if (nrRows != 0) {
             for (StocktakingProtec.Row row : stocktakingRows) {
-
                 String article_text = row.getYarticle().getSwd();
                 String countedQty_text = row.getYcountedqty().stripTrailingZeros().toPlainString();
                 String unit_text = row.getYarticle().getSU().toString();
@@ -180,6 +182,9 @@ public class MyStocktakingList extends AppCompatActivity {
                 tableRowList.addView(storagePlace);
                 tableRowList.addView(articleName);
                 stocktakingList.addView(tableRowList, j);
+            }
+            if(ctx.isActive()) {
+                ctx.close();
             }
         }
     }

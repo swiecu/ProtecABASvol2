@@ -10,7 +10,6 @@ import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.Html;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -257,9 +256,15 @@ public class MoveLeaveArticle extends AppCompatActivity {
 
         }catch (DBRuntimeException e){
             LoadingDialog.dismiss();
-            GlobalClass.showDialog(this, "Brak połączenia!", "Nie można aktualnie połączyć z bazą.", "OK",
-                    new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) {} });
+            if(e.getMessage().contains("failed")){
+                GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) { } });
+
+                //przekroczona liczba licencji
+            }else if(e.getMessage().contains("FULL")){
+                GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekroczona.", "OK",new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) { } });
+            }
         }
     }
     @SuppressLint("WrongViewCast")
@@ -357,16 +362,15 @@ public class MoveLeaveArticle extends AppCompatActivity {
                     @Override
                     public void onClick(View view) {
                         wdrDialog.dismiss();
-                        AlertDialog.Builder choosenArticleAlert = new AlertDialog.Builder(MoveLeaveArticle.this);
-                        String mge = row.getLemge().toString();
-                        String articleString = "<b>" + art + "</b><br/>" + art_descr + "<br/>" + qty + " " + finalUnit;
-                        choosenArticleAlert.setMessage(Html.fromHtml(articleString));
-                        choosenArticleAlert.setTitle("Wybrany artykuł: ");
-                        choosenArticleAlert.setPositiveButton("Wybierz artykuł",
-                                new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        //dismiss the dialog
-                                       // article_textEdit.setFocusable(false);
+//                        AlertDialog.Builder choosenArticleAlert = new AlertDialog.Builder(MoveLeaveArticle.this);
+//                        String articleString = "<b>" + art + "</b><br/>" + art_descr + "<br/>" + qty + " " + finalUnit;
+//                        choosenArticleAlert.setMessage(Html.fromHtml(articleString));
+//                        choosenArticleAlert.setTitle("Wybrany artykuł: ");
+//                        choosenArticleAlert.setPositiveButton("Wybierz artykuł",
+//                                new DialogInterface.OnClickListener() {
+//                                    public void onClick(DialogInterface dialog, int which) {
+//                                        //dismiss the dialog
+//                                       // article_textEdit.setFocusable(false);
                                         article_textEdit.setInputType(0);
                                         article_textEdit.setText(art);
                                         unit_textView.setText(finalUnit);
@@ -375,17 +379,17 @@ public class MoveLeaveArticle extends AppCompatActivity {
                                         article_textInfo.setVisibility(View.VISIBLE);
                                         location_textInfo.setVisibility(View.VISIBLE);
                                         qty_textInfo.setVisibility(View.VISIBLE);
-                                    }
-                                });
-                        choosenArticleAlert.setNegativeButton("Anuluj",
-                                new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        //dismiss the dialog
-                                        wdrDialog.show();
-                                    }
-                                });
-                        choosenArticleAlert.setCancelable(true);
-                        choosenArticleAlert.create().show();
+//                                    }
+//                                });
+//                        choosenArticleAlert.setNegativeButton("Anuluj",
+//                                new DialogInterface.OnClickListener() {
+//                                    public void onClick(DialogInterface dialog, int which) {
+//                                        //dismiss the dialog
+//                                        wdrDialog.show();
+//                                    }
+//                                });
+//                        choosenArticleAlert.setCancelable(true);
+//                        choosenArticleAlert.create().show();
                         ctx.close();
                     }
                 });
@@ -472,13 +476,15 @@ public class MoveLeaveArticle extends AppCompatActivity {
                                 }
                             });
                 } catch (DBRuntimeException e) {
-                    GlobalClass.showDialog(this, "Brak połączenia!", "Nie można aktualnie połączyć z bazą.", "OK",
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                }
-                            });
-                    e.printStackTrace();
+                    if(e.getMessage().contains("failed")){
+                        GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
+                            @Override public void onClick(DialogInterface dialog, int which) { } });
+
+                        //przekroczona liczba licencji
+                    }else if(e.getMessage().contains("FULL")){
+                        GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekroczona.", "OK",new DialogInterface.OnClickListener() {
+                            @Override public void onClick(DialogInterface dialog, int which) { } });
+                    }
                 } catch (CommandException e) {
                     e.printStackTrace();
                 }

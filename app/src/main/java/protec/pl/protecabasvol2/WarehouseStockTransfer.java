@@ -39,10 +39,9 @@ import de.abas.erp.db.DbContext;
 import de.abas.erp.db.EditorAction;
 import de.abas.erp.db.EditorCommand;
 import de.abas.erp.db.EditorCommandFactory;
-import de.abas.erp.db.Query;
 import de.abas.erp.db.exception.CommandException;
 import de.abas.erp.db.exception.DBRuntimeException;
-import de.abas.erp.db.infosystem.custom.owpl.IsPrLoggedUsers;
+import de.abas.erp.db.infosystem.custom.owpl.IsPrLoggedUser;
 import de.abas.erp.db.infosystem.standard.la.StockLevelInformation;
 import de.abas.erp.db.schema.employee.Employee;
 import de.abas.erp.db.schema.employee.EmployeeEditor;
@@ -67,7 +66,8 @@ public class WarehouseStockTransfer extends AppCompatActivity {
     }
     DbContext ctx ;
     ProgressDialog LoadingDialog;
-    String database, back_article, artIDNO, platzFrom, platzTo, user_short_name = "";
+    String database, back_article, artIDNO, platzFrom, user_short_name = "" ;
+    BigDecimal qty;
     CheckBox lockIcon;
     TextView unit_textView, article_textInfo, location_textInfo, qty_textInfo;
     EditText article_textEdit, fromLocation_textEdit, toLocation_textEdit, qty_textEdit;
@@ -91,9 +91,8 @@ public class WarehouseStockTransfer extends AppCompatActivity {
             setPassword(password);
             LoadingDialog = ProgressDialog.show(WarehouseStockTransfer.this, "",
                     "Ładowanie. Proszę czekać...", true);
-            searchArticle(back_article);
+            searchArticle(back_article, ctx);
         }
-
     }
 
     public void onBackPressed() {
@@ -108,6 +107,7 @@ public class WarehouseStockTransfer extends AppCompatActivity {
         if (LoadingDialog != null) {
             LoadingDialog.dismiss();
         }
+            ctx.close();
     }
 
     @SuppressLint("WrongViewCast")
@@ -137,12 +137,13 @@ public class WarehouseStockTransfer extends AppCompatActivity {
         fromLocation_textEdit.setInputType(0);
         toLocation_textEdit.setInputType(0);
         article_textEdit.setInputType(0);
-        lockIcon.setVisibility(View.INVISIBLE);
+        //lockIcon.setVisibility(View.INVISIBLE);
 
         ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");   //?? potrzebne policy?
-        IsPrLoggedUsers lu = ctx.openInfosystem(IsPrLoggedUsers.class);
+        IsPrLoggedUser lu = ctx.openInfosystem(IsPrLoggedUser.class);
         user_short_name = lu.getYuser();
         employee = FindEmployeeBySwd(ctx, user_short_name);
+        ctx.close();
         if(!employee.getYapplocklocation().equals("")){
             lockIcon.setChecked(true);
             toLocation_textEdit.setHint(employee.getYapplocklocation());
@@ -222,13 +223,13 @@ public class WarehouseStockTransfer extends AppCompatActivity {
             if (requestCode == 101) {
                 if (resultCode == RESULT_OK) {
                     String content = result.getContents();
-                    searchArticle(content);
+                    searchArticle(content, ctx);
                 }
             }
             if (requestCode == 70) {
                 if (resultCode == RESULT_OK) {
                     String content = result.getContents();
-                    getLocation(content);
+                    getLocation(content, ctx);
                 }
             }
             super.onActivityResult(requestCode, resultCode, data);
@@ -263,7 +264,7 @@ public class WarehouseStockTransfer extends AppCompatActivity {
                     articleDialog.dismiss();
                     LoadingDialog = ProgressDialog.show(WarehouseStockTransfer.this, "",
                             "Ładowanie. Proszę czekać...", true);
-                    searchArticle(article_name);
+                    searchArticle(article_name, ctx);
                 }
             }
         });
@@ -273,10 +274,9 @@ public class WarehouseStockTransfer extends AppCompatActivity {
 
     //      SEARCH ARTICLE
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
-    public void searchArticle(String content) {
+    public void searchArticle(String content, DbContext ctx) {
         myGlob = new GlobalClass(getApplicationContext());
         try{
-            ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");   //?? potrzebne policy?
             if(myGlob.FindProductByIdno(ctx, content) != null) {  //jeśli Find by IDNO nie równa się null
                 drawTable(ctx, content);
                 if (LoadingDialog != null){
@@ -305,9 +305,15 @@ public class WarehouseStockTransfer extends AppCompatActivity {
             if(LoadingDialog != null) {
                 LoadingDialog.dismiss();
             }
-            GlobalClass.showDialog(WarehouseStockTransfer.this, "Brak połączenia!", "Nie można aktualnie połączyć z bazą.", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override public void onClick(DialogInterface dialog, int which) {} });
+            if(e.getMessage().contains("failed")){
+                GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) { } });
+
+                //przekroczona liczba licencji
+            }else if(e.getMessage().contains("FULL")){
+                GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekroczona.", "OK",new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) { } });
+            }
         }
     }
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -425,16 +431,15 @@ public class WarehouseStockTransfer extends AppCompatActivity {
                         @Override
                         public void onClick(View view) {
                             stockDialog.dismiss();
-                            AlertDialog.Builder choosedLocAlert = new AlertDialog.Builder(WarehouseStockTransfer.this);
                             platzFrom = row.getLplatz().getSwd();
-                            String mge = row.getLemge().toString();
-                            String articleString = "<b>" + platzFrom + "</b><br/>" + finalQty + " " + finalUnit;
-                            choosedLocAlert.setMessage(Html.fromHtml(articleString));
-                            choosedLocAlert.setTitle("Wybrana lokalizacja: ");
-                            choosedLocAlert.setPositiveButton("Wybierz lokalizację",
-                                    new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            //dismiss the dialog
+//                            AlertDialog.Builder choosedLocAlert = new AlertDialog.Builder(WarehouseStockTransfer.this);
+//                            String articleString = "<b>" + platzFrom + "</b><br/>" + finalQty + " " + finalUnit;
+//                            choosedLocAlert.setMessage(Html.fromHtml(articleString));
+//                            choosedLocAlert.setTitle("Wybrana lokalizacja: ");
+//                            choosedLocAlert.setPositiveButton("Wybierz lokalizację",
+//                                    new DialogInterface.OnClickListener() {
+//                                        public void onClick(DialogInterface dialog, int which) {
+//                                            //dismiss the dialog
                                             fromLocation_textEdit.setText(platzFrom);
                                             article_textEdit.setText(art);
                                             unit_textView.setText(finalUnit);
@@ -443,16 +448,16 @@ public class WarehouseStockTransfer extends AppCompatActivity {
                                             article_textInfo.setVisibility(View.VISIBLE);
                                             location_textInfo.setVisibility(View.VISIBLE);
                                             qty_textInfo.setVisibility(View.VISIBLE);
-                                        }
-                                    });
-                            choosedLocAlert.setNegativeButton("Anuluj",
-                                    new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            //dismiss the dialog
-                                        }
-                                    });
-                            choosedLocAlert.setCancelable(true);
-                            choosedLocAlert.create().show();
+//                                        }
+//                                    });
+//                            choosedLocAlert.setNegativeButton("Anuluj",
+//                                    new DialogInterface.OnClickListener() {
+//                                        public void onClick(DialogInterface dialog, int which) {
+//                                            //dismiss the dialog
+//                                        }
+//                                    });
+//                            choosedLocAlert.setCancelable(true);
+//                            choosedLocAlert.create().show();
                             ctx.close();
                         }
                     });
@@ -467,11 +472,10 @@ public class WarehouseStockTransfer extends AppCompatActivity {
         }
     }
 
-    public void getLocation(String content) {
-        LocationHeader location = LocationExists(content);
+    public void getLocation(String content, DbContext ctx) {
+        LocationHeader location = LocationExists(content, ctx);
         if (location != null) {
             String location_name = location.getSwd();
-            platzTo = location_name;
             toLocation_textEdit.setText(location_name);
             article_textInfo.setVisibility(View.VISIBLE);
             qty_textInfo.setVisibility(View.VISIBLE);
@@ -485,10 +489,9 @@ public class WarehouseStockTransfer extends AppCompatActivity {
         }
     }
 
-    public LocationHeader LocationExists(String location) {
+    public LocationHeader LocationExists(String location, DbContext ctx) {
         LocationHeader loc = null;
         try {
-            ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
             SelectionBuilder<LocationHeader> locationSB = SelectionBuilder.create(LocationHeader.class);
             locationSB.add(Conditions.eq(LocationHeader.META.swd, location));
             loc = QueryUtil.getFirst(ctx, locationSB.build());
@@ -500,30 +503,39 @@ public class WarehouseStockTransfer extends AppCompatActivity {
     }
 
     public void save(View view) {
-        String qty = qty_textEdit.getText().toString();
-        String art = article_textEdit.getText().toString();
-        String loc = toLocation_textEdit.getText().toString();
-        if (art.equals("")) {
+        if (article_textEdit.getText().toString().isEmpty()) {
             GlobalClass.showDialog(this, "Brak artykułu!", "Proszę wprowadzić artykuł", "OK",
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                         }
                     });
-        } else if (loc.equals("")) {
-            GlobalClass.showDialog(this, "Brak lokalizacji!", "Proszę wprowadzić lokalizację", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                        }
-                    });
-        } else {
-            if (qty.equals("")) {
-                qty = qty_textEdit.getHint().toString();
-                qty_textEdit.setText(qty);
+        } else if (toLocation_textEdit.getText().toString().isEmpty()) {
+            if (toLocation_textEdit.getHint().toString().equals("Lokalizacja")) {
+                GlobalClass.showDialog(this, "Brak lokalizacji!", "Proszę wprowadzić lokalizację.", "OK",
+                        new DialogInterface.OnClickListener() {@Override public void onClick(DialogInterface dialog, int which) {}});
+            } else{
+                toLocation_textEdit.setText(toLocation_textEdit.getHint().toString());
+
+                if (qty_textEdit.getText().toString().isEmpty()) {
+                    qty_textEdit.setText(qty_textEdit.getHint().toString());
+                }
+                if (new BigDecimal(qty_textEdit.getText().toString()).compareTo(new BigDecimal(qty_textEdit.getHint().toString())) == 1) {
+                    GlobalClass.showDialog(this, "Wykroczenie poza stan!", "Wpisana ilość przekracza ilość dostępną na stanie.", "OK",
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                }
+                            });
+                }else {
+                    sendToDatabase();
+                }
             }
-            //jeśli ilość wpisana jest WIĘKSZA niż na stanie
-            if (Double.parseDouble(qty) > Double.parseDouble(qty_textEdit.getHint().toString())) {
+        }else {
+            if (qty_textEdit.getText().toString().isEmpty()) {
+                qty_textEdit.setText(qty_textEdit.getHint().toString());
+            }
+            if (new BigDecimal(qty_textEdit.getText().toString()).compareTo(new BigDecimal(qty_textEdit.getHint().toString())) == 1) {
                 GlobalClass.showDialog(this, "Wykroczenie poza stan!", "Wpisana ilość przekracza ilość dostępną na stanie.", "OK",
                         new DialogInterface.OnClickListener() {
                             @Override
@@ -531,100 +543,104 @@ public class WarehouseStockTransfer extends AppCompatActivity {
                             }
                         });
             } else {
-                    EmployeeEditor employeeEditor = employee.createEditor();
-                    try {
-                        employeeEditor.open(EditorAction.UPDATE);
-                    if(lockIcon.isChecked()){
-                        employeeEditor.setYapplocklocation(toLocation_textEdit.getText().toString());
-                    }else{
-                        employeeEditor.setYapplocklocation("");
-                    }
-                    employeeEditor.commit();
-                    if(employeeEditor.active()) {
-                            employeeEditor.abort();
-                        }
-                    ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
-                    EditorCommand cmd = EditorCommandFactory.typedCmd("Lbuchung", "");
-                    StockAdjustmentEditor stockAdjustmentEditor = (StockAdjustmentEditor) ctx.openEditor(cmd);
-                    AbasDate today = new AbasDate();
-                    stockAdjustmentEditor.setString("product", artIDNO);
-                    stockAdjustmentEditor.setDocNo("MOBILE");
-                    stockAdjustmentEditor.setDateDoc(today);
-                    stockAdjustmentEditor.setEntType(EnumEntryTypeStockAdjustment.Transfer);
-                    StockAdjustmentEditor.Row sadRow = stockAdjustmentEditor.table().getRow(1);
-                    sadRow.setUnitQty(Double.parseDouble(qty));
-                    sadRow.setString("location", platzFrom);
-                    sadRow.setString("location2", platzTo);
-                    stockAdjustmentEditor.commit();
-
-                    AlertDialog.Builder stockAddAlert = new AlertDialog.Builder(WarehouseStockTransfer.this);
-                    stockAddAlert.setMessage("Produkt został pomyślnie przeksięgowany.");
-                    stockAddAlert.setTitle("Zapisano!");
-                    stockAddAlert.setPositiveButton("Dodaj nowy artykuł",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    //dismiss the dialog
-                                    article_textEdit.setText("");
-                                    fromLocation_textEdit.setText("");
-                                    qty_textEdit.setText("");
-                                    qty_textEdit.setHint("Ilość");
-                                    unit_textView.setVisibility(View.INVISIBLE);
-                                    toLocation_textEdit.setText("");
-
-                                    if (!employee.getYapplocklocation().equals("")) {
-                                        toLocation_textEdit.setHint(employee.getYapplocklocation());
-                                        lockIcon.setBackgroundResource(R.drawable.ic_new_lock_closed_icon);
-                                        lockIcon.setChecked(true);
-                                    } else {
-                                        toLocation_textEdit.setHint("Lokalizacja");
-                                        lockIcon.setBackgroundResource(R.drawable.ic_new_lock_icon);
-                                        lockIcon.setChecked(false);
-                                    }
-                                    ctx.close();
-                                }
-                            });
-                    stockAddAlert.setNegativeButton("Menu",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    //dismiss the dialog
-                                    setIntent("Menu", "");
-                                }
-                            });
-                    stockAddAlert.setCancelable(true);
-                    stockAddAlert.create().show();
-                    //
-                } catch (NumberFormatException e) {
-                    e.printStackTrace();
-                    GlobalClass.showDialog(this, "Błąd!", "Podczas zmiany formatu wystąpił błąd.", "OK",
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                }
-                            });
-                } catch (DBRuntimeException e) {
-                    GlobalClass.showDialog(this, "Brak połączenia!", "Nie można aktualnie połączyć z bazą.", "OK",
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                }
-                            });
-                    e.printStackTrace();
-                } catch (CommandException e) {
-                    e.printStackTrace();
-                }
+                sendToDatabase();
             }
+        }
+    }
+
+    public void sendToDatabase(){
+        EmployeeEditor employeeEditor = employee.createEditor();
+        try {
+            employeeEditor.open(EditorAction.UPDATE);
+            if(lockIcon.isChecked()){
+                employeeEditor.setYapplocklocation(toLocation_textEdit.getText().toString());
+            }else{
+                employeeEditor.setYapplocklocation("");
+            }
+            employeeEditor.commit();
+            if(employeeEditor.active()) {
+                employeeEditor.abort();
+            }
+            EditorCommand cmd = EditorCommandFactory.typedCmd("Lbuchung", "");
+            StockAdjustmentEditor stockAdjustmentEditor = (StockAdjustmentEditor) ctx.openEditor(cmd);
+            AbasDate today = new AbasDate();
+            stockAdjustmentEditor.setString("product", artIDNO);
+            stockAdjustmentEditor.setDocNo("MOBILE");
+            stockAdjustmentEditor.setDateDoc(today);
+            stockAdjustmentEditor.setEntType(EnumEntryTypeStockAdjustment.Transfer);
+            StockAdjustmentEditor.Row sadRow = stockAdjustmentEditor.table().getRow(1);
+            sadRow.setString("unitQty", qty_textEdit.getText().toString());
+            //sadRow.setUnitQty(new BigDecimal(qty_textEdit.getText().toString()));
+            sadRow.setString("location", fromLocation_textEdit.getText().toString());
+            sadRow.setString("location2", toLocation_textEdit.getText().toString());
+            stockAdjustmentEditor.commit();
+            if(stockAdjustmentEditor.active()) {
+                stockAdjustmentEditor.abort();
+            }
+            ctx.close();
+            AlertDialog.Builder stockAddAlert = new AlertDialog.Builder(WarehouseStockTransfer.this);
+            stockAddAlert.setMessage("Produkt został pomyślnie przeksięgowany.");
+            stockAddAlert.setTitle("Zapisano!");
+            stockAddAlert.setPositiveButton("Dodaj nowy artykuł",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            //dismiss the dialog
+                            article_textEdit.setText("");
+                            fromLocation_textEdit.setText("");
+                            qty_textEdit.setText("");
+                            qty_textEdit.setHint("Ilość");
+                            unit_textView.setVisibility(View.INVISIBLE);
+                            toLocation_textEdit.setText("");
+                            ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");   //?? potrzebne policy?
+                            employee = FindEmployeeBySwd(ctx, user_short_name);
+                            if (!employee.getYapplocklocation().equals("")) {
+                                toLocation_textEdit.setHint(employee.getYapplocklocation());
+                                lockIcon.setBackgroundResource(R.drawable.ic_new_lock_closed_icon);
+                                lockIcon.setChecked(true);
+                                ctx.close();
+                            } else {
+                                toLocation_textEdit.setHint("Lokalizacja");
+                                lockIcon.setBackgroundResource(R.drawable.ic_new_lock_icon);
+                                lockIcon.setChecked(false);
+                                ctx.close();
+                            }
+
+                        }
+                    });
+            stockAddAlert.setNegativeButton("Menu",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            //dismiss the dialog
+                            setIntent("Menu", "");
+                        }
+                    });
+            stockAddAlert.setCancelable(true);
+            stockAddAlert.create().show();
+
+        } catch (DBRuntimeException e) {
+            if(e.getMessage().contains("failed")){
+                GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) { } });
+
+                //przekroczona liczba licencji
+            }else if(e.getMessage().contains("FULL")){
+                GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekroczona.", "OK",new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) { } });
+            }
+        } catch (CommandException e) {
+            e.printStackTrace();
         }
     }
 
     public final Employee FindEmployeeBySwd(DbContext ctx, String name){
         Employee employee = null;
         SelectionBuilder<Employee> employeeSB = SelectionBuilder.create(Employee.class);
-        Query<Employee> employeeQuery = ctx.createQuery(employeeSB.build());
         try {
             employeeSB.add(Conditions.eq(Product.META.swd.toString(), name));
             employee = QueryUtil.getFirst(ctx, employeeSB.build());
         } catch (Exception e) {
         }
+        ctx.close();
         return employee;
     }
 }

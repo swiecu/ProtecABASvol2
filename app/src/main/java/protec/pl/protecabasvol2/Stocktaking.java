@@ -25,6 +25,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 import de.abas.erp.db.DbContext;
 import de.abas.erp.db.EditorAction;
 import de.abas.erp.db.exception.CommandException;
@@ -47,13 +50,14 @@ public class Stocktaking extends AppCompatActivity {
     }
     DbContext ctx;
     ProgressDialog LoadingDialog;
-    String database, stockID, back_article;
+    String database, stockID, back_article, qtySumEquation;
     CheckBox lockIcon;
-    TextView unit, test, article_textInfo, location_textInfo, qty_textInfo, info_textInfo;
+    TextView unit, test, article_textInfo, location_textInfo, qty_textInfo, info_textInfo, equation_textView;
     EditText article_textEdit, location_textEdit, qty_textEdit, info_textEdit;
     GlobalClass myGlob;
     StocktakingProtec stocktaking = null;
     Boolean isHandWritten;
+    BigDecimal qtySum = new BigDecimal(BigInteger.ZERO);
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @SuppressLint("WrongViewCast")
@@ -115,18 +119,16 @@ public class Stocktaking extends AppCompatActivity {
         qty_textInfo = (TextView) findViewById(R.id.qty_textInfo);
         info_textInfo = (TextView) findViewById(R.id.info_textInfo);
         info_textEdit= (EditText) findViewById(R.id.info_textEdit);
+        equation_textView = (TextView) findViewById(R.id.equation_textView);
     }
 
     public void setLook() {
         unit.setVisibility(View.INVISIBLE);
-        article_textInfo.setVisibility(View.INVISIBLE);
-        location_textInfo.setVisibility(View.INVISIBLE);
-        qty_textInfo.setVisibility(View.INVISIBLE);
         info_textEdit.setText("");
-        info_textInfo.setVisibility(View.INVISIBLE);
         location_textEdit.setInputType(0);
         article_textEdit.setInputType(0);
         isHandWritten = false;
+        equation_textView.setVisibility(View.INVISIBLE);
     }
 
     public void getElementsFromIntent() {
@@ -255,12 +257,15 @@ public class Stocktaking extends AppCompatActivity {
                 });
             }
         } catch (Exception e) {
-            GlobalClass.showDialog(Stocktaking.this, "Brak połączenia!", "Nie można aktualnie połączyć z bazą.", "OK",
-            new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                }
-            });
+            if(e.getMessage().contains("failed")){
+                GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) { } });
+
+                //przekroczona liczba licencji
+            }else if(e.getMessage().contains("FULL")){
+                GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekroczona.", "OK",new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) { } });
+            }
         }
     }
 
@@ -339,12 +344,15 @@ public class Stocktaking extends AppCompatActivity {
             if (LoadingDialog != null) {
                 LoadingDialog.dismiss();
             }
-            GlobalClass.showDialog(Stocktaking.this, "Brak połączenia!", "Nie można aktualnie połączyć z bazą.", "OK",
-            new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                }
-            });
+            if(e.getMessage().contains("failed")){
+                GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) { } });
+
+                //przekroczona liczba licencji
+            }else if(e.getMessage().contains("FULL")){
+                GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekroczona.", "OK",new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) { } });
+            }
         }
     }
 
@@ -385,8 +393,27 @@ public class Stocktaking extends AppCompatActivity {
             GlobalClass.showDialog(this, "Brak artykułu!", "Proszę wprowadzić artykuł.", "OK",
             new DialogInterface.OnClickListener() {@Override public void onClick(DialogInterface dialog, int which) {} });
         }else if((qty_textEdit.getText().toString().isEmpty())){
-            GlobalClass.showDialog(this, "Brak ilości!", "Proszę wprowadzić ilość.", "OK",
-            new DialogInterface.OnClickListener() { @Override public void onClick(DialogInterface dialog, int which) {}});
+            if(!equation_textView.getText().toString().equals("suma")){
+                qty_textEdit.setText(qty_textEdit.getHint().toString());
+                if(location_textEdit.getText().toString().isEmpty()) {
+                    if (location_textEdit.getHint().toString().equals("Lokalizacja")) {
+                        GlobalClass.showDialog(this, "Brak lokalizacji!", "Proszę wprowadzić lokalizację.", "OK",
+                                new DialogInterface.OnClickListener() {@Override public void onClick(DialogInterface dialog, int which) {}});
+                    } else{
+                        location_textEdit.setText(location_textEdit.getHint().toString());
+                        sendToDatabase();
+                    }
+                }else{
+                    sendToDatabase();
+                }
+            }else {
+                GlobalClass.showDialog(this, "Brak ilości!", "Proszę wprowadzić ilość.", "OK",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        });
+            }
         }else if(location_textEdit.getText().toString().isEmpty()) {
             if (location_textEdit.getHint().toString().equals("Lokalizacja")) {
                 GlobalClass.showDialog(this, "Brak lokalizacji!", "Proszę wprowadzić lokalizację.", "OK",
@@ -413,8 +440,8 @@ public class Stocktaking extends AppCompatActivity {
                     article_textEdit.setText("");
                     location_textEdit.setText("");
                     qty_textEdit.setText("");
+                    qty_textEdit.setHint("Ilość");
                     info_textEdit.setText("");
-                    isHandWritten = false;
                     stocktaking = getStocktaing();
                     if (!stocktaking.getYcurrlocation().equals("")) {
                         location_textEdit.setHint(stocktaking.getYcurrlocation());
@@ -425,6 +452,12 @@ public class Stocktaking extends AppCompatActivity {
                         lockIcon.setBackgroundResource(R.drawable.ic_new_lock_icon);
                         lockIcon.setChecked(false);
                     }
+                    unit.setVisibility(View.INVISIBLE);
+                    isHandWritten = false;
+                    equation_textView.setText("suma");
+                    equation_textView.setVisibility(View.INVISIBLE);
+                    qtySum = BigDecimal.ZERO;
+                    qtySumEquation = null;
                     ctx.close();
                 }
             });
@@ -486,5 +519,29 @@ public class Stocktaking extends AppCompatActivity {
         LoadingDialog = ProgressDialog.show(Stocktaking.this, "",
                 "Ładowanie. Proszę czekać...", true);
         setIntent("MyStocktakingList", stockID, "");
+    }
+
+    public void addQty(View view){
+        String mathOperator = "";
+        if(qty_textEdit.getText().toString().isEmpty()){
+            GlobalClass.showDialog(this, "Brak ilości!", "Proszę wprowadzić ilość.", "OK",
+                    new DialogInterface.OnClickListener() {@Override public void onClick(DialogInterface dialog, int which) {} });
+        }else {
+            BigDecimal newQty = new BigDecimal(qty_textEdit.getText().toString());
+            qtySum = qtySum.add(newQty);
+            if (newQty.compareTo(BigDecimal.ZERO) != -1) {
+                mathOperator = "+";
+            }
+            if(qtySumEquation != null) {
+                qtySumEquation = qtySumEquation + mathOperator + qty_textEdit.getText().toString();
+            }else{
+                qtySumEquation = qty_textEdit.getText().toString();
+            }
+            equation_textView.setVisibility(View.VISIBLE);
+            equation_textView.setText(qtySumEquation);
+           //info_textEdit.setText(qtySumEquation);
+            qty_textEdit.setHint(qtySum.toString());
+            qty_textEdit.setText("");
+        }
     }
 }

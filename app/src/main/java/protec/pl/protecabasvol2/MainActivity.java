@@ -31,13 +31,15 @@ import com.google.zxing.integration.android.IntentResult;
 import de.abas.erp.db.DbContext;
 import de.abas.erp.db.Query;
 import de.abas.erp.db.exception.DBRuntimeException;
-import de.abas.erp.db.infosystem.custom.owpl.IsPrLoggedUsers;
+import de.abas.erp.db.infosystem.custom.owpl.IsPrLoggedUser;
 import de.abas.erp.db.schema.employee.Employee;
 import de.abas.erp.db.schema.part.Product;
 import de.abas.erp.db.selection.Conditions;
 import de.abas.erp.db.selection.SelectionBuilder;
 import de.abas.erp.db.util.ContextHelper;
 import de.abas.erp.db.util.QueryUtil;
+
+import static com.google.android.play.core.install.model.AppUpdateType.IMMEDIATE;
 
 public class MainActivity extends AppCompatActivity {
    DbContext ctx;
@@ -54,36 +56,57 @@ public class MainActivity extends AppCompatActivity {
         mAppUpdateManager.registerListener(installStateUpdatedListener);
         mAppUpdateManager.getAppUpdateInfo().addOnSuccessListener(appUpdateInfo -> {
             if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
-                    && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE /*AppUpdateType.IMMEDIATE*/)){
+                    && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE /*AppUpdateType.FLEXIBLE*/)){
                 try {
                     mAppUpdateManager.startUpdateFlowForResult(
-                            appUpdateInfo, AppUpdateType.FLEXIBLE /*AppUpdateType.IMMEDIATE*/, MainActivity.this, 77);
+                            appUpdateInfo, AppUpdateType.IMMEDIATE /*AppUpdateType.IMMEDIATE*/, MainActivity.this, 77);
                 } catch (IntentSender.SendIntentException e) {
-                    e.printStackTrace();
+                    e.getMessage();
                 }
             } else if (appUpdateInfo.installStatus() == InstallStatus.DOWNLOADED){
-                //CHECK THIS if AppUpdateType.FLEXIBLE, otherwise you can skip
-                popupSnackbarForCompleteUpdate();
+               //CHECK THIS if AppUpdateType.FLEXIBLE, otherwise you can skip
+              // popupSnackbarForCompleteUpdate();
             }
         });
     }
+
+
     InstallStateUpdatedListener installStateUpdatedListener = new
             InstallStateUpdatedListener() {
                 @Override
                 public void onStateUpdate(InstallState state) {
-                    if (state.installStatus() == InstallStatus.DOWNLOADED){
-                        //CHECK THIS if AppUpdateType.FLEXIBLE, otherwise you can skip
-                        popupSnackbarForCompleteUpdate();
-                    } else if (state.installStatus() == InstallStatus.INSTALLED){
-                        if (mAppUpdateManager != null){
-                            mAppUpdateManager.unregisterListener(installStateUpdatedListener);
+                    try {
+                        if (state.installStatus() == InstallStatus.DOWNLOADED) {
+                            //CHECK THIS if AppUpdateType.FLEXIBLE, otherwise you can skip
+                            // popupSnackbarForCompleteUpdate();
+                        } else if (state.installStatus() == InstallStatus.INSTALLED) {
+                            if (mAppUpdateManager != null) {
+                                mAppUpdateManager.unregisterListener(installStateUpdatedListener);
+                            }
+                        } else {
+                            Log.i("mess", "InstallStateUpdatedListener: state: " + state.installStatus());
                         }
-
-                    } else {
-                        Log.i("mess", "InstallStateUpdatedListener: state: " + state.installStatus());
+                    }catch(Exception e){
+                        e.getMessage();
                     }
                 }
             };
+
+    protected void onResume() {
+        super.onResume();
+        mAppUpdateManager.getAppUpdateInfo().addOnSuccessListener(
+        appUpdateInfo -> {
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) {
+                // If an in-app update is already running, resume the update.
+                try {
+                    mAppUpdateManager.startUpdateFlowForResult(
+                            appUpdateInfo, IMMEDIATE, this, 77);
+                } catch (IntentSender.SendIntentException e) {
+                    e.getMessage();
+                }
+            }
+        });
+    }
     private void popupSnackbarForCompleteUpdate() {
         Snackbar snackbar =
                 Snackbar.make(
@@ -148,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
             }
             if (requestCode == 77) {
                 if (resultCode != RESULT_OK) {
-                    GlobalClass.showDialog(this,"Błąd podczas aktuallizacji","Nie udało się zaktualizować aplikacji, proszę spróbować później.", "OK",new DialogInterface.OnClickListener() {
+                    GlobalClass.showDialog(this,"Błąd podczas aktuallizacji","Nie udało się zaktualizować aplikacji, proszę spróbować później. Kod błędu: " + resultCode, "OK",new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) { } });
                 }
             }
@@ -194,11 +217,9 @@ public class MainActivity extends AppCompatActivity {
         }
    }
    public void checkUserDatabase(DbContext ctx){
-        Log.d("inCheckUserDatabase", "before");
-       IsPrLoggedUsers lu = ctx.openInfosystem(IsPrLoggedUsers.class);
+       IsPrLoggedUser lu = ctx.openInfosystem(IsPrLoggedUser.class);
        user_short_name = lu.getYuser();
        employee = FindEmployeeBySwd(ctx, user_short_name);
-       Log.d("inCheckUserDatabase", "after");
 
        if(employee.getYdatabase().isEmpty()){
            GlobalClass.showDialog(this,"Brak dostępu!","Nie masz dostępu do tej aplikacji.", "OK",new DialogInterface.OnClickListener() {
@@ -220,7 +241,7 @@ public class MainActivity extends AppCompatActivity {
                Log.d("database", "demo");
            }
            startActivity(intent);
-           LoadingDialog =  ProgressDialog.show(MainActivity.this, "",
+           LoadingDialog = ProgressDialog.show(MainActivity.this, "",
                    "Ładowanie. Proszę czekać...", true);
        }
    }
@@ -236,5 +257,4 @@ public class MainActivity extends AppCompatActivity {
         }
         return employee;
     }
-
 }

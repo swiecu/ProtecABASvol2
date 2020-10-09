@@ -64,4 +64,11 @@ public class QualityControl extends AppCompatActivity {
     public void ReportNonCompliance(View view){
         setIntent("QualityControlReportNonCompliance");
     }
+
+    public void ToCheck(View view){
+        LoadingDialog = ProgressDialog.show(QualityControl.this, "",
+            "Ładowanie. Proszę czekać...", true);
+
+        setIntent("QualityControlToCheck");
+    }
 }

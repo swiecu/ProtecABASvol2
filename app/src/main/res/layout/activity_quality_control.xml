@@ -8,9 +8,24 @@
     tools:context=".QualityControl">
 
     <Button
+        android:id="@+id/button7"
+        android:layout_width="170dp"
+        android:layout_height="92dp"
+        android:background="#7C7878"
+        android:onClick="ToCheck"
+        android:text="@string/toControl"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button6" />
+
+    <Button
         android:id="@+id/take_articles_btn2"
         android:layout_width="170dp"
         android:layout_height="92dp"
+        android:layout_marginBottom="45dp"
         android:background="@color/colorBlue"
         android:onClick="ReportNonCompliance"
         android:text="@string/reportNonCompliance"
@@ -18,7 +33,6 @@
         android:textSize="18sp"
         app:layout_constraintBottom_toTopOf="@+id/button6"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="packed" />
@@ -27,15 +41,14 @@
         android:id="@+id/button6"
         android:layout_width="170dp"
         android:layout_height="92dp"
-        android:layout_marginTop="60dp"
+        android:layout_marginBottom="45dp"
         android:background="@color/colorProtec"
         android:onClick="ProductionControl"
         android:text="@string/productionControl"
         android:textColor="#FFFFFF"
         android:textSize="18sp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/button7"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/take_articles_btn2" />
 

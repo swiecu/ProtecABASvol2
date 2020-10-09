@@ -29,12 +29,12 @@
             android:id="@+id/loggedUser"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="48dp"
-            android:layout_marginRight="48dp"
-            android:text="@string/logged_user"
+            android:layout_marginTop="17dp"
+            android:layout_marginEnd="2dp"
+            android:layout_marginRight="2dp"
+            android:text="@string/employeeQuality"
             android:textColor="#FFFFFF"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/imageView14"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
@@ -67,13 +67,13 @@
             android:id="@+id/linearLayout"
             android:layout_width="0dp"
             android:layout_height="175dp"
-            android:layout_marginTop="150dp"
+            android:layout_marginTop="4dp"
             android:orientation="horizontal"
             android:padding="10dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toBottomOf="@+id/textView6">
 
             <androidx.cardview.widget.CardView
                 android:id="@+id/stockInfo_cardView"
@@ -81,7 +81,8 @@
                 android:layout_height="match_parent"
                 android:layout_margin="5dp"
                 android:layout_weight="1"
-                app:cardBackgroundColor="#00FFFFFF">
+                app:cardBackgroundColor="#00FFFFFF"
+                app:cardElevation="0dp">
 
                 <RelativeLayout
                     android:id="@+id/stockInfo_relative_layout"
@@ -90,9 +91,7 @@
                     android:background="#FFFFFF"
                     android:clickable="true"
                     android:focusable="true"
-                    android:onClick="checkStock"
-                    android:outlineProvider="bounds"
-                    android:translationZ="2dp">
+                    android:onClick="checkStock">
 
                     <TextView
                         android:id="@+id/stockInfo_textView"
@@ -129,9 +128,8 @@
                 android:layout_height="match_parent"
                 android:layout_margin="5dp"
                 android:layout_weight="1"
-                android:translationZ="2dp"
                 app:cardBackgroundColor="#00ffffff"
-                app:cardElevation="2dp">
+                app:cardElevation="0dp">
 
                 <RelativeLayout
                     android:id="@+id/move_relative_layout"
@@ -139,9 +137,7 @@
                     android:layout_height="match_parent"
                     android:background="#FFFFFF"
                     android:clickable="true"
-                    android:onClick="move"
-                    android:outlineProvider="bounds"
-                    android:translationZ="2dp">
+                    android:onClick="move">
 
                     <TextView
                         android:id="@+id/move_textView"
@@ -189,9 +185,8 @@
                 android:layout_height="match_parent"
                 android:layout_margin="5dp"
                 android:layout_weight="1"
-                android:translationZ="2dp"
                 app:cardBackgroundColor="#00FFFFFF"
-                app:cardElevation="2dp">
+                app:cardElevation="0dp">
 
                 <RelativeLayout
                     android:id="@+id/quality_relative_layout"
@@ -199,9 +194,7 @@
                     android:layout_height="match_parent"
                     android:background="#FFFFFF"
                     android:clickable="true"
-                    android:onClick="qualityControl"
-                    android:outlineProvider="bounds"
-                    android:translationZ="2dp">
+                    android:onClick="qualityControl">
 
                     <TextView
                         android:id="@+id/quality_cont_textView"
@@ -236,9 +229,8 @@
                 android:layout_height="match_parent"
                 android:layout_margin="5dp"
                 android:layout_weight="1"
-                android:translationZ="2dp"
                 app:cardBackgroundColor="#00FFFFFF"
-                app:cardElevation="2dp">
+                app:cardElevation="0dp">
 
                 <RelativeLayout
                     android:id="@+id/stocktaking_relative_layout"
@@ -246,9 +238,7 @@
                     android:layout_height="match_parent"
                     android:background="#FFFFFF"
                     android:clickable="true"
-                    android:onClick="stocktaking"
-                    android:outlineProvider="bounds"
-                    android:translationZ="2dp">
+                    android:onClick="stocktaking">
 
                     <TextView
                         android:id="@+id/stocktaking_textView"
@@ -278,13 +268,16 @@
                 </RelativeLayout>
             </androidx.cardview.widget.CardView>
         </LinearLayout>
+
         <LinearLayout
             android:id="@+id/linearLayout3"
             android:layout_width="0dp"
             android:layout_height="175dp"
             android:layout_marginTop="4dp"
+            android:layout_marginBottom="8dp"
             android:orientation="horizontal"
             android:padding="10dp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
@@ -296,9 +289,8 @@
                 android:layout_height="match_parent"
                 android:layout_margin="5dp"
                 android:layout_weight="1"
-                android:translationZ="2dp"
                 app:cardBackgroundColor="#00FFFFFF"
-                app:cardElevation="2dp">
+                app:cardElevation="0dp">
 
                 <RelativeLayout
                     android:id="@+id/maintenance_relative_layout"
@@ -306,9 +298,7 @@
                     android:layout_height="match_parent"
                     android:background="#FFFFFF"
                     android:clickable="true"
-                    android:onClick="maintenance"
-                    android:outlineProvider="bounds"
-                    android:translationZ="2dp">
+                    android:onClick="maintenance">
 
                     <TextView
                         android:id="@+id/maintenance_textView"
@@ -344,9 +334,8 @@
                 android:layout_height="match_parent"
                 android:layout_margin="5dp"
                 android:layout_weight="1"
-                android:translationZ="2dp"
                 app:cardBackgroundColor="#00FFFFFF"
-                app:cardElevation="2dp">
+                app:cardElevation="0dp">
 
                 <RelativeLayout
                     android:id="@+id/warehosueTransfer_relative_layout"
@@ -354,9 +343,7 @@
                     android:layout_height="match_parent"
                     android:background="#FFFFFF"
                     android:clickable="true"
-                    android:onClick="warehouseStockTranfer"
-                    android:outlineProvider="bounds"
-                    android:translationZ="2dp">
+                    android:onClick="warehouseStockTranfer">
 
                     <TextView
                         android:id="@+id/warehosueTransfer_textView"
@@ -416,6 +403,17 @@
             app:layout_constraintStart_toEndOf="@+id/textView6"
             app:layout_constraintTop_toBottomOf="@+id/textView2"
             card_view:srcCompat="@drawable/ic_new_map_icon_white" />
+
+        <ImageView
+            android:id="@+id/imageView14"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginRight="20dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            card_view:srcCompat="@drawable/ic_baseline_person_white" />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,13 +1,11 @@
 package protec.pl.protecabasvol2;
 
-import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.Html;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
@@ -16,7 +14,6 @@ import android.widget.TableRow;
 import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.math.BigDecimal;
@@ -37,8 +34,6 @@ public class ArticleNameList extends AppCompatActivity {
     public void setPassword(String password) {
         this.password = password;
     }
-    ProgressDialog LoadingDialog;
-    GlobalClass SearchArticleGlob;
     DbContext ctx;
     String destination, database, name, positiveButtonText, stockID;
     TextView suma, article_name;
@@ -118,8 +113,15 @@ public class ArticleNameList extends AppCompatActivity {
                 }
             }
         }catch (DBRuntimeException e) {
-            GlobalClass.showDialog(this, "Brak połączenia!", "Nie można aktualnie połączyć z bazą.", "OK", new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) {}});
+            if(e.getMessage().contains("failed")){
+                GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) { } });
+
+                //przekroczona liczba licencji
+            }else if(e.getMessage().contains("FULL")){
+                GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekroczona.", "OK",new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) { } });
+            }
         }
         ctx.close();
     }
@@ -137,8 +139,15 @@ public class ArticleNameList extends AppCompatActivity {
             ctx.close();
         }catch (DBRuntimeException e) {
             Log.d("error", e.getMessage());
-            GlobalClass.showDialog(this, "Brak połączenia!", "Nie można aktualnie połączyć z bazą.", "OK", new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) {} });
+            if(e.getMessage().contains("failed")){
+                GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) { } });
+
+                //przekroczona liczba licencji
+            }else if(e.getMessage().contains("FULL")){
+                GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekroczona.", "OK",new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) { } });
+            }
         }
 
     }
@@ -210,31 +219,31 @@ public class ArticleNameList extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 ctx.close();
-                if(destination.equals("Stocktaking")){
-                    positiveButtonText = "Wybierz";
-                }else{
-                    positiveButtonText = "Sprawdź stan";
-                }
-
-                AlertDialog.Builder dlgAlert = new AlertDialog.Builder(ArticleNameList.this, R.style.Theme_AppCompat_Light_Dialog_Alert);
-                String articleString = "<b>" + finalArticle + "</b><br/>" + finalArticle_name;
-                dlgAlert.setMessage(Html.fromHtml(articleString));
-                dlgAlert.setTitle("Wybrany artykuł: ");
-                dlgAlert.setPositiveButton(positiveButtonText,
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                //dismiss the dialog
-                                setIntent(finalArticleIDNO);
-                            }
-                        });
-                dlgAlert.setNegativeButton("Anuluj",
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                //dismiss the dialog
-                            }
-                        });
-                dlgAlert.setCancelable(true);
-                dlgAlert.create().show();
+//                if(destination.equals("Stocktaking")){
+//                    positiveButtonText = "Wybierz";
+//                }else{
+//                    positiveButtonText = "Sprawdź stan";
+//                }
+//
+//                AlertDialog.Builder dlgAlert = new AlertDialog.Builder(ArticleNameList.this, R.style.Theme_AppCompat_Light_Dialog_Alert);
+//                String articleString = "<b>" + finalArticle + "</b><br/>" + finalArticle_name;
+//                dlgAlert.setMessage(Html.fromHtml(articleString));
+//                dlgAlert.setTitle("Wybrany artykuł: ");
+//                dlgAlert.setPositiveButton(positiveButtonText,
+//                        new DialogInterface.OnClickListener() {
+//                            public void onClick(DialogInterface dialog, int which) {
+//                                //dismiss the dialog
+                setIntent(finalArticleIDNO);
+//                            }
+//                        });
+//                dlgAlert.setNegativeButton("Anuluj",
+//                        new DialogInterface.OnClickListener() {
+//                            public void onClick(DialogInterface dialog, int which) {
+//                                //dismiss the dialog
+//                            }
+//                        });
+//                dlgAlert.setCancelable(true);
+//                dlgAlert.create().show();
             }
         });
 

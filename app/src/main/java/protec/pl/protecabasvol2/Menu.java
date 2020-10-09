@@ -1,7 +1,6 @@
 package protec.pl.protecabasvol2;
 
 import android.annotation.SuppressLint;
-import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
@@ -20,13 +19,12 @@ import android.widget.TextView;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
 
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
 import de.abas.erp.db.DbContext;
-import de.abas.erp.db.infosystem.custom.owpl.IsPrLoggedUsers;
+import de.abas.erp.db.infosystem.custom.owpl.IsPrLoggedUser;
 import de.abas.erp.db.schema.custom.protec.StocktakingProtec;
 import de.abas.erp.db.schema.employee.Employee;
 import de.abas.erp.db.schema.part.Product;
@@ -49,8 +47,6 @@ public class Menu extends AppCompatActivity {
     TextView quality_cont_textView, move_textView, stocktaking_textView, stockInfo_textView, maintenance_textView, warehosueTransfer_textView, loggedUser;
     ImageView quality_control, move, stocktaking, stockInfo, maintenance, warehosueTransfer;
     Employee employee;
-    ProgressDialog LoadingDialog;
-    CardView cardView;
 
     @SuppressLint("WrongViewCast")
     @Override
@@ -64,7 +60,7 @@ public class Menu extends AppCompatActivity {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
         ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", getPassword(), "mobileApp");
-        IsPrLoggedUsers lu = ctx.openInfosystem(IsPrLoggedUsers.class);
+        IsPrLoggedUser lu = ctx.openInfosystem(IsPrLoggedUser.class);
         user_short_name = lu.getYuser();
         employee = FindEmployeeBySwd(ctx, user_short_name);
         if(employee != null) {
@@ -112,7 +108,7 @@ public class Menu extends AppCompatActivity {
 
     public void setMenuLook(Employee employee){
         user = employee.getAddr().toUpperCase();
-        loggedUser.setText("Zalogowany użytkownik: " + user);
+        loggedUser.setText(user);
         if (employee.getYqm() == false) {  // jeśli NIE jest kontrolerem jakości ustaw button jako disabled
             quality_relative_layout.setBackgroundColor(Color.parseColor("#41EFEEEE"));
             quality_relative_layout.setBackgroundResource(R.drawable.card_edge);

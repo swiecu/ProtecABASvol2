@@ -57,20 +57,19 @@
         android:layout_height="42dp"
         android:layout_marginStart="5dp"
         android:layout_marginLeft="5dp"
-        android:layout_marginTop="36dp"
         android:gravity="center_horizontal|center_vertical"
         android:text="szt."
         android:textColor="#2C2B2B"
         android:textSize="18sp"
+        app:layout_constraintBaseline_toBaselineOf="@+id/qty_TOtextEdit"
         app:layout_constraintStart_toEndOf="@+id/qty_TOtextEdit"
-        app:layout_constraintTop_toBottomOf="@+id/toQR_btn"
         tools:visibility="invisible" />
 
     <Button
         android:id="@+id/toQR_btn"
         android:layout_width="90dp"
         android:layout_height="45dp"
-        android:layout_marginTop="56dp"
+        android:layout_marginTop="46dp"
         android:layout_marginEnd="10dp"
         android:layout_marginRight="10dp"
         android:background="@color/colorBlue"
@@ -211,8 +210,8 @@
         android:id="@+id/info_textEdit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginLeft="16dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginLeft="20dp"
         android:layout_marginTop="4dp"
         android:ems="10"
         android:gravity="start|top"
@@ -246,5 +245,31 @@
         android:textSize="12sp"
         app:layout_constraintEnd_toStartOf="@+id/articleLeaveQr_btn"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/imageView10"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="53dp"
+        android:background="@color/colorGray"
+        android:onClick="addQty"
+        app:layout_constraintStart_toEndOf="@+id/unit_textView"
+        app:layout_constraintTop_toBottomOf="@+id/toQR_btn"
+        app:srcCompat="@drawable/ic_add_24px" />
+
+    <TextView
+        android:id="@+id/equation_textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginLeft="24dp"
+        android:layout_marginTop="1dp"
+        android:text="suma"
+        android:textSize="10sp"
+        android:visibility="invisible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/qty_TOtextEdit" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

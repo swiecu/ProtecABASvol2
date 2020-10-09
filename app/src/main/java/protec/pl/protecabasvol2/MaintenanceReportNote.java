@@ -159,9 +159,15 @@ public class MaintenanceReportNote extends AppCompatActivity {
         } catch (Exception e) {
             machineName_TextView.setText("");
             machine_TextEdit.setText("");
-            GlobalClass.showDialog(this, "Brak połączenia!", "Nie można aktualnie połączyć z bazą.", "OK", new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) {}});
-            //LoadingDialog.dismiss();
+            if(e.getMessage().contains("failed")){
+                GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) { } });
+
+                //przekroczona liczba licencji
+            }else if(e.getMessage().contains("FULL")){
+                GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekroczona.", "OK",new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) { } });
+            }
         }
         return machine;
     }

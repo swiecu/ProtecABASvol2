@@ -227,9 +227,15 @@ public class MoveTakeArticle extends Activity {
             if(LoadingDialog != null) {
                 LoadingDialog.dismiss();
             }
-            GlobalClass.showDialog(MoveTakeArticle.this, "Brak połączenia!", "Nie można aktualnie połączyć z bazą.", "OK",
-                new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) {} });
+            if(e.getMessage().contains("failed")){
+                GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) { } });
+
+                //przekroczona liczba licencji
+            }else if(e.getMessage().contains("FULL")){
+                GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekroczona.", "OK",new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) { } });
+            }
         }
     }
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -347,16 +353,15 @@ public class MoveTakeArticle extends Activity {
                         @Override
                         public void onClick(View view) {
                             stockDialog.dismiss();
-                            AlertDialog.Builder choosedLocAlert = new AlertDialog.Builder(MoveTakeArticle.this);
                             platz = row.getLplatz().getSwd();
-                            String mge = row.getLemge().toString();
-                            String articleString = "<b>" + platz + "</b><br/>" + finalQty + " " + finalUnit;
-                            choosedLocAlert.setMessage(Html.fromHtml(articleString));
-                            choosedLocAlert.setTitle("Wybrana lokalizacja: ");
-                            choosedLocAlert.setPositiveButton("Wybierz lokalizację",
-                                    new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            //dismiss the dialog
+//                            AlertDialog.Builder choosedLocAlert = new AlertDialog.Builder(MoveTakeArticle.this);
+//                            String articleString = "<b>" + platz + "</b><br/>" + finalQty + " " + finalUnit;
+//                            choosedLocAlert.setMessage(Html.fromHtml(articleString));
+//                            choosedLocAlert.setTitle("Wybrana lokalizacja: ");
+//                            choosedLocAlert.setPositiveButton("Wybierz lokalizację",
+//                                    new DialogInterface.OnClickListener() {
+//                                        public void onClick(DialogInterface dialog, int which) {
+//                                            //dismiss the dialog
                                             location_textEdit.setText(platz);
                                             article_textEdit.setText(art);
                                             unit_textEdit.setText(finalUnit);
@@ -365,16 +370,16 @@ public class MoveTakeArticle extends Activity {
                                             artInfo.setVisibility(View.VISIBLE);
                                             lokInfo.setVisibility(View.VISIBLE);
                                             qtyInfo.setVisibility(View.VISIBLE);
-                                        }
-                                    });
-                            choosedLocAlert.setNegativeButton("Anuluj",
-                                    new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            //dismiss the dialog
-                                        }
-                                    });
-                            choosedLocAlert.setCancelable(true);
-                            choosedLocAlert.create().show();
+//                                        }
+//                                    });
+//                            choosedLocAlert.setNegativeButton("Anuluj",
+//                                    new DialogInterface.OnClickListener() {
+//                                        public void onClick(DialogInterface dialog, int which) {
+//                                            //dismiss the dialog
+//                                        }
+//                                    });
+//                            choosedLocAlert.setCancelable(true);
+//                            choosedLocAlert.create().show();
                             ctx.close();
                         }
                     });
@@ -455,13 +460,15 @@ public class MoveTakeArticle extends Activity {
                                 }
                             });
                 } catch (DBRuntimeException e) {
-                    GlobalClass.showDialog(this, "Brak połączenia!", "Nie można aktualnie połączyć z bazą.", "OK",
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                }
-                            });
-                    e.printStackTrace();
+                    if(e.getMessage().contains("failed")){
+                        GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
+                            @Override public void onClick(DialogInterface dialog, int which) { } });
+
+                        //przekroczona liczba licencji
+                    }else if(e.getMessage().contains("FULL")){
+                        GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekroczona.", "OK",new DialogInterface.OnClickListener() {
+                            @Override public void onClick(DialogInterface dialog, int which) { } });
+                    }
                 } catch (CommandException e) {
                     e.printStackTrace();
                 }
