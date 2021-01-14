@@ -11,8 +11,8 @@ android {
         applicationId "protec.pl.protecabasvol2"
         minSdkVersion 16
         targetSdkVersion 30
-        versionCode 13
-        versionName "1.13"
+        versionCode 33
+        versionName "1.33"
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
 
@@ -47,7 +47,7 @@ dependencies {
     implementation project(':mylibrary')
     implementation 'io.voucherify.android.client:voucherify-android-sdk:2.1.0@aar'
     implementation 'com.google.android.material:material:1.1.0-alpha10'
-    implementation 'com.google.android.play:core:1.6.4'
+    implementation 'com.google.android.play:core:1.7.3'
     implementation 'com.google.android.gms:play-services-base:6.5.87'
     //noinspection GradleCompatible
     implementation "com.android.support:support-compat:28.0.0"

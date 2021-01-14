@@ -1,5 +1,6 @@
 package protec.pl.protecabasvol2;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -8,10 +9,13 @@ import android.content.IntentSender;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.EditText;
 
 import androidx.annotation.RequiresApi;
@@ -29,7 +33,6 @@ import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
 import de.abas.erp.db.DbContext;
-import de.abas.erp.db.Query;
 import de.abas.erp.db.exception.DBRuntimeException;
 import de.abas.erp.db.infosystem.custom.owpl.IsPrLoggedUser;
 import de.abas.erp.db.schema.employee.Employee;
@@ -39,19 +42,21 @@ import de.abas.erp.db.selection.SelectionBuilder;
 import de.abas.erp.db.util.ContextHelper;
 import de.abas.erp.db.util.QueryUtil;
 
-import static com.google.android.play.core.install.model.AppUpdateType.IMMEDIATE;
-
 public class MainActivity extends AppCompatActivity {
-   DbContext ctx;
+   DbContext ctx, sessionCtx;
    ProgressDialog LoadingDialog;
    private AppUpdateManager mAppUpdateManager;
    Employee employee;
    String user_short_name = "", password;
+   Button login_btn;
+   Handler handler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Thread.setDefaultUncaughtExceptionHandler(new UnCaughtException(MainActivity.this, "no user yet- error in MainActivity"));
+        login_btn = (Button) findViewById(R.id.login_btn);
         mAppUpdateManager = AppUpdateManagerFactory.create(this);
         mAppUpdateManager.registerListener(installStateUpdatedListener);
         mAppUpdateManager.getAppUpdateInfo().addOnSuccessListener(appUpdateInfo -> {
@@ -70,27 +75,26 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-
     InstallStateUpdatedListener installStateUpdatedListener = new
-            InstallStateUpdatedListener() {
-                @Override
-                public void onStateUpdate(InstallState state) {
-                    try {
-                        if (state.installStatus() == InstallStatus.DOWNLOADED) {
-                            //CHECK THIS if AppUpdateType.FLEXIBLE, otherwise you can skip
-                            // popupSnackbarForCompleteUpdate();
-                        } else if (state.installStatus() == InstallStatus.INSTALLED) {
-                            if (mAppUpdateManager != null) {
-                                mAppUpdateManager.unregisterListener(installStateUpdatedListener);
-                            }
-                        } else {
-                            Log.i("mess", "InstallStateUpdatedListener: state: " + state.installStatus());
+        InstallStateUpdatedListener() {
+            @Override
+            public void onStateUpdate(InstallState state) {
+                try {
+                    if (state.installStatus() == InstallStatus.DOWNLOADED) {
+                        //CHECK THIS if AppUpdateType.FLEXIBLE, otherwise you can skip
+                        // popupSnackbarForCompleteUpdate();
+                    }else if (state.installStatus() == InstallStatus.INSTALLED) {
+                        if (mAppUpdateManager != null) {
+                            mAppUpdateManager.unregisterListener(installStateUpdatedListener);
                         }
-                    }catch(Exception e){
-                        e.getMessage();
+                    } else {
+                        Log.i("mess", "InstallStateUpdatedListener: state: " + state.installStatus());
                     }
+                }catch(Exception e){
+
                 }
-            };
+            }
+        };
 
     protected void onResume() {
         super.onResume();
@@ -100,13 +104,14 @@ public class MainActivity extends AppCompatActivity {
                 // If an in-app update is already running, resume the update.
                 try {
                     mAppUpdateManager.startUpdateFlowForResult(
-                            appUpdateInfo, IMMEDIATE, this, 77);
+                            appUpdateInfo, AppUpdateType.IMMEDIATE, this, 77);
                 } catch (IntentSender.SendIntentException e) {
                     e.getMessage();
                 }
             }
         });
     }
+
     private void popupSnackbarForCompleteUpdate() {
         Snackbar snackbar =
                 Snackbar.make(
@@ -135,10 +140,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onPause(){  //closes ctx if the app is minimized
+        if(ctx != null) {
+            ctx.close();
+        }
+        super.onPause();
+    }
+
+    @Override
+    public void onBackPressed(){
+        //do nothing, the code is preventing from going back to being logged in
+    }
+
     public void hideKeyboard(View view) {
         InputMethodManager inputMethodManager =(InputMethodManager)getSystemService(Activity.INPUT_METHOD_SERVICE);
         inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
+
     // CHECK STOCK
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void ScanQR(View view){
@@ -156,6 +175,7 @@ public class MainActivity extends AppCompatActivity {
             startActivity(marketIntent);
         }
     }
+
     // ON ACTIVITY RESULT
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -179,77 +199,113 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // on Login Button Click
-   public void login(View view)  {
-        EditText password_text = findViewById(R.id.password_text);
-        password = password_text.getText().toString();
-        if(!password.equals("")){
-            try {
-                StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-                StrictMode.setThreadPolicy(policy);
-                ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", password, "mobileApp");  // musi być erp, na pierwszym logowaniu
-                checkUserDatabase(ctx);
-                ctx.close();
-
-            }catch (DBRuntimeException e) {
-                //błędne hasło
-                if(e.getMessage().contains("password")){
-                    GlobalClass.showDialog(this,"Błędne hasło!","Podane hasło jest błędne.", "OK",new DialogInterface.OnClickListener() {
-                        @Override public void onClick(DialogInterface dialog, int which) { } });
-
-                //brak połączenia
-                }else if(e.getMessage().contains("failed")){
-                    GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
-                        @Override public void onClick(DialogInterface dialog, int which) { } });
-
-                    //przekroczona liczba licencji
-                }else if(e.getMessage().contains("FULL")){
-                    GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekroczona.", "OK",new DialogInterface.OnClickListener() {
-                        @Override public void onClick(DialogInterface dialog, int which) { } });
-                }else{
-                    Log.d("error", e.getMessage());
-                }
-            }
-         // brak wpisanego hasła
-        }else{
-            GlobalClass.showDialog(this,"Brak hasła!","Proszę wpisać hasło.", "OK",new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) { } });
-        }
+   public void login(View view) {
+       EditText password_text = findViewById(R.id.password_text);
+       password = password_text.getText().toString();
+       if (!password.equals("")) {
+           try {
+               StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+               StrictMode.setThreadPolicy(policy);
+               ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", password, "mobileApp");  // musi być erp, na pierwszym logowaniu
+               checkUserDatabase(ctx);
+               if(ctx != null){
+                   ctx.close();
+               }
+           } catch (DBRuntimeException e) {
+               catchExceptionCases(e, "loginCallOnClick");
+           }
+       } else {
+           GlobalClass.showDialog(this, "Brak hasła!", "Proszę wpisać hasło.", "OK", new DialogInterface.OnClickListener() {
+               @Override public void onClick(DialogInterface dialog, int which) {}
+           });
+       }
    }
+
+    @SuppressLint("HandlerLeak")
+    public void catchExceptionCases (DBRuntimeException e, String function){
+
+        if (e.getMessage().contains("password")) {
+            GlobalClass.showDialog(this, "Błędne hasło!", "Podane hasło jest błędne.", "OK", new DialogInterface.OnClickListener() {
+                @Override public void onClick(DialogInterface dialog, int which) { }
+            });
+
+        } else if (e.getMessage().contains("failed")) {
+            GlobalClass.showDialog(this, "Brak połączenia!", "Nie można się aktualnie połączyć z bazą.", "OK", new DialogInterface.OnClickListener() {
+                @Override public void onClick(DialogInterface dialog, int which) {}
+            });
+
+        //przekroczona liczba licencji
+        } else if (e.getMessage().contains("FULL")) {
+            LoadingDialog = ProgressDialog.show(MainActivity.this, "     Przekroczono liczbę licencji.",
+                    "Zwalniam miejsce w ABAS. Proszę czekać...", true);
+            new Thread(() -> {
+                sessionCtx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", "sesje", "mobileApp");  // hasło sesje aby mieć dostęp
+                GlobalClass.licenceCleaner(sessionCtx);
+                if(sessionCtx != null) {
+                    sessionCtx.close();
+                }
+                handler.sendEmptyMessage(0);
+            }).start();
+            handler = new Handler() {
+                @SuppressLint("HandlerLeak")
+                public void handleMessage(Message msg) {
+                    LoadingDialog.dismiss();
+                    if(function.equals("loginCallOnClick")) {
+                        login_btn.callOnClick();
+                    }
+                }
+            };
+        } else {
+            Log.d("error", e.getMessage());
+        }
+    }
+
    public void checkUserDatabase(DbContext ctx){
        IsPrLoggedUser lu = ctx.openInfosystem(IsPrLoggedUser.class);
        user_short_name = lu.getYuser();
        employee = FindEmployeeBySwd(ctx, user_short_name);
+       if(employee != null) {
+           if ((employee.getYdatabase() == null) || (employee.getYdatabase().isEmpty())){
+               GlobalClass.showDialog(this, "Brak dostępu!", "Nie masz dostępu do tej aplikacji.", "OK", new DialogInterface.OnClickListener() {
+                   @Override
+                   public void onClick(DialogInterface dialog, int which) {
+                   }
+               });
+           } else {
+               Boolean correctDatabase = false;
+               String database="";
 
-       if(employee.getYdatabase().isEmpty()){
-           GlobalClass.showDialog(this,"Brak dostępu!","Nie masz dostępu do tej aplikacji.", "OK",new DialogInterface.OnClickListener() {
-               @Override public void onClick(DialogInterface dialog, int which) { } });
-       }else {
-           Intent intent = new Intent(this, Menu.class);
-           intent.putExtra("password", password);
-
-           if (employee.getYdatabase().equalsIgnoreCase("test")) {
-               intent.putExtra("database", "test");
-               Log.d("database", "test");
+               if (employee.getYdatabase().equalsIgnoreCase("test")) {
+                   correctDatabase = true;
+                   database = "test";
+               }else if (employee.getYdatabase().equalsIgnoreCase("erp")) {
+                   correctDatabase = true;
+                   database = "erp";
+               }else if (employee.getYdatabase().equalsIgnoreCase("demo")) {
+                   correctDatabase = true;
+                   database = "demo";
+               }
+               if(correctDatabase == true) {
+                   Intent intent = new Intent(this, Menu.class);
+                   intent.putExtra("password", password);
+                   intent.putExtra("database", database);
+                   startActivity(intent);
+                   LoadingDialog = ProgressDialog.show(MainActivity.this, "",
+                           "Ładowanie. Proszę czekać...", true);
+               }else{
+                   GlobalClass.showDialog(this, "Błędna baza", "Błędna baza ustawiona na użytkowniku.", "OK", new DialogInterface.OnClickListener() {
+                       @Override
+                       public void onClick(DialogInterface dialog, int which) {
+                       }
+                   });
+               }
            }
-           if (employee.getYdatabase().equalsIgnoreCase("erp")) {
-               intent.putExtra("database", "erp");
-               Log.d("database", "erp");
-           }
-           if (employee.getYdatabase().equalsIgnoreCase("demo")) {
-               intent.putExtra("database", "demo");
-               Log.d("database", "demo");
-           }
-           startActivity(intent);
-           LoadingDialog = ProgressDialog.show(MainActivity.this, "",
-                   "Ładowanie. Proszę czekać...", true);
        }
    }
 
     public final Employee FindEmployeeBySwd(DbContext ctx, String name){
         Employee employee = null;
         SelectionBuilder<Employee> employeeSB = SelectionBuilder.create(Employee.class);
-        Query<Employee> employeeQuery = ctx.createQuery(employeeSB.build());
         try {
             employeeSB.add(Conditions.eq(Product.META.swd.toString(), name));
             employee = QueryUtil.getFirst(ctx, employeeSB.build());

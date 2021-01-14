@@ -1,8 +1,10 @@
 package protec.pl.protecabasvol2;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Matrix;
 import android.graphics.PointF;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -18,7 +20,8 @@ public class DialogMap extends AppCompatActivity {
     public void setPassword(String password) {
         this.password = password;
     }
-    String database;
+    String database, userSwd;
+    Intent intent;
 
     Matrix matrix = new Matrix();
     Matrix savedMatrix = new Matrix();
@@ -27,17 +30,17 @@ public class DialogMap extends AppCompatActivity {
     static final int DRAG = 1;
     static final int ZOOM = 2;
     int mode = NONE;
-    // Remember some things for zooming
+    // Remember for zooming
     PointF start = new PointF();
     PointF mid = new PointF();
     float oldDist = 1f;
-    String savedItemClicked;
     ImageView view;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dialog_map);
+        Thread.setDefaultUncaughtExceptionHandler(new UnCaughtException(DialogMap.this, userSwd));
         view = (ImageView) findViewById(R.id.map_imageView);
         view.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         getElementsFromIntent();
@@ -45,21 +48,47 @@ public class DialogMap extends AppCompatActivity {
 
     public void onBackPressed(){
         super.onBackPressed();
-        setIntent("Menu");
+        new setIntentAsyncTask().execute("Menu");
+    }
+
+    private class setIntentAsyncTask extends AsyncTask<String, Void, String> {
+        ProgressDialog loadDialog = new ProgressDialog(DialogMap.this);
+
+        @Override
+        protected void onPreExecute(){
+            super.onPreExecute();
+            loadDialog = ProgressDialog.show(DialogMap.this, "",
+                    "Ładowanie. Proszę czekać...", true);
+        }
+
+        @Override
+        protected String doInBackground(String... strings) {
+            String destination = strings[0];
+            setIntent(destination);
+            return null;
+        }
+
+        protected void onPostExecute(String param){
+            startActivity(intent);
+//            if(loadDialog!= null){
+//                loadDialog.dismiss();
+//            }
+        }
     }
 
     public void getElementsFromIntent(){
         String password = (getIntent().getStringExtra("password"));
         database = (getIntent().getStringExtra("database"));
+        userSwd = getIntent().getStringExtra("userSwd");
         setPassword(password);
     }
 
     public void setIntent(String destination){
         try {
-            Intent intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
+            intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
             intent.putExtra("password", getPassword());
             intent.putExtra("database", database);
-            startActivity(intent);
+            intent.putExtra("userSwd", userSwd);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -111,7 +140,6 @@ public class DialogMap extends AppCompatActivity {
                 }
                 break;
         }
-
         view.setImageMatrix(matrix);
         return true;
     }

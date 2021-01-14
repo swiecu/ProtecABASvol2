@@ -8,8 +8,11 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.text.Html;
 import android.util.Log;
 import android.util.TypedValue;
@@ -64,26 +67,28 @@ public class WarehouseStockTransfer extends AppCompatActivity {
     public void setPassword(String password) {
         this.password = password;
     }
-    DbContext ctx ;
+    DbContext ctx, sessionCtx;
     ProgressDialog LoadingDialog;
-    String database, back_article, artIDNO, platzFrom, user_short_name = "" ;
-    BigDecimal qty;
+    String database, back_article, artIDNO, user_short_name = "", userSwd ;
     CheckBox lockIcon;
     TextView unit_textView, article_textInfo, location_textInfo, qty_textInfo;
     EditText article_textEdit, fromLocation_textEdit, toLocation_textEdit, qty_textEdit;
     GlobalClass myGlob;
     TableLayout stockLayout;
     Employee employee;
+    View save_btn;
+    Handler handler;
+    Intent intent;
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_warehouse_stock_transfer);
-
         getElementsFromIntent();
         getElementsById();
         setLook();
+        Thread.setDefaultUncaughtExceptionHandler(new UnCaughtException(WarehouseStockTransfer.this, userSwd));
 
         //jeśli wraca z ArticleNameList
         if(back_article != null) {
@@ -97,7 +102,7 @@ public class WarehouseStockTransfer extends AppCompatActivity {
 
     public void onBackPressed() {
         super.onBackPressed();
-        setIntent("Menu",  "");
+        new setIntentAsyncTask().execute("Menu", "");
     }
 
     // na wyjście z actvity
@@ -107,9 +112,19 @@ public class WarehouseStockTransfer extends AppCompatActivity {
         if (LoadingDialog != null) {
             LoadingDialog.dismiss();
         }
+        if(ctx != null) {
             ctx.close();
+        }
     }
 
+    @Override
+    protected void onPause(){  //closes ctx if the app is minimized
+        if(ctx != null) {
+            ctx.close();
+        }
+        super.onPause();
+    }
+    
     @SuppressLint("WrongViewCast")
     public void lockLocation(View view) {
         lockIcon = (CheckBox) view;
@@ -130,6 +145,7 @@ public class WarehouseStockTransfer extends AppCompatActivity {
         article_textInfo = (TextView) findViewById(R.id.article_textInfo);
         location_textInfo = (TextView) findViewById(R.id.locationFrom_textInfo);
         qty_textInfo = (TextView) findViewById(R.id.qty_textInfo);
+        save_btn = findViewById(R.id.save_btn);
     }
 
     public void setLook() {
@@ -137,13 +153,19 @@ public class WarehouseStockTransfer extends AppCompatActivity {
         fromLocation_textEdit.setInputType(0);
         toLocation_textEdit.setInputType(0);
         article_textEdit.setInputType(0);
-        //lockIcon.setVisibility(View.INVISIBLE);
+        save_btn.setEnabled(true);
 
-        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");   //?? potrzebne policy?
-        IsPrLoggedUser lu = ctx.openInfosystem(IsPrLoggedUser.class);
-        user_short_name = lu.getYuser();
-        employee = FindEmployeeBySwd(ctx, user_short_name);
-        ctx.close();
+        try {
+            ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
+            IsPrLoggedUser lu = ctx.openInfosystem(IsPrLoggedUser.class);
+            user_short_name = lu.getYuser();
+            employee = FindEmployeeBySwd(ctx, user_short_name);
+        }catch (DBRuntimeException e){
+            catchExceptionCases(e, "setLook", "", ctx);
+        }
+        if(ctx != null) {
+            ctx.close();
+        }
         if(!employee.getYapplocklocation().equals("")){
             lockIcon.setChecked(true);
             toLocation_textEdit.setHint(employee.getYapplocklocation());
@@ -153,7 +175,9 @@ public class WarehouseStockTransfer extends AppCompatActivity {
             toLocation_textEdit.setHint("Lokalizacja");
             lockIcon.setBackgroundResource(R.drawable.ic_new_lock_icon);
         }
-        ctx.close();
+        if(ctx != null) {
+            ctx.close();
+        }
     }
 
     public void getElementsFromIntent() {
@@ -161,16 +185,40 @@ public class WarehouseStockTransfer extends AppCompatActivity {
         setPassword(password);
         database = (getIntent().getStringExtra("database"));
         back_article = (getIntent().getStringExtra("art_idno"));
+        userSwd = getIntent().getStringExtra("userSwd");
+    }
+
+    private class setIntentAsyncTask extends AsyncTask<String, Void, String> {
+        private ProgressDialog loadDialog = new ProgressDialog(WarehouseStockTransfer.this);
+
+        @Override
+        protected void onPreExecute(){
+            super.onPreExecute();
+            loadDialog = ProgressDialog.show(WarehouseStockTransfer.this, "",
+                    "Ładowanie. Proszę czekać...", true);
+        }
+
+        @Override
+        protected String doInBackground(String... strings) {
+            String destination = strings[0];
+            String article = strings[1];
+            setIntent(destination, article);
+            return null;
+        }
+
+        protected void onPostExecute(String param){
+            startActivity(intent);
+        }
     }
 
     public void setIntent(String destination, String article) {
         try {
-            Intent intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
+            intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
             intent.putExtra("password", getPassword());
             intent.putExtra("database", database);
             intent.putExtra("content", article);
             intent.putExtra("destination", "WarehouseStockTransfer");
-            startActivity(intent);
+            intent.putExtra("userSwd", userSwd);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -223,11 +271,13 @@ public class WarehouseStockTransfer extends AppCompatActivity {
             if (requestCode == 101) {
                 if (resultCode == RESULT_OK) {
                     String content = result.getContents();
+                    save_btn.setEnabled(true);
                     searchArticle(content, ctx);
                 }
             }
             if (requestCode == 70) {
                 if (resultCode == RESULT_OK) {
+                    save_btn.setEnabled(true);
                     String content = result.getContents();
                     getLocation(content, ctx);
                 }
@@ -242,7 +292,7 @@ public class WarehouseStockTransfer extends AppCompatActivity {
         View dialogView = LayoutInflater.from(view.getContext()).inflate(R.layout.dialog_enter_article, viewGroup, false);
         enterArticleDialog.setView(dialogView);
         AlertDialog articleDialog = enterArticleDialog.create();
-        Button button_cancel = (Button)dialogView.findViewById(R.id.button_cancel);
+        Button button_cancel = (Button)dialogView.findViewById(R.id.button_indivStocktaking);
         button_cancel .setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -258,8 +308,8 @@ public class WarehouseStockTransfer extends AppCompatActivity {
                 if(article_name.matches("")){ //jeśli jest pusty
                     articleDialog.dismiss();
                     GlobalClass.showDialog(WarehouseStockTransfer.this, "Brak wpisanego artykułu!", "Proszę wprowadzić artykuł.", "OK",
-                            new DialogInterface.OnClickListener() {
-                                @Override public void onClick(DialogInterface dialog, int which) {} });
+                    new DialogInterface.OnClickListener() {
+                        @Override public void onClick(DialogInterface dialog, int which) {} });
                 }else {
                     articleDialog.dismiss();
                     LoadingDialog = ProgressDialog.show(WarehouseStockTransfer.this, "",
@@ -272,9 +322,10 @@ public class WarehouseStockTransfer extends AppCompatActivity {
         articleDialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
     }
 
-    //      SEARCH ARTICLE
+    //  SEARCH ARTICLE
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void searchArticle(String content, DbContext ctx) {
+        save_btn.setEnabled(true);
         myGlob = new GlobalClass(getApplicationContext());
         try{
             if(myGlob.FindProductByIdno(ctx, content) != null) {  //jeśli Find by IDNO nie równa się null
@@ -282,40 +333,75 @@ public class WarehouseStockTransfer extends AppCompatActivity {
                 if (LoadingDialog != null){
                     LoadingDialog.dismiss();
                 }
-                //jeśli nie znajdzie by IDNO
+            //jeśli nie znajdzie by IDNO
             }else if (myGlob.FindProductByDescr(ctx, content) != null){
-                ctx.close();
-                setIntent("ArticleNameList", content);
+                if(ctx != null) {
+                    Log.d("ctxClosed", "");
+                    ctx.close();
+                }
+                new setIntentAsyncTask().execute("ArticleNameList", content);
 
-                // jeśli nie znajdzie by DESCR
+            // jeśli nie znajdzie by DESCR
             } else if (myGlob.FindProductBySwd(ctx, content) != null) {   //jeśli Find by SWD nie równa się null
-                ctx.close();
-                setIntent("ArticleNameList", content);
+                if(ctx != null) {
+                    ctx.close();
+                }
+                new setIntentAsyncTask().execute("ArticleNameList", content);
 
-                // jeśli nie znajdzie ani tu ani tu
+            // jeśli nie znajdzie ani tu ani tu
             } else {
-                ctx.close();
-                LoadingDialog.dismiss();
+                if(ctx != null) {
+                    ctx.close();
+                }
+                if (LoadingDialog != null){
+                    LoadingDialog.dismiss();
+                }
                 GlobalClass.showDialog(WarehouseStockTransfer.this, "Brak artykułu!", "W bazie nie ma takeigo artykłu!", "OK",
-                        new DialogInterface.OnClickListener() {
-                            @Override public void onClick(DialogInterface dialog, int which) {} });
+                new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) {} });
             }
 
-        } catch (Exception e) {
+        } catch (DBRuntimeException e) {
             if(LoadingDialog != null) {
                 LoadingDialog.dismiss();
             }
-            if(e.getMessage().contains("failed")){
-                GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) { } });
-
-                //przekroczona liczba licencji
-            }else if(e.getMessage().contains("FULL")){
-                GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekroczona.", "OK",new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) { } });
-            }
+           catchExceptionCases(e, "searchArticle", content, ctx);
         }
     }
+
+    @SuppressLint("HandlerLeak")
+    public void catchExceptionCases (DBRuntimeException e, String function, String parameter, DbContext ctx){
+        if(e.getMessage().contains("failed")){
+            GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
+                @Override public void onClick(DialogInterface dialog, int which) { } });
+
+        }else if(e.getMessage().contains("FULL")){
+            LoadingDialog = ProgressDialog.show(WarehouseStockTransfer.this, "     Przekroczono liczbę licencji.",
+                    "Zwalniam miejsce w ABAS. Proszę czekać...", true);
+            new Thread(() -> {
+                sessionCtx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", "sesje", "mobileApp");  // hasło sesje aby mieć dostęp
+                GlobalClass.licenceCleaner(sessionCtx);
+                sessionCtx.close();
+                handler.sendEmptyMessage(0);
+            }).start();
+            handler = new Handler() {
+                @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+                public void handleMessage(Message msg) {
+                if (LoadingDialog != null){
+                    LoadingDialog.dismiss();
+                }
+                if (function.equals("searchArticle")) {
+                    searchArticle(parameter, ctx);
+                }else if(function.equals("save")){
+                    save_btn.callOnClick();
+                }else if(function.equals("setLook")){
+                    setLook();
+                }
+                }
+            };
+        }
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void drawTable(DbContext ctx, String content){
 
@@ -370,10 +456,11 @@ public class WarehouseStockTransfer extends AppCompatActivity {
                     }
 
                     // Lokalizacja
-                    place_textViewTable.setText(row.getLplatz().getSwd());
+                    String platzFrom = row.getLplatz().getSwd();
+                    place_textViewTable.setText(platzFrom);
                     place_textViewTable.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
                     place_textViewTable.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                    place_textViewTable.setPadding(5, 10, 5, 10);
+                    place_textViewTable.setPadding(5, 20, 5, 20);
                     place_textViewTable.setLayoutParams(cellParam);
                     //Artykuł
                     String art = FindProductByIdno(ctx, content).getSwd();
@@ -387,12 +474,12 @@ public class WarehouseStockTransfer extends AppCompatActivity {
                     article_textViewTable.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
                     article_textViewTable.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
                     article_textViewTable.setTypeface(Typeface.DEFAULT_BOLD);
-                    article_textViewTable.setPadding(5, 10, 5, 10);
+                    article_textViewTable.setPadding(5, 20, 5, 20);
                     article_textViewTable.setLayoutParams(cellParam);
                     //  Jednostka
                     unit_textViewTable.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
                     unit_textViewTable.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                    unit_textViewTable.setPadding(5, 10, 5, 10);
+                    unit_textViewTable.setPadding(5, 20, 5, 20);
                     unit_textViewTable.setLayoutParams(cellParam);
                     //  Ilość
                     BigDecimal qtyDecimal = row.getLemge().stripTrailingZeros();  //by po przecinku usunąć niepotrzebne zera
@@ -400,65 +487,51 @@ public class WarehouseStockTransfer extends AppCompatActivity {
                     qty_textViewTable.setText(Qty);
                     qty_textViewTable.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
                     qty_textViewTable.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                    qty_textViewTable.setPadding(5, 10, 5, 10);
+                    qty_textViewTable.setPadding(5, 20, 5, 20);
                     qty_textViewTable.setLayoutParams(cellParam);
 
-                    // Ilość i jednostka .setText na podstawie szt. kg kpl
-                    unit = row.getLeinheit().toString();
-                    if (unit.equals("(20)")) { // jeśli jednostka to szt.
-                        unit_textViewTable.setText("szt.");
+                    //Jednostka
+                    unit = row.getString("leinheit");
+                    if (unit.equals("(20)")) {
                         unit = "szt.";
-                    } else if (unit.equals("(7)")) { //jeśli jednostka to kg
-                        unit_textViewTable.setText("kg");
+                    } else if (unit.equals("(7)")) {
                         unit = "kg";
-                    } else if (unit.equals("(21)")) { // jeśli jednostka to kpl
-                        unit_textViewTable.setText("kpl");
+                    } else if (unit.equals("(21)")) {
                         unit = "kpl";
-                    } else if (unit.equals("(1)")) { // jeśli jednostka to kpl
-                        unit_textViewTable.setText("m");
+                    } else if (unit.equals("(1)")) {
                         unit = "m";
+                    }else if (unit.equals("(10)")) {
+                        unit = "tona";
+                    }else if (unit.equals("(28)")) {
+                        unit = "arkusz";
                     }
+                    unit_textViewTable.setText(unit);
+
                     tableRowStock.addView(article_textViewTable);
                     tableRowStock.addView(qty_textViewTable);
                     tableRowStock.addView(unit_textViewTable);
                     tableRowStock.addView(place_textViewTable);
                     stockLayout.addView(tableRowStock, j);
 
-                    String articleName = ((Product) row.getTartikel()).getDescr6();
                     String finalUnit = unit;
                     String finalQty = Qty;
                     tableRowStock.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
                             stockDialog.dismiss();
-                            platzFrom = row.getLplatz().getSwd();
-//                            AlertDialog.Builder choosedLocAlert = new AlertDialog.Builder(WarehouseStockTransfer.this);
-//                            String articleString = "<b>" + platzFrom + "</b><br/>" + finalQty + " " + finalUnit;
-//                            choosedLocAlert.setMessage(Html.fromHtml(articleString));
-//                            choosedLocAlert.setTitle("Wybrana lokalizacja: ");
-//                            choosedLocAlert.setPositiveButton("Wybierz lokalizację",
-//                                    new DialogInterface.OnClickListener() {
-//                                        public void onClick(DialogInterface dialog, int which) {
-//                                            //dismiss the dialog
-                                            fromLocation_textEdit.setText(platzFrom);
-                                            article_textEdit.setText(art);
-                                            unit_textView.setText(finalUnit);
-                                            qty_textEdit.setHint(finalQty);
-                                            unit_textView.setVisibility(View.VISIBLE);
-                                            article_textInfo.setVisibility(View.VISIBLE);
-                                            location_textInfo.setVisibility(View.VISIBLE);
-                                            qty_textInfo.setVisibility(View.VISIBLE);
-//                                        }
-//                                    });
-//                            choosedLocAlert.setNegativeButton("Anuluj",
-//                                    new DialogInterface.OnClickListener() {
-//                                        public void onClick(DialogInterface dialog, int which) {
-//                                            //dismiss the dialog
-//                                        }
-//                                    });
-//                            choosedLocAlert.setCancelable(true);
-//                            choosedLocAlert.create().show();
-                            ctx.close();
+                          //  String platzFrom = row.getLplatz().getSwd();
+                            fromLocation_textEdit.setText(platzFrom);
+                            article_textEdit.setText(art);
+                            unit_textView.setText(finalUnit);
+                            qty_textEdit.setHint(finalQty);
+                            qty_textEdit.setText("");
+                            unit_textView.setVisibility(View.VISIBLE);
+                            article_textInfo.setVisibility(View.VISIBLE);
+                            location_textInfo.setVisibility(View.VISIBLE);
+                            qty_textInfo.setVisibility(View.VISIBLE);
+                            if(ctx != null){
+                                ctx.close();
+                            }
                         }
                     });
                 }
@@ -468,7 +541,9 @@ public class WarehouseStockTransfer extends AppCompatActivity {
                     new DialogInterface.OnClickListener() {
                         @Override public void onClick(DialogInterface dialog, int which) {} });
             stockDialog.dismiss();
-            ctx.close();
+            if(ctx != null) {
+                ctx.close();
+            }
         }
     }
 
@@ -480,12 +555,14 @@ public class WarehouseStockTransfer extends AppCompatActivity {
             article_textInfo.setVisibility(View.VISIBLE);
             qty_textInfo.setVisibility(View.VISIBLE);
             location_textInfo.setVisibility(View.VISIBLE);
-            ctx.close();
+            if(ctx != null) {
+                ctx.close();
+            }
         }else {
             toLocation_textEdit.setText("");
             GlobalClass.showDialog(this, "Brak lokalizacji!", "Zeskanowana lokalizacja nie istnieje.", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override public void onClick(DialogInterface dialog, int which) {} });
+            new DialogInterface.OnClickListener() {
+                @Override public void onClick(DialogInterface dialog, int which) {} });
         }
     }
 
@@ -495,7 +572,9 @@ public class WarehouseStockTransfer extends AppCompatActivity {
             SelectionBuilder<LocationHeader> locationSB = SelectionBuilder.create(LocationHeader.class);
             locationSB.add(Conditions.eq(LocationHeader.META.swd, location));
             loc = QueryUtil.getFirst(ctx, locationSB.build());
-            ctx.close();
+            if(ctx != null) {
+                ctx.close();
+            }
         } catch (Exception e) {
             Log.d("error", e.getMessage());
         }
@@ -503,133 +582,137 @@ public class WarehouseStockTransfer extends AppCompatActivity {
     }
 
     public void save(View view) {
+        Boolean emptyFields = checkIfFieldsEmpty();
+        if(emptyFields == false){
+            save_btn.setEnabled(false);
+            EmployeeEditor employeeEditor = employee.createEditor();
+            try {
+                employeeEditor.open(EditorAction.UPDATE);
+
+                if(lockIcon.isChecked()){
+                    employeeEditor.setYapplocklocation(toLocation_textEdit.getText().toString());
+                }else{
+                    employeeEditor.setYapplocklocation("");
+                }
+                employeeEditor.commit();
+                if(employeeEditor.active()) {
+                    Log.d("ifactiveEditor", "");
+                    employeeEditor.abort();
+                    Log.d("abortEditor", "");
+                }
+                enterIntoAbas();
+                AlertDialog.Builder stockAddAlert = new AlertDialog.Builder(WarehouseStockTransfer.this);
+                stockAddAlert.setMessage("Produkt został pomyślnie przeksięgowany.");
+                stockAddAlert.setTitle("Zapisano!");
+                stockAddAlert.setPositiveButton("Dodaj nowy artykuł",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                //dismiss the dialog
+                                save_btn.setEnabled(true);
+                                article_textEdit.setText("");
+                                fromLocation_textEdit.setText("");
+                                qty_textEdit.setText("");
+                                qty_textEdit.setHint("Ilość");
+                                unit_textView.setVisibility(View.INVISIBLE);
+                                toLocation_textEdit.setText("");
+                                ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");   //?? potrzebne policy?
+                                employee = FindEmployeeBySwd(ctx, user_short_name);
+                                if (!employee.getYapplocklocation().equals("")) {
+                                    toLocation_textEdit.setHint(employee.getYapplocklocation());
+                                    lockIcon.setBackgroundResource(R.drawable.ic_new_lock_closed_icon);
+                                    lockIcon.setChecked(true);
+                                    if(ctx != null) {
+                                        ctx.close();
+                                    }
+                                }else{
+                                    toLocation_textEdit.setHint("Lokalizacja");
+                                    lockIcon.setBackgroundResource(R.drawable.ic_new_lock_icon);
+                                    lockIcon.setChecked(false);
+                                    if(ctx != null) {
+                                        ctx.close();
+                                    }
+                                }
+                            }
+                        });
+                stockAddAlert.setNegativeButton("Menu",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                //dismiss the dialog
+                                new setIntentAsyncTask().execute("Menu", "");
+                            }
+                        });
+                stockAddAlert.setCancelable(true);
+                stockAddAlert.create().show();
+
+            } catch (DBRuntimeException e) {
+                catchExceptionCases(e, "save", "", null);
+            } catch (CommandException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void enterIntoAbas() throws CommandException {
+        EditorCommand cmd = EditorCommandFactory.typedCmd("Lbuchung", "");
+        StockAdjustmentEditor stockAdjustmentEditor = (StockAdjustmentEditor) ctx.openEditor(cmd);
+        AbasDate today = new AbasDate();
+        stockAdjustmentEditor.setString("product", artIDNO);
+        stockAdjustmentEditor.setDocNo("MOBILE");
+        stockAdjustmentEditor.setDateDoc(today);
+        stockAdjustmentEditor.setEntType(EnumEntryTypeStockAdjustment.Transfer);
+        StockAdjustmentEditor.Row sadRow = stockAdjustmentEditor.table().getRow(1);
+        sadRow.setString("unitQty", qty_textEdit.getText().toString());
+        //sadRow.setUnitQty(new BigDecimal(qty_textEdit.getText().toString()));
+        sadRow.setString("location", fromLocation_textEdit.getText().toString());
+        sadRow.setString("location2", toLocation_textEdit.getText().toString());
+        stockAdjustmentEditor.commit();
+        if(stockAdjustmentEditor.active()) {
+            stockAdjustmentEditor.abort();
+        }
+        if(ctx != null) {
+            ctx.close();
+        }
+    }
+
+    public Boolean checkIfFieldsEmpty() {
+        Boolean emptyFields = false;
         if (article_textEdit.getText().toString().isEmpty()) {
+            emptyFields = true;
             GlobalClass.showDialog(this, "Brak artykułu!", "Proszę wprowadzić artykuł", "OK",
                     new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                        }
+                        @Override  public void onClick(DialogInterface dialog, int which) {  }
                     });
         } else if (toLocation_textEdit.getText().toString().isEmpty()) {
             if (toLocation_textEdit.getHint().toString().equals("Lokalizacja")) {
+                emptyFields = true;
                 GlobalClass.showDialog(this, "Brak lokalizacji!", "Proszę wprowadzić lokalizację.", "OK",
                         new DialogInterface.OnClickListener() {@Override public void onClick(DialogInterface dialog, int which) {}});
             } else{
                 toLocation_textEdit.setText(toLocation_textEdit.getHint().toString());
-
                 if (qty_textEdit.getText().toString().isEmpty()) {
                     qty_textEdit.setText(qty_textEdit.getHint().toString());
                 }
                 if (new BigDecimal(qty_textEdit.getText().toString()).compareTo(new BigDecimal(qty_textEdit.getHint().toString())) == 1) {
+                    emptyFields = true;
                     GlobalClass.showDialog(this, "Wykroczenie poza stan!", "Wpisana ilość przekracza ilość dostępną na stanie.", "OK",
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                }
-                            });
-                }else {
-                    sendToDatabase();
+                    new DialogInterface.OnClickListener() {
+                        @Override  public void onClick(DialogInterface dialog, int which) { }
+                    });
                 }
             }
         }else {
             if (qty_textEdit.getText().toString().isEmpty()) {
                 qty_textEdit.setText(qty_textEdit.getHint().toString());
             }
-            if (new BigDecimal(qty_textEdit.getText().toString()).compareTo(new BigDecimal(qty_textEdit.getHint().toString())) == 1) {
+            if (new BigDecimal(qty_textEdit.getText().toString()).compareTo(new BigDecimal(qty_textEdit.getHint().toString())) == 1) {  // jak dalej będą błędy to zamienić "," na "."
+                emptyFields = true;
                 GlobalClass.showDialog(this, "Wykroczenie poza stan!", "Wpisana ilość przekracza ilość dostępną na stanie.", "OK",
                         new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                            }
+                            @Override  public void onClick(DialogInterface dialog, int which) { }
                         });
-            } else {
-                sendToDatabase();
             }
         }
-    }
-
-    public void sendToDatabase(){
-        EmployeeEditor employeeEditor = employee.createEditor();
-        try {
-            employeeEditor.open(EditorAction.UPDATE);
-            if(lockIcon.isChecked()){
-                employeeEditor.setYapplocklocation(toLocation_textEdit.getText().toString());
-            }else{
-                employeeEditor.setYapplocklocation("");
-            }
-            employeeEditor.commit();
-            if(employeeEditor.active()) {
-                employeeEditor.abort();
-            }
-            EditorCommand cmd = EditorCommandFactory.typedCmd("Lbuchung", "");
-            StockAdjustmentEditor stockAdjustmentEditor = (StockAdjustmentEditor) ctx.openEditor(cmd);
-            AbasDate today = new AbasDate();
-            stockAdjustmentEditor.setString("product", artIDNO);
-            stockAdjustmentEditor.setDocNo("MOBILE");
-            stockAdjustmentEditor.setDateDoc(today);
-            stockAdjustmentEditor.setEntType(EnumEntryTypeStockAdjustment.Transfer);
-            StockAdjustmentEditor.Row sadRow = stockAdjustmentEditor.table().getRow(1);
-            sadRow.setString("unitQty", qty_textEdit.getText().toString());
-            //sadRow.setUnitQty(new BigDecimal(qty_textEdit.getText().toString()));
-            sadRow.setString("location", fromLocation_textEdit.getText().toString());
-            sadRow.setString("location2", toLocation_textEdit.getText().toString());
-            stockAdjustmentEditor.commit();
-            if(stockAdjustmentEditor.active()) {
-                stockAdjustmentEditor.abort();
-            }
-            ctx.close();
-            AlertDialog.Builder stockAddAlert = new AlertDialog.Builder(WarehouseStockTransfer.this);
-            stockAddAlert.setMessage("Produkt został pomyślnie przeksięgowany.");
-            stockAddAlert.setTitle("Zapisano!");
-            stockAddAlert.setPositiveButton("Dodaj nowy artykuł",
-                    new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            //dismiss the dialog
-                            article_textEdit.setText("");
-                            fromLocation_textEdit.setText("");
-                            qty_textEdit.setText("");
-                            qty_textEdit.setHint("Ilość");
-                            unit_textView.setVisibility(View.INVISIBLE);
-                            toLocation_textEdit.setText("");
-                            ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");   //?? potrzebne policy?
-                            employee = FindEmployeeBySwd(ctx, user_short_name);
-                            if (!employee.getYapplocklocation().equals("")) {
-                                toLocation_textEdit.setHint(employee.getYapplocklocation());
-                                lockIcon.setBackgroundResource(R.drawable.ic_new_lock_closed_icon);
-                                lockIcon.setChecked(true);
-                                ctx.close();
-                            } else {
-                                toLocation_textEdit.setHint("Lokalizacja");
-                                lockIcon.setBackgroundResource(R.drawable.ic_new_lock_icon);
-                                lockIcon.setChecked(false);
-                                ctx.close();
-                            }
-
-                        }
-                    });
-            stockAddAlert.setNegativeButton("Menu",
-                    new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            //dismiss the dialog
-                            setIntent("Menu", "");
-                        }
-                    });
-            stockAddAlert.setCancelable(true);
-            stockAddAlert.create().show();
-
-        } catch (DBRuntimeException e) {
-            if(e.getMessage().contains("failed")){
-                GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) { } });
-
-                //przekroczona liczba licencji
-            }else if(e.getMessage().contains("FULL")){
-                GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekroczona.", "OK",new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) { } });
-            }
-        } catch (CommandException e) {
-            e.printStackTrace();
-        }
+        return emptyFields;
     }
 
     public final Employee FindEmployeeBySwd(DbContext ctx, String name){
@@ -640,7 +723,9 @@ public class WarehouseStockTransfer extends AppCompatActivity {
             employee = QueryUtil.getFirst(ctx, employeeSB.build());
         } catch (Exception e) {
         }
-        ctx.close();
+        if(ctx != null) {
+            ctx.close();
+        }
         return employee;
     }
 }

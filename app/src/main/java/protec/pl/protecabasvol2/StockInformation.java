@@ -1,5 +1,6 @@
 package protec.pl.protecabasvol2;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -7,8 +8,11 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.text.Html;
 import android.util.Log;
 import android.util.TypedValue;
@@ -30,6 +34,7 @@ import com.google.zxing.integration.android.IntentResult;
 import java.math.BigDecimal;
 
 import de.abas.erp.db.DbContext;
+import de.abas.erp.db.exception.DBRuntimeException;
 import de.abas.erp.db.infosystem.standard.la.StockLevelInformation;
 import de.abas.erp.db.schema.part.Product;
 import de.abas.erp.db.schema.warehouse.WarehouseGroup;
@@ -45,13 +50,15 @@ public class StockInformation extends Activity {
     public void setPassword(String password) {
         this.password = password;
     }
-    DbContext ctx;
+    DbContext ctx, sessionCtx;
     ProgressDialog LoadingDialog;
     TableLayout layout;
     TextView article_name, suma;
     TableRow no_art;
     GlobalClass globFunctions;  //zadeklarowanie globalnej klasy
-    String database, back_article;
+    String database, back_article, userSwd;
+    Handler handler;
+    Intent intent;
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
@@ -61,6 +68,7 @@ public class StockInformation extends Activity {
         getElementsById();
         setLook();
         getElementsFromIntent();
+        Thread.setDefaultUncaughtExceptionHandler(new UnCaughtException(StockInformation.this, userSwd));
         setPassword(password);
 
         //jeśli wraca z ArticleNameList
@@ -84,25 +92,59 @@ public class StockInformation extends Activity {
     @Override
     public void onBackPressed(){
         super.onBackPressed();
-        setIntent("Menu", "");
+        new setIntentAsyncTask().execute("Menu", "");
+    }
+
+    @Override
+    protected void onPause(){  //closes ctx if the app is minimized
+        if(ctx != null) {
+            ctx.close();
+        }
+        super.onPause();
+    }
+
+    private class setIntentAsyncTask extends AsyncTask<String, Void, String> {
+        private ProgressDialog loadDialog = new ProgressDialog(StockInformation.this);
+
+        @Override
+        protected void onPreExecute(){
+            super.onPreExecute();
+            loadDialog = ProgressDialog.show(StockInformation.this, "",
+                    "Ładowanie. Proszę czekać...", true);
+        }
+
+        @Override
+        protected String doInBackground(String... strings) {
+            String destination = strings[0];
+            String content = strings[1];
+            setIntent(destination, content);
+            return null;
+        }
+
+        protected void onPostExecute(String param){
+            startActivity(intent);
+//            if(loadDialog!= null){
+//                loadDialog.dismiss();
+//            }
+        }
     }
 
     public void setIntent(String destination, String content){
         try {
-            Intent intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
+            intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
             intent.putExtra("password", getPassword());
             intent.putExtra("database", database);
             intent.putExtra("content", content);
             intent.putExtra("destination", "StockInformation");
-            startActivity(intent);
+            intent.putExtra("userSwd", userSwd);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
     public void getElementsById(){
-        layout = (TableLayout) findViewById(R.id.articleNameTable); //tabelka
+        layout = (TableLayout) findViewById(R.id.articleNameTable);
         article_name = (TextView) findViewById(R.id.article_name); //nazwa artkułu nad tabelką
-        suma = (TextView) findViewById(R.id.suma); //suma ilości pod tabelką
+        suma = (TextView) findViewById(R.id.suma);
         no_art = (TableRow) findViewById(R.id.no_articles); //table row "Brak artykułów"
     }
 
@@ -116,7 +158,9 @@ public class StockInformation extends Activity {
         password = (getIntent().getStringExtra("password"));
         back_article = (getIntent().getStringExtra("art_idno"));
         database = (getIntent().getStringExtra("database"));
+        userSwd = getIntent().getStringExtra("userSwd");
     }
+
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void checkStock(View view){
         try{
@@ -133,6 +177,7 @@ public class StockInformation extends Activity {
             startActivity(marketIntent);
         }
     }
+
     // ON ACTIVITY RESULT
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -157,7 +202,7 @@ public class StockInformation extends Activity {
         View dialogView = LayoutInflater.from(view.getContext()).inflate(R.layout.dialog_enter_article, viewGroup, false);
         enterArticleDialog.setView(dialogView);
         AlertDialog articleDialog = enterArticleDialog.create();
-        Button button_cancel = (Button)dialogView.findViewById(R.id.button_cancel);
+        Button button_cancel = (Button)dialogView.findViewById(R.id.button_indivStocktaking);
         button_cancel .setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -200,35 +245,65 @@ public class StockInformation extends Activity {
 
             if(globFunctions.FindProductByIdno(ctx, content) != null) {  //jeśli Find by IDNO nie równa się null
                 drawTable(ctx, content);
-                LoadingDialog.dismiss();
+                if (LoadingDialog != null){
+                    LoadingDialog.dismiss();
+                }
                 //jeśli nie znajdzie by IDNO
             }else if (globFunctions.FindProductByDescr(ctx, content) != null){
-                setIntent("ArticleNameList", content);
+                if (LoadingDialog != null){
+                    LoadingDialog.dismiss();
+                }
+                new setIntentAsyncTask().execute("ArticleNameList", content);
 
                 // jeśli nie znajdzie by DESCR
             } else if (globFunctions.FindProductBySwd(ctx, content) != null) {   //jeśli Find by SWD nie równa się null
-                setIntent("ArticleNameList", content);
+                if (LoadingDialog != null){
+                    LoadingDialog.dismiss();
+                }
+                new setIntentAsyncTask().execute("ArticleNameList", content);
 
                 // jeśli nie znajdzie ani tu ani tu
             } else {
-                LoadingDialog.dismiss();
+                if (LoadingDialog != null){
+                    LoadingDialog.dismiss();
+                }
                 no_art.setVisibility(View.VISIBLE);
                 GlobalClass.showDialog(this, "Brak artykułu!", "W bazie nie ma takiego artykłu!", "OK",
                     new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {} });
             }
             ctx.close();
-        } catch (Exception e) {
-            if(e.getMessage().contains("failed")){
-                GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) { } });
+        } catch (DBRuntimeException e) {
+            catchExceptionCases(e, "searchArticle", content);
+        }
+    }
 
-                //przekroczona liczba licencji
-            }else if(e.getMessage().contains("FULL")){
-                GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekroczona.", "OK",new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) { } });
-            }
-            LoadingDialog.dismiss();
+    @SuppressLint("HandlerLeak")
+    public void catchExceptionCases (DBRuntimeException e, String function, String parameter){
+        if(e.getMessage().contains("failed")){
+            GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
+                @Override public void onClick(DialogInterface dialog, int which) { } });
+        }else if(e.getMessage().contains("FULL")){
+            LoadingDialog = ProgressDialog.show(StockInformation.this, "     Przekroczono liczbę licencji.",
+                    "Zwalniam miejsce w ABAS. Proszę czekać...", true);
+            new Thread(() -> {
+                sessionCtx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", "sesje", "mobileApp");  // hasło sesje aby mieć dostęp
+                GlobalClass.licenceCleaner(sessionCtx);
+                sessionCtx.close();
+                handler.sendEmptyMessage(0);
+            }).start();
+            handler = new Handler() {
+                @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+                public void handleMessage(Message msg) {
+                LoadingDialog.dismiss();
+                if(function.equals("searchArticle")) {
+                    searchArticle(parameter);
+                }
+                }
+            };
+        }
+        if(LoadingDialog != null){
+        LoadingDialog.dismiss();
         }
     }
 
@@ -260,7 +335,7 @@ public class StockInformation extends Activity {
                 TextView qty_textViewTable = new TextView(this);
                 TextView unit_textViewTable = new TextView(this);
                 TextView id_textViewTable = new TextView(this);
-                String Unit;
+                String unit;
 
                 Integer j = layout.getChildCount();
                 j = j - 1; //  table header nie ma być brany pod uwagę więc -1
@@ -282,13 +357,13 @@ public class StockInformation extends Activity {
                 id_textViewTable.setText((j).toString());
                 id_textViewTable.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
                 id_textViewTable.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                id_textViewTable.setPadding(5, 10, 5, 10);
+                id_textViewTable.setPadding(5, 20, 5, 20);
                 id_textViewTable.setLayoutParams(cellParam);
                 // Lokalizacja
                 place_textViewTable.setText(row.getLplatz().getSwd());
                 place_textViewTable.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
                 place_textViewTable.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                place_textViewTable.setPadding(5, 10, 5, 10);
+                place_textViewTable.setPadding(5, 20, 5, 20);
                 place_textViewTable.setLayoutParams(cellParam);
                 //Artykuł
                 if (j == 1) {
@@ -297,36 +372,36 @@ public class StockInformation extends Activity {
                 article_textViewTable.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
                 article_textViewTable.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
                 article_textViewTable.setTypeface(Typeface.DEFAULT_BOLD);
-                article_textViewTable.setPadding(5, 10, 5, 10);
+                article_textViewTable.setPadding(5, 20, 5, 20);
                 article_textViewTable.setLayoutParams(cellParam);
                 //  Ilość
                 String Qty = row.getLemge().stripTrailingZeros().toPlainString();
                 qty_textViewTable.setText(Qty);
                 qty_textViewTable.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
                 qty_textViewTable.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                qty_textViewTable.setPadding(5, 10, 5, 10);
+                qty_textViewTable.setPadding(5, 20, 5, 20);
                 qty_textViewTable.setLayoutParams(cellParam);
                 //  Jednostka
                 unit_textViewTable.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
                 unit_textViewTable.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                unit_textViewTable.setPadding(5, 10, 5, 10);
+                unit_textViewTable.setPadding(5, 20, 5, 20);
                 unit_textViewTable.setLayoutParams(cellParam);
                 // Ilość i jednostka .setText na podstawie szt. kg kpl
-
-                Unit = row.getLeinheit().toString();
-                if (Unit.equals("(20)")) { // jeśli jednostka to szt.
-                    unit_textViewTable.setText("szt.");
-                    Unit = "szt.";
-                } else if (Unit.equals("(7)")) { //jeśli jednostka to kg
-                    unit_textViewTable.setText("kg");
-                    Unit = "kg";
-                } else if (Unit.equals("(21)")) { // jeśli jednostka to kpl
-                    unit_textViewTable.setText("kpl");
-                    Unit = "kpl";
-                }else if (Unit.equals("(1)")) { // jeśli jednostka to m
-                    unit_textViewTable.setText("m");
-                    Unit = "m";
+                    unit = row.getString("leinheit");
+                if (unit.equals("(20)")) {
+                    unit = "szt.";
+                } else if (unit.equals("(7)")) {
+                    unit = "kg";
+                } else if (unit.equals("(21)")) {
+                    unit = "kpl";
+                } else if (unit.equals("(1)")) {
+                    unit = "m";
+                }else if (unit.equals("(10)")) {
+                    unit = "tona";
+                }else if (unit.equals("(28)")) {
+                    unit = "arkusz";
                 }
+                unit_textViewTable.setText(unit);
 
                 tableRow.addView(id_textViewTable);
                 tableRow.addView(article_textViewTable);
@@ -337,7 +412,7 @@ public class StockInformation extends Activity {
 
                 sum = sum.add(new BigDecimal(Qty));
                 String articleName = ((Product) row.getTartikel()).getDescr6();
-                String sumString = sumString = "Suma: <b> " + sum + "<b> " + Unit;
+                String sumString = sumString = "Suma: <b> " + sum + "<b> " + unit;
                 article_name.setText(Html.fromHtml("Nazwa: <b>" + articleName));
                 article_name.setVisibility(View.VISIBLE);
 

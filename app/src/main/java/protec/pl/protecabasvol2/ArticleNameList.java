@@ -1,11 +1,16 @@
 package protec.pl.protecabasvol2;
 
+import android.annotation.SuppressLint;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
@@ -16,11 +21,15 @@ import android.widget.TextView;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 
 import de.abas.erp.db.DbContext;
 import de.abas.erp.db.Query;
 import de.abas.erp.db.exception.DBRuntimeException;
+import de.abas.erp.db.infosystem.custom.owpl.IsPrLoggedUser;
 import de.abas.erp.db.schema.part.Product;
 import de.abas.erp.db.selection.Conditions;
 import de.abas.erp.db.selection.SelectionBuilder;
@@ -34,10 +43,15 @@ public class ArticleNameList extends AppCompatActivity {
     public void setPassword(String password) {
         this.password = password;
     }
-    DbContext ctx;
-    String destination, database, name, positiveButtonText, stockID;
+    DbContext ctx, sessionCtx;
+    String destination, database, name, proof_Nr, stockID, vendor, purchaseOrder, userSwd;
     TextView suma, article_name;
     TableRow no_art;
+    HashMap<String, String> tableRowsHM;
+    ProgressDialog LoadingDialog;
+    Handler handler;
+    Method method;
+    Intent intent;
 
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -45,13 +59,11 @@ public class ArticleNameList extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_article_name_list);
-       // LoadingDialog = ProgressDialog.show(ArticleNameList.this, "",
-            //    "Ładowanie. Proszę czekać...", true);
         getElementsFromIntent();
         getElementsById();
-        doRestDescr();
-        doRestSwd();
-       // LoadingDialog.dismiss();
+        Thread.setDefaultUncaughtExceptionHandler(new UnCaughtException(ArticleNameList.this, userSwd));
+        drawTableByDescr();
+        drawTableBySwd();
     }
     //na cofnięcie Back do tyłu
     public void onBackPressed() {
@@ -65,16 +77,38 @@ public class ArticleNameList extends AppCompatActivity {
         if (suma != null) {
             suma.setVisibility(View.GONE);
         }
-        setIntent(""); //cofnij do StockInformation
+        if (LoadingDialog != null) {
+            LoadingDialog.dismiss();
+        }
+        new setIntentAsyncTask().execute("");// cofnij do activity
+    }
+
+    @Override
+    protected void onPause(){  //closes ctx if the app is minimized
+        if(ctx != null) {
+            ctx.close();
+        }
+        super.onPause();
     }
 
     public void getElementsFromIntent() {
         password = (getIntent().getStringExtra("password"));
         setPassword(password);
+        userSwd = getIntent().getStringExtra("userSwd");
         destination = getIntent().getStringExtra("destination");
         database = (getIntent().getStringExtra("database"));
         name = (getIntent().getStringExtra("content"));
         stockID = (getIntent().getStringExtra("stockID"));
+        vendor = (getIntent().getStringExtra("vendor"));
+        proof_Nr = (getIntent().getStringExtra("proof_Nr"));
+        purchaseOrder = (getIntent().getStringExtra("purchaseOrder"));
+        tableRowsHM = (HashMap<String, String>)getIntent().getSerializableExtra("tableRowsHM");
+        if(tableRowsHM != null) {
+            for (Map.Entry<String, String> entryTableRowsHM : tableRowsHM.entrySet()) {
+                Log.d("productKey", entryTableRowsHM.getKey());
+                Log.d("qtyValue", entryTableRowsHM.getValue());
+            }
+        }
     }
 
     public void getElementsById(){
@@ -85,19 +119,48 @@ public class ArticleNameList extends AppCompatActivity {
 
     public void setIntent(String finalArticleIDNO) {
         try {
-            Intent intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
+            intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
             intent.putExtra("password", getPassword());
             intent.putExtra("database", database);
             intent.putExtra("art_idno", finalArticleIDNO);
             intent.putExtra("stockID", stockID);
-            startActivity(intent);
+            intent.putExtra("vendor", vendor);
+            intent.putExtra("tableRowsHM", tableRowsHM);
+            intent.putExtra("proof_Nr", proof_Nr);
+            intent.putExtra("purchaseOrder", purchaseOrder);
+            intent.putExtra("userSwd", userSwd);
+            // startActivity(intent);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
+    private class setIntentAsyncTask extends AsyncTask<String, Void, String> {
+        private ProgressDialog loadDialog = new ProgressDialog(ArticleNameList.this);
+
+        @Override
+        protected void onPreExecute(){
+            super.onPreExecute();
+            loadDialog = new ProgressDialog(ArticleNameList.this, ProgressDialog.THEME_DEVICE_DEFAULT_LIGHT);
+            loadDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            loadDialog.setTitle("");
+            loadDialog.setMessage("Ładowanie. Proszę czekać...");
+            loadDialog.show();
+        }
+
+        @Override
+        protected String doInBackground(String... strings) {
+            String content = strings[0];
+            setIntent(content);
+            return null;
+        }
+
+        protected void onPostExecute(String param){
+            startActivity(intent);
+        }
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
-    public void doRestDescr(){
+    public void drawTableByDescr(){
         try{
             ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
             SelectionBuilder<Product> productSB = SelectionBuilder.create(Product.class);
@@ -112,26 +175,18 @@ public class ArticleNameList extends AppCompatActivity {
                     drawTable(product);
                 }
             }
+            ctx.close();
         }catch (DBRuntimeException e) {
-            if(e.getMessage().contains("failed")){
-                GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) { } });
-
-                //przekroczona liczba licencji
-            }else if(e.getMessage().contains("FULL")){
-                GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekroczona.", "OK",new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) { } });
-            }
+            catchExceptionCases(e, "drawTableByDescr");
         }
-        ctx.close();
     }
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
-    public void doRestSwd() {
-        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
-        SelectionBuilder<Product> productSB = SelectionBuilder.create(Product.class);
-        Query<Product> productQuery = ctx.createQuery(productSB.build());
 
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+    public void drawTableBySwd() {
         try {
+            ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
+            SelectionBuilder<Product> productSB = SelectionBuilder.create(Product.class);
+            Query<Product> productQuery = ctx.createQuery(productSB.build());
             productSB.add(Conditions.matchIgCase(Product.META.swd.toString(), name));
             for (Product product : productQuery) {
                 drawTable(product);
@@ -139,18 +194,42 @@ public class ArticleNameList extends AppCompatActivity {
             ctx.close();
         }catch (DBRuntimeException e) {
             Log.d("error", e.getMessage());
-            if(e.getMessage().contains("failed")){
-                GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) { } });
-
-                //przekroczona liczba licencji
-            }else if(e.getMessage().contains("FULL")){
-                GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekroczona.", "OK",new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) { } });
-            }
+            catchExceptionCases(e, "drawTableBySwd");
         }
-
     }
+
+    @SuppressLint("HandlerLeak")
+    public void catchExceptionCases (DBRuntimeException e, String function){
+        if(e.getMessage().contains("failed")){
+            GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
+                @Override public void onClick(DialogInterface dialog, int which) { } });
+        }else if(e.getMessage().contains("FULL")){
+            LoadingDialog = new ProgressDialog(ArticleNameList.this, ProgressDialog.THEME_DEVICE_DEFAULT_LIGHT);
+            LoadingDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            LoadingDialog.setTitle("     Przekroczono liczbę licencji.");
+            LoadingDialog.setMessage("Zwalniam miejsce w ABAS. Proszę czekać...");
+            LoadingDialog.show();
+            new Thread(() -> {
+                sessionCtx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", "sesje", "mobileApp");  // hasło sesje aby mieć dostęp
+                GlobalClass.licenceCleaner(sessionCtx);
+                sessionCtx.close();
+                handler.sendEmptyMessage(0);
+            }).start();
+            handler = new Handler() {
+                @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+                public void handleMessage(Message msg) {
+                    LoadingDialog.dismiss();
+                    try {
+                        method = Class.forName("protec.pl.protecabasvol2.ArticleNameList").getMethod(function, String.class);
+                        method.invoke("protec.pl.protecabasvol2.ArticleNameList", function);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            };
+        }
+    }
+
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void drawTable(Product product){
@@ -189,7 +268,7 @@ public class ArticleNameList extends AppCompatActivity {
         id.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
         id.setTextColor(Color.parseColor("#808080"));
         id.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12f);
-        id.setPadding(5, 10, 5, 10);
+        id.setPadding(5, 20, 5, 20);
         id.setLayoutParams(params);
 
         articleView.setText(article);
@@ -197,14 +276,14 @@ public class ArticleNameList extends AppCompatActivity {
         articleView.setTextColor(Color.parseColor("#808080"));
         articleView.setTypeface(Typeface.DEFAULT_BOLD);
         articleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12f);
-        articleView.setPadding(5, 10, 5, 10);
+        articleView.setPadding(5, 20, 5, 20);
         articleView.setLayoutParams(params);
 
         article_nameView.setText(article_name);
         article_nameView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
         article_nameView.setTextColor(Color.parseColor("#808080"));
         article_nameView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12f);
-        article_nameView.setPadding(5, 10, 5, 10);
+        article_nameView.setPadding(5, 20, 5, 20);
         article_nameView.setLayoutParams(params);
 
         tableRowList.addView(id);
@@ -212,40 +291,20 @@ public class ArticleNameList extends AppCompatActivity {
         tableRowList.addView(article_nameView);
         layoutList.addView(tableRowList, j);
 
-        String finalArticle = article;
-        String finalArticle_name = article_name;
         String finalArticleIDNO = articleIDNO;
         tableRowList.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 ctx.close();
-//                if(destination.equals("Stocktaking")){
-//                    positiveButtonText = "Wybierz";
-//                }else{
-//                    positiveButtonText = "Sprawdź stan";
-//                }
-//
-//                AlertDialog.Builder dlgAlert = new AlertDialog.Builder(ArticleNameList.this, R.style.Theme_AppCompat_Light_Dialog_Alert);
-//                String articleString = "<b>" + finalArticle + "</b><br/>" + finalArticle_name;
-//                dlgAlert.setMessage(Html.fromHtml(articleString));
-//                dlgAlert.setTitle("Wybrany artykuł: ");
-//                dlgAlert.setPositiveButton(positiveButtonText,
-//                        new DialogInterface.OnClickListener() {
-//                            public void onClick(DialogInterface dialog, int which) {
-//                                //dismiss the dialog
-                setIntent(finalArticleIDNO);
-//                            }
-//                        });
-//                dlgAlert.setNegativeButton("Anuluj",
-//                        new DialogInterface.OnClickListener() {
-//                            public void onClick(DialogInterface dialog, int which) {
-//                                //dismiss the dialog
-//                            }
-//                        });
-//                dlgAlert.setCancelable(true);
-//                dlgAlert.create().show();
+                new setIntentAsyncTask().execute(finalArticleIDNO);
             }
         });
-
+    }
+    public String getEmployeeSwd(){
+        DbContext ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", getPassword(), "mobileApp");
+        IsPrLoggedUser lu = ctx.openInfosystem(IsPrLoggedUser.class);
+        String userSwd = lu.getYuser();
+        ctx.close();
+        return userSwd;
     }
 }

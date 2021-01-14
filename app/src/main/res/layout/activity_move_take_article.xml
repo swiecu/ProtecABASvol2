@@ -105,13 +105,13 @@
         app:layout_constraintTop_toBottomOf="@+id/enterArticle_btn" />
 
     <Button
-        android:id="@+id/leave_btn"
+        android:id="@+id/take_btn"
         android:layout_width="110dp"
         android:layout_height="50dp"
         android:layout_marginTop="40dp"
         android:layout_marginBottom="76dp"
         android:background="@color/colorProtec"
-        android:onClick="takeArticles"
+        android:onClick="save"
         android:text="@string/move_to"
         android:textColor="#FFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -128,7 +128,7 @@
         android:layout_marginEnd="12dp"
         android:layout_marginRight="12dp"
         android:background="@color/colorBlue"
-        android:onClick="checkStock"
+        android:onClick="scanArticle"
         android:text="@string/qr_btn"
         android:textColor="#FFFFFF"
         app:layout_constraintEnd_toEndOf="parent"

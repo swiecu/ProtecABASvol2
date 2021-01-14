@@ -88,6 +88,7 @@
     <string name="save">Zapisz</string>
     <string name="remember_loc">Zapamiętaj</string>
     <string name="scan_committee">Zeskanuj ID komisji</string>
+    <string name="stocktakingIndividual">IW</string>
     <string name="info">Info:</string>
     <string name="info2">Wiadomość</string>
 
@@ -126,6 +127,21 @@
     <string name="machineGroup">Gr. Maszyn</string>
     <string name="employeeQuality">Pracownik</string>
 
+    <string name="income">Income- dostawa</string>
+    <string name="plannedDeliveryToday">Zaplanowane dostawy na dziś</string>
+    <string name="delivery">Nazwa Dostawcy</string>
+
+    <string name="ordersToDeliver">Wszystkie zamówienia do dostarczenia dzisiaj od dostawcy</string>
+    <string name="qtyToDeliver">Il. do dostarcz.</string>
+    <string name="deliveredQty">Il. dostarcz.</string>
+    <string name="addArticle">Dodaj artykuł</string>
+    <string name="sendEmailToQC">Powiadom KJ</string>
+    <string name="createPZ">Stwórz PZ</string>
+
+    <string name="addNewProduct">Dodaj nowy artykuł</string>
+    <string name="deliverQty">Ilość dostarczona:</string>
+    <string name="add">Dodaj</string>
+    <string name="proofNr">Nr Dowodu:</string>
 
 
 </resources>

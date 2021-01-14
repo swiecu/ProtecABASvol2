@@ -22,6 +22,8 @@
 
     <style name="Dialog" parent="Theme.AppCompat.Light.Dialog.Alert">
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:textColorHint">@color/hintColor</item>
+        <item name="backgroundTint">@color/tintColor</item>
     </style>
 
 </resources>

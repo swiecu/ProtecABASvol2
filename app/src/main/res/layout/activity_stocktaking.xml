@@ -179,11 +179,11 @@
         tools:visibility="visible" />
 
     <Button
-        android:id="@+id/leave_btn"
+        android:id="@+id/save_btn"
         android:layout_width="110dp"
         android:layout_height="50dp"
         android:background="@color/colorProtec"
-        android:onClick="saveStockEntry"
+        android:onClick="save"
         android:text="@string/save"
         android:textColor="#FFFFFF"
         app:layout_constraintBaseline_toBaselineOf="@+id/button2"

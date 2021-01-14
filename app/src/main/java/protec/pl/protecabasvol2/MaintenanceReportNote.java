@@ -1,13 +1,16 @@
 package protec.pl.protecabasvol2;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
+import android.os.Handler;
+import android.os.Message;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -24,8 +27,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import de.abas.erp.db.DbContext;
+import de.abas.erp.db.EditorAction;
+import de.abas.erp.db.exception.CommandException;
+import de.abas.erp.db.exception.DBRuntimeException;
 import de.abas.erp.db.infosystem.custom.owpl.IsMailSender;
 import de.abas.erp.db.schema.capacity.WorkCenter;
+import de.abas.erp.db.schema.capacity.WorkCenterEditor;
 import de.abas.erp.db.schema.custom.protec.AppConfigValues;
 import de.abas.erp.db.selection.Conditions;
 import de.abas.erp.db.selection.SelectionBuilder;
@@ -36,24 +43,30 @@ public class MaintenanceReportNote extends AppCompatActivity {
     private String password;
     public String getPassword() { return password;}
     public void setPassword(String password) {this.password = password; }
-    String database, user;
+    String database, user, userSwd;
     TextView machineName_TextView, message;
     EditText machine_TextEdit;
-    DbContext ctx;
+    DbContext ctx, sessionCtx;
     ProgressDialog LoadingDialog;
     AppConfigValues appConfigValues;
     WorkCenter machine;
+    View send_btn;
+    Handler handler;
+    Intent intent;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maintenance_report_note);
         getElementsFromIntent();
         getElementsById();
+        Thread.setDefaultUncaughtExceptionHandler(new UnCaughtException(MaintenanceReportNote.this, userSwd));
+        send_btn.setEnabled(true);
     }
 
     public void onBackPressed(){
         super.onBackPressed();
-        setIntent("Maintenance");
+        new setIntentAsyncTask().execute("Maintenance");
     }
     // na wyjście z actvity
     @Override
@@ -63,25 +76,57 @@ public class MaintenanceReportNote extends AppCompatActivity {
             LoadingDialog.dismiss();
         }
     }
+
+    @Override
+    protected void onPause(){  //closes ctx if the app is minimized
+        if(ctx != null) {
+            ctx.close();
+        }
+        super.onPause();
+    }
+
     public void getElementsFromIntent(){
         String password = (getIntent().getStringExtra("password"));
         database = (getIntent().getStringExtra("database"));
         setPassword(password);
         user = (getIntent().getStringExtra("user"));
+        userSwd = getIntent().getStringExtra("userSwd");
     }
 
     public void getElementsById(){
         machine_TextEdit = findViewById(R.id.machine_TextEdit);
         machineName_TextView = findViewById(R.id.machineName_textView);
         message = findViewById(R.id.message_MultiLine);
+        send_btn = findViewById(R.id.send_btn);
     }
 
+    private class setIntentAsyncTask extends AsyncTask<String, Void, String> {
+        private ProgressDialog loadDialog = new ProgressDialog(MaintenanceReportNote.this);
+
+        @Override
+        protected void onPreExecute(){
+            super.onPreExecute();
+            loadDialog = ProgressDialog.show(MaintenanceReportNote.this, "",
+                    "Ładowanie. Proszę czekać...", true);
+        }
+
+        @Override
+        protected String doInBackground(String... strings) {
+            String destination = strings[0];
+            setIntent(destination);
+            return null;
+        }
+
+        protected void onPostExecute(String param){
+            startActivity(intent);
+        }
+    }
     public void setIntent(String destination){
         try {
-            Intent intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
+            intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
             intent.putExtra("password", getPassword());
             intent.putExtra("database", database);
-            startActivity(intent);
+            intent.putExtra("userSwd", userSwd);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -128,8 +173,8 @@ public class MaintenanceReportNote extends AppCompatActivity {
         String machine_swd = "";
         String machine_name = "";
 
-
         if (MachineExists(content) != null) {
+            send_btn.setEnabled(true);
             machine = MachineExists(content);
             machine_swd = machine.getSwd();
             machine_name = machine.getDescr6();
@@ -151,44 +196,62 @@ public class MaintenanceReportNote extends AppCompatActivity {
         machine = null;
         try {
             ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
-            Log.d("try", "before");
             SelectionBuilder<WorkCenter> machineSB = SelectionBuilder.create(WorkCenter.class);
             machineSB.add(Conditions.eq(WorkCenter.META.swd, card_nr));
             machine = QueryUtil.getFirst(ctx, machineSB.build());
             ctx.close();
-        } catch (Exception e) {
-            machineName_TextView.setText("");
-            machine_TextEdit.setText("");
-            if(e.getMessage().contains("failed")){
-                GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) { } });
-
-                //przekroczona liczba licencji
-            }else if(e.getMessage().contains("FULL")){
-                GlobalClass.showDialog(this,"Przekroczona liczba licencji!","Liczba licencji została przekroczona.", "OK",new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) { } });
-            }
+        } catch (DBRuntimeException e) {
+            catchExceptionCases(e, "MachineExists", card_nr);
         }
         return machine;
     }
 
-    public void Send(View view) {
-        LoadingDialog = ProgressDialog.show(MaintenanceReportNote.this, "",
-                "Ładowanie. Proszę czekać...", true);
+    @SuppressLint("HandlerLeak")
+    public void catchExceptionCases (DBRuntimeException e, String function, String parameter){
+        if(e.getMessage().contains("failed")){
+            GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
+                @Override public void onClick(DialogInterface dialog, int which) { } });
+
+            //przekroczona liczba licencji
+        }else if(e.getMessage().contains("FULL")){
+            LoadingDialog = ProgressDialog.show(MaintenanceReportNote.this, "     Przekroczono liczbę licencji.",
+                    "Zwalniam miejsce w ABAS. Proszę czekać...", true);
+            new Thread(() -> {
+                sessionCtx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", "sesje", "mobileApp");  // hasło sesje aby mieć dostęp
+                GlobalClass.licenceCleaner(sessionCtx);
+                sessionCtx.close();
+                handler.sendEmptyMessage(0);
+            }).start();
+            handler = new Handler() {
+                public void handleMessage(Message msg) {
+                    LoadingDialog.dismiss();
+                    if(function.equals("MachineExists")) {
+                        MachineExists(parameter);
+                    }
+                }
+            };
+        }
+    }
+    public void Send(View view) throws CommandException {
         String mess_text = message.getText().toString();
         DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         Date today = new Date();
         EditText machine_TextEdit = findViewById(R.id.machine_TextEdit);
         String machine_text = machine_TextEdit.getText().toString();
-        if (machine_text.equals("")) {
-            GlobalClass.showDialog(this, "Brak maszyny!", "Proszę wprowadzić maszynę.", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                        }
-                    });
 
-        } else if (!mess_text.equals("")) {
+        Boolean emptyFields = checkIfFieldsEmpty(machine_text, mess_text);
+        if (emptyFields == false) {
+            LoadingDialog = ProgressDialog.show(MaintenanceReportNote.this, "",
+                    "Ładowanie. Proszę czekać...", true);
+            send_btn.setEnabled(false);
+            WorkCenterEditor workCenterEditor = machine.createEditor();
+            workCenterEditor.open(EditorAction.UPDATE);
+            workCenterEditor.setYcomment(mess_text); // na test nie ma tego pola
+            workCenterEditor.commit();
+            if(workCenterEditor.active()){
+                workCenterEditor.abort();
+            }
+            ctx.close();
             appConfigValues = getAppConfigValues();
             IsMailSender sender = ctx.openInfosystem(IsMailSender.class);
             sender.setYto(appConfigValues.getYmaintenancereport()); //pobieranie emaili z abasa
@@ -198,25 +261,45 @@ public class MaintenanceReportNote extends AppCompatActivity {
             sender.setYtrext(text);
             sender.invokeStart();
             sender.close();
+            ctx.close();
             GlobalClass.showDialog(this, "Wysłano!", "Wiadomość została pomyślnie wysłana.", "OK",
             new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    setIntent("Menu");
+                    ctx.close();
+                    new setIntentAsyncTask().execute("Menu");
                 }
             });
-            LoadingDialog.dismiss();
             ctx.close();
-        } else {
-            GlobalClass.showDialog(this, "Brak wiadomości!", "Proszę wpisać wiadomość.", "OK",
-            new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                }
-            });
         }
-        LoadingDialog.dismiss();
+        if(LoadingDialog != null) {
+            LoadingDialog.dismiss();
+        }
     }
+
+    public Boolean checkIfFieldsEmpty(String machine_text, String mess_text){
+        Boolean emptyFields= false;
+        if (machine_text.equals("")) {
+            emptyFields = true;
+            GlobalClass.showDialog(this, "Brak maszyny!", "Proszę wprowadzić maszynę.", "OK",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                        }
+                    });
+
+        }else if (mess_text.equals("")) {
+            emptyFields = true;
+            GlobalClass.showDialog(this, "Brak wiadomości!", "Proszę wpisać wiadomość.", "OK",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                        }
+                    });
+        }
+        return emptyFields;
+    }
+
     public AppConfigValues getAppConfigValues() {
         ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
         SelectionBuilder<AppConfigValues> stocktakingSB = SelectionBuilder.create(AppConfigValues.class);

@@ -24,7 +24,7 @@
 
     <EditText
         android:id="@+id/article_textEdit"
-        android:layout_width="121dp"
+        android:layout_width="131dp"
         android:layout_height="47dp"
         android:layout_marginStart="16dp"
         android:layout_marginLeft="16dp"
@@ -72,7 +72,7 @@
         android:layout_height="45dp"
         android:layout_marginTop="152dp"
         android:background="@color/colorProtec"
-        android:onClick="chooseArticle"
+        android:onClick="chooseArticleFromWDRStockTable"
         android:singleLine="false"
         android:text="@string/select_product"
         android:textColor="#FFFFFF"
@@ -103,7 +103,7 @@
         android:layout_marginTop="40dp"
         android:layout_marginBottom="76dp"
         android:background="@color/colorProtec"
-        android:onClick="leaveArticles"
+        android:onClick="save"
         android:text="@string/move_from"
         android:textColor="#FFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"

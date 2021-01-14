@@ -164,7 +164,7 @@
         tools:visibility="visible" />
 
     <Button
-        android:id="@+id/leave_btn"
+        android:id="@+id/save_btn"
         android:layout_width="110dp"
         android:layout_height="50dp"
         android:background="@color/colorProtec"

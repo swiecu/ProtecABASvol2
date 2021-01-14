@@ -102,7 +102,6 @@
                         android:background="#BCB81414"
                         android:gravity="center"
                         android:maxWidth="40dp"
-                        android:padding="1dp"
                         android:paddingLeft="5dp"
                         android:paddingTop="5dp"
                         android:paddingRight="5dp"
@@ -135,7 +134,7 @@
 
                     <TextView
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_column="2"
                         android:layout_margin="1dp"
                         android:layout_weight="1"
@@ -152,8 +151,6 @@
                         android:typeface="normal"></TextView>
 
                 </TableRow>
-
-
             </TableLayout>
         </HorizontalScrollView>
 
