@@ -44,15 +44,9 @@ public class MaintenanceReportNote extends AppCompatActivity {
     public String getPassword() { return password;}
     public void setPassword(String password) {this.password = password; }
     String database, user, userSwd;
-    TextView machineName_TextView, message;
-    EditText machine_TextEdit;
-    DbContext ctx, sessionCtx;
-    ProgressDialog LoadingDialog;
-    AppConfigValues appConfigValues;
-    WorkCenter machine;
-    View send_btn;
-    Handler handler;
-    Intent intent;
+    TextView machineName_TextView, message; EditText machine_TextEdit;
+    DbContext ctx, sessionCtx; ProgressDialog LoadingDialog; AppConfigValues appConfigValues;
+    WorkCenter machine; View send_btn; Handler handler; Intent intent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,23 +59,19 @@ public class MaintenanceReportNote extends AppCompatActivity {
     }
 
     public void onBackPressed(){
-        super.onBackPressed();
         new setIntentAsyncTask().execute("Maintenance");
+        super.onBackPressed();
     }
     // na wyjście z actvity
     @Override
     protected void onStop(){
+        GlobalClass.dismissLoadingDialog(LoadingDialog);
         super.onStop();
-        if (LoadingDialog != null){
-            LoadingDialog.dismiss();
-        }
     }
 
     @Override
     protected void onPause(){  //closes ctx if the app is minimized
-        if(ctx != null) {
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx);
         super.onPause();
     }
 
@@ -170,8 +160,7 @@ public class MaintenanceReportNote extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void checkMachine(String content) {
-        String machine_swd = "";
-        String machine_name = "";
+        String machine_swd = "", machine_name = "";
 
         if (MachineExists(content) != null) {
             send_btn.setEnabled(true);
@@ -199,7 +188,7 @@ public class MaintenanceReportNote extends AppCompatActivity {
             SelectionBuilder<WorkCenter> machineSB = SelectionBuilder.create(WorkCenter.class);
             machineSB.add(Conditions.eq(WorkCenter.META.swd, card_nr));
             machine = QueryUtil.getFirst(ctx, machineSB.build());
-            ctx.close();
+            GlobalClass.ctxClose(ctx);
         } catch (DBRuntimeException e) {
             catchExceptionCases(e, "MachineExists", card_nr);
         }
@@ -208,38 +197,37 @@ public class MaintenanceReportNote extends AppCompatActivity {
 
     @SuppressLint("HandlerLeak")
     public void catchExceptionCases (DBRuntimeException e, String function, String parameter){
-        if(e.getMessage().contains("failed")){
-            GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) { } });
 
-            //przekroczona liczba licencji
-        }else if(e.getMessage().contains("FULL")){
-            LoadingDialog = ProgressDialog.show(MaintenanceReportNote.this, "     Przekroczono liczbę licencji.",
-                    "Zwalniam miejsce w ABAS. Proszę czekać...", true);
+        GlobalClass.catchExceptionCases(e, this);
+
+        //przekroczona liczba licencji
+        if (e.getMessage().contains("FULL")) {
+            LoadingDialog = GlobalClass.getDialogForLicences(this);
+            LoadingDialog.show();
             new Thread(() -> {
                 sessionCtx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", "sesje", "mobileApp");  // hasło sesje aby mieć dostęp
                 GlobalClass.licenceCleaner(sessionCtx);
-                sessionCtx.close();
+                GlobalClass.ctxClose(sessionCtx);
                 handler.sendEmptyMessage(0);
             }).start();
             handler = new Handler() {
+                @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
                 public void handleMessage(Message msg) {
-                    LoadingDialog.dismiss();
-                    if(function.equals("MachineExists")) {
-                        MachineExists(parameter);
-                    }
+                GlobalClass.dismissLoadingDialog(LoadingDialog);
+                if(function.equals("MachineExists")) {
+                    MachineExists(parameter);
+                }
                 }
             };
         }
     }
     public void Send(View view) throws CommandException {
-        String mess_text = message.getText().toString();
         DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         Date today = new Date();
         EditText machine_TextEdit = findViewById(R.id.machine_TextEdit);
-        String machine_text = machine_TextEdit.getText().toString();
-
+        String machine_text = machine_TextEdit.getText().toString(), mess_text = message.getText().toString();
         Boolean emptyFields = checkIfFieldsEmpty(machine_text, mess_text);
+
         if (emptyFields == false) {
             LoadingDialog = ProgressDialog.show(MaintenanceReportNote.this, "",
                     "Ładowanie. Proszę czekać...", true);
@@ -251,7 +239,7 @@ public class MaintenanceReportNote extends AppCompatActivity {
             if(workCenterEditor.active()){
                 workCenterEditor.abort();
             }
-            ctx.close();
+            GlobalClass.ctxClose(ctx);
             appConfigValues = getAppConfigValues();
             IsMailSender sender = ctx.openInfosystem(IsMailSender.class);
             sender.setYto(appConfigValues.getYmaintenancereport()); //pobieranie emaili z abasa
@@ -261,20 +249,18 @@ public class MaintenanceReportNote extends AppCompatActivity {
             sender.setYtrext(text);
             sender.invokeStart();
             sender.close();
-            ctx.close();
+            GlobalClass.ctxClose(ctx);
             GlobalClass.showDialog(this, "Wysłano!", "Wiadomość została pomyślnie wysłana.", "OK",
             new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    ctx.close();
+                    GlobalClass.ctxClose(ctx);
                     new setIntentAsyncTask().execute("Menu");
                 }
             });
-            ctx.close();
+            GlobalClass.ctxClose(ctx);
         }
-        if(LoadingDialog != null) {
-            LoadingDialog.dismiss();
-        }
+        GlobalClass.dismissLoadingDialog(LoadingDialog);
     }
 
     public Boolean checkIfFieldsEmpty(String machine_text, String mess_text){
@@ -305,7 +291,7 @@ public class MaintenanceReportNote extends AppCompatActivity {
         SelectionBuilder<AppConfigValues> stocktakingSB = SelectionBuilder.create(AppConfigValues.class);
         stocktakingSB.add(Conditions.eq(AppConfigValues.META.swd, "OGOLNE"));
         appConfigValues = QueryUtil.getFirst(ctx, stocktakingSB.build());
-        ctx.close();
+        GlobalClass.ctxClose(ctx);
         return appConfigValues;
     }
 }

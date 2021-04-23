@@ -36,10 +36,8 @@ public class Maintenance extends AppCompatActivity {
     // na wyjście z actvity
     @Override
     protected void onStop(){
+        GlobalClass.dismissLoadingDialog(LoadingDialog);
         super.onStop();
-        if (LoadingDialog != null){
-            LoadingDialog.dismiss();
-        }
     }
 
     public void getElementsFromIntent(){
@@ -68,9 +66,6 @@ public class Maintenance extends AppCompatActivity {
 
         protected void onPostExecute(String param){
             startActivity(intent);
-//            if(loadDialog!= null){
-//                loadDialog.dismiss();
-//            }
         }
     }
     public void setIntent(String destination){

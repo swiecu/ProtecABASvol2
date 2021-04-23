@@ -56,14 +56,9 @@ public class Menu extends AppCompatActivity {
     RelativeLayout quality_relative_layout, move_relative_layout, stocktaking_relative_layout,maintenance_relative_layout, warehouseTransfer_relative_layout, stockInfo_relative_layout, income_relative_layout;
     TextView quality_cont_textView, move_textView, stocktaking_textView, stockInfo_textView, maintenance_textView, warehosueTransfer_textView, income_textView, loggedUser;
     ImageView quality_control, move, stocktaking, stockInfo, maintenance, warehosueTransfer, income;
-    Employee employee;
-    ProgressDialog LoadingDialog;
-    AppConfigValues appConfigValues;
-    Intent intent;
-    Handler handler;
-    RelativeLayout[] relativeLayoutList;
-    TextView[] textViewList;
-    ImageView[] imageViewList;
+    Employee employee; Intent intent; Handler handler;
+    ProgressDialog LoadingDialog; AppConfigValues appConfigValues;
+    RelativeLayout[] relativeLayoutList; TextView[] textViewList; ImageView[] imageViewList;
 
     @SuppressLint("WrongViewCast")
     @Override
@@ -81,9 +76,7 @@ public class Menu extends AppCompatActivity {
             employee = FindEmployeeBySwd(ctx, user_short_name);
             if (employee != null) {
                 setMenuLook(employee);
-                if(ctx != null){ //necessarry
-                    ctx.close();
-                }
+                GlobalClass.ctxClose(ctx);
             }
             Thread.setDefaultUncaughtExceptionHandler(new UnCaughtException(Menu.this, userSwd));
         }catch (DBRuntimeException e){
@@ -106,9 +99,7 @@ public class Menu extends AppCompatActivity {
 
     @Override
     protected void onPause(){  //closes ctx if the app is minimized
-        if(ctx != null) {
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx);
         super.onPause(); //has to be after code
     }
 
@@ -141,9 +132,7 @@ public class Menu extends AppCompatActivity {
 
     public void setMenuLook(Employee employee){
         user = employee.getAddr().toUpperCase();
-        if(ctx != null){ //necessarry
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx); //necessary
         userSwd = getEmployeeSwd();
         appConfigValues = getAppConfigValues();
         Log.d("userSwdMenu", userSwd);
@@ -153,7 +142,7 @@ public class Menu extends AppCompatActivity {
         textViewList = new TextView[] {quality_cont_textView, move_textView, stocktaking_textView, stockInfo_textView, maintenance_textView, warehosueTransfer_textView, income_textView, loggedUser};
         imageViewList = new ImageView[]{quality_control, move, stocktaking, stockInfo, maintenance, warehosueTransfer, income};
         for(int i=0; i<relativeLayoutList.length; i++){
-            if(appConfigValues.getYstocktakinglock() == false) {
+            if(appConfigValues.getYstocktakinglock() == false) { //diabling while inventory
                 setLookForMenuOption(relativeLayoutList[i], textViewList[i], imageViewList[i], "#FFFFFF", (float) 1, (float) 1); //enable
             }else{
                 setLookForMenuOption(relativeLayoutList[i], textViewList[i], imageViewList[i], "#41EFEEEE", (float) 0.35, (float) 0.25); //disable
@@ -169,6 +158,9 @@ public class Menu extends AppCompatActivity {
         if (employee.getYwarehouseman() == false) {
             setLookForMenuOption(move_relative_layout, move_textView, move, "#41EFEEEE", (float) 0.35, (float) 0.25);
         }
+
+        //temporary on income
+//        setLookForMenuOption(income_relative_layout, income_textView, income, "#41EFEEEE", (float) 0.35, (float) 0.25); //disable
     }
 
     public void setLookForMenuOption(RelativeLayout relativeLayout, TextView textView, ImageView imageView, String colorString,  Float alphaValueTextView, Float alphaValueImageView){
@@ -210,8 +202,7 @@ public class Menu extends AppCompatActivity {
 
         @Override
         protected String doInBackground(String... strings) {
-            String destination = strings[0];
-            String stockID = strings[1];
+            String destination = strings[0], stockID = strings[1];
             setIntent(destination, stockID);
             return null;
         }
@@ -233,9 +224,7 @@ public class Menu extends AppCompatActivity {
                 GlobalClass.showDialog(this, "Ta opcja jest niedostępna!", "Musisz być magazynierem aby korzystać z tej opcji.", "OK",
                 new DialogInterface.OnClickListener() {
                 @Override
-                public void onClick(DialogInterface dialog, int which) {
-                }
-                });
+                public void onClick(DialogInterface dialog, int which) {}});
             }
         }
     }
@@ -248,9 +237,7 @@ public class Menu extends AppCompatActivity {
                 GlobalClass.showDialog(this, "Ta opcja jest niedostępna!", "Musisz być kontrolerem jakości aby korzystać z tej opcji.", "OK",
                 new DialogInterface.OnClickListener() {
                 @Override
-                public void onClick(DialogInterface dialog, int which) {
-                }
-                });
+                public void onClick(DialogInterface dialog, int which) {}});
             }
         }
     }
@@ -264,6 +251,10 @@ public class Menu extends AppCompatActivity {
     }
 
     public void income (View view){
+//        GlobalClass.showDialog(this, "Opcja niedostępna!", "Ta opcja jest aktualnie niedostępna.", "OK",
+//                new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {}});
         new setIntentAsyncTask().execute("QualityControlIncome", "");
     }
 
@@ -283,8 +274,8 @@ public class Menu extends AppCompatActivity {
         button_indivStocktaking .setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                GlobalClass.showDialogTwoButtons(Menu.this, "Utwórz Inwentaryzację Indywidualną", "Czy napewno chcesz utworzyć nową Inwentaryzację Indywidualną?",
-                        "Utwórz", "Anuluj",
+                GlobalClass.showDialogTwoButtons(Menu.this, "Otwórz Inwentaryzację Wewnętrzną", "Czy napewno chcesz otworzyć nową Inwentaryzację Wewnętrzną?",
+                        "Otwórz", "Anuluj",
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
@@ -315,21 +306,18 @@ public class Menu extends AppCompatActivity {
         StocktakingProtec stocktakingObject = getStocktakingBySwd(ctx, objectSwd);
         if(stocktakingObject == null){
             StocktakingProtecEditor newStocktaking = (StocktakingProtecEditor) ctx.newObject(StocktakingProtecEditor.class);
-            Log.d("newObjectSwd", objectSwd);
             newStocktaking.setYstocktakingnumber(userSwd);
             newStocktaking.setYcommittee(today.toString());  //generated swd model : "KI+year_Ycommittee_YstocktakingNumber (KI2020_BKOCHAN_20210113)
+            newStocktaking.setYinternal(true);
             newStocktaking.commit();
             if(newStocktaking.active()) {
                 newStocktaking.abort();
             }
             stocktakingIdno = getStocktakingBySwd(ctx, objectSwd).getIdno(); //has to getStocktaking by swd, because newStocktaking has no idno before saving
-            if(ctx != null){
-                ctx.close();
-            }
+            GlobalClass.ctxClose(ctx);
         }else{
             stocktakingIdno = stocktakingObject.getIdno();
         }
-        Log.d("stocktakingIdno2", stocktakingIdno);
         return  stocktakingIdno;
     }
 
@@ -360,17 +348,13 @@ public class Menu extends AppCompatActivity {
                     ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
                     StocktakingProtec stock = FindStocktakingByIdno(ctx, content);
                     if(stock != null){
-                        if(ctx != null){
-                            ctx.close();
-                        }
+                        GlobalClass.ctxClose(ctx);
                         new setIntentAsyncTask().execute("Stocktaking", stock.getIdno());
                     }else{
                         GlobalClass.showDialog(Menu.this, "Błędny numer komisji", "Podany numer komisji nie istnieje.", "OK", new DialogInterface.OnClickListener() {
                         @Override public void onClick(DialogInterface dialog, int which) {} });
                     }
-                    if(ctx != null){
-                        ctx.close();
-                    }
+                    GlobalClass.ctxClose(ctx);
                 }
             }
             super.onActivityResult(requestCode, resultCode, data);
@@ -395,9 +379,7 @@ public class Menu extends AppCompatActivity {
         try {
             stocktakingSB.add(Conditions.eq(Product.META.swd.toString(), newObject));
             stocktaking = QueryUtil.getFirst(ctx, stocktakingSB.build());
-            if(ctx != null){
-                ctx.close();
-            }
+            GlobalClass.ctxClose(ctx);
         } catch (Exception e) {
         }
         return stocktaking;
@@ -409,9 +391,7 @@ public class Menu extends AppCompatActivity {
         try {
             stocktakingSB.add(Conditions.eq(Product.META.idno.toString(), idno));
             stocktaking = QueryUtil.getFirst(ctx, stocktakingSB.build());
-            if(ctx != null){
-                ctx.close();
-            }
+            GlobalClass.ctxClose(ctx);
         } catch (Exception e) {
         }
         return stocktaking;
@@ -421,36 +401,30 @@ public class Menu extends AppCompatActivity {
         DbContext ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", getPassword(), "mobileApp");
         IsPrLoggedUser lu = ctx.openInfosystem(IsPrLoggedUser.class);
         String userSwd = lu.getYuser();
-        if(ctx != null){
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx);
         return userSwd;
     }
 
     @SuppressLint("HandlerLeak")
     public void catchExceptionCases (DBRuntimeException e) {
-        if (e.getMessage().contains("failed")) {
-            GlobalClass.showDialog(this, "Brak połączenia!", "Nie można się aktualnie połączyć z bazą.", "OK", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                }
-            });
 
-            //przekroczona liczba licencji
-        } else if (e.getMessage().contains("FULL")) {
-            LoadingDialog = ProgressDialog.show(Menu.this, "     Przekroczono liczbę licencji.",
-                    "Zwalniam miejsce w ABAS. Proszę czekać...", true);
+        GlobalClass.catchExceptionCases(e, this);
+
+        //przekroczona liczba licencji
+        if (e.getMessage().contains("FULL")) {
+            LoadingDialog = GlobalClass.getDialogForLicences(this);
+            LoadingDialog.show();
             new Thread(() -> {
                 sessionCtx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", "sesje", "mobileApp");  // hasło sesje aby mieć dostęp
                 GlobalClass.licenceCleaner(sessionCtx);
-                sessionCtx.close();
+                GlobalClass.ctxClose(sessionCtx);
                 handler.sendEmptyMessage(0);
             }).start();
             handler = new Handler() {
                 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
                 public void handleMessage(Message msg) {
-                    LoadingDialog.dismiss();
-                    startActivity(new Intent(Menu.this, Menu.class));
+                GlobalClass.dismissLoadingDialog(LoadingDialog);
+                startActivity(new Intent(Menu.this, Menu.class));
                 }
             };
         }
@@ -461,9 +435,7 @@ public class Menu extends AppCompatActivity {
         SelectionBuilder<AppConfigValues> stocktakingSB = SelectionBuilder.create(AppConfigValues.class);
         stocktakingSB.add(Conditions.eq(AppConfigValues.META.swd, "OGOLNE"));
         appConfigValues = QueryUtil.getFirst(ctx, stocktakingSB.build());
-        if(ctx != null){
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx);
         return appConfigValues;
     }
 }

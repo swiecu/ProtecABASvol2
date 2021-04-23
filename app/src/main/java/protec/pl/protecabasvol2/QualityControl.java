@@ -17,8 +17,7 @@ public class QualityControl extends AppCompatActivity {
         this.password = password;
     }
     String database, user, userSwd;
-    ProgressDialog LoadingDialog;
-    Intent intent;
+    ProgressDialog LoadingDialog; Intent intent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,16 +28,14 @@ public class QualityControl extends AppCompatActivity {
     }
 
     public void onBackPressed(){
-        super.onBackPressed();
         new setIntentAsyncTask().execute("Menu");
+        super.onBackPressed();
     }
     // na wyjście z actvity
     @Override
     protected void onStop(){
+        GlobalClass.dismissLoadingDialog(LoadingDialog);
         super.onStop();
-        if (LoadingDialog != null){
-            LoadingDialog.dismiss();
-        }
     }
 
     public void getElementsFromIntent(){

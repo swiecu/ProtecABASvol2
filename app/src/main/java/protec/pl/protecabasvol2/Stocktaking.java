@@ -35,6 +35,7 @@ import de.abas.erp.db.DbContext;
 import de.abas.erp.db.EditorAction;
 import de.abas.erp.db.exception.CommandException;
 import de.abas.erp.db.exception.DBRuntimeException;
+import de.abas.erp.db.infosystem.standard.la.StockLevelInformation;
 import de.abas.erp.db.schema.custom.protec.StocktakingProtec;
 import de.abas.erp.db.schema.custom.protec.StocktakingProtecEditor;
 import de.abas.erp.db.schema.location.LocationHeader;
@@ -52,19 +53,13 @@ public class Stocktaking extends AppCompatActivity {
     public void setPassword(String password) {
         this.password = password;
     }
-    DbContext ctx, sessionCtx;
-    ProgressDialog LoadingDialog;
+    DbContext ctx, sessionCtx; ProgressDialog LoadingDialog;
     String database, stockID, back_article, qtySumEquation, userSwd;
-    CheckBox lockIcon;
     TextView unit, test, article_textInfo, location_textInfo, qty_textInfo, info_textInfo, equation_textView;
     EditText article_textEdit, location_textEdit, qty_textEdit, info_textEdit;
-    GlobalClass myGlob;
-    StocktakingProtec stocktaking = null;
-    Boolean isHandWritten;
+    GlobalClass myGlob;  CheckBox lockIcon; StocktakingProtec stocktaking = null;
+    Boolean isHandWritten; View save_btn; Handler handler; Intent intent;
     BigDecimal qtySum = new BigDecimal(BigInteger.ZERO);
-    View save_btn;
-    Handler handler;
-    Intent intent;
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @SuppressLint("WrongViewCast")
@@ -79,24 +74,20 @@ public class Stocktaking extends AppCompatActivity {
     }
 
     public void onBackPressed() {
-        super.onBackPressed();
         new setIntentAsyncTask().execute("Menu", "", "");
+        super.onBackPressed();
     }
 
     // na wyjście z actvity
     @Override
     protected void onStop() {
+        GlobalClass.dismissLoadingDialog(LoadingDialog);
         super.onStop();
-        if (LoadingDialog != null) {
-            LoadingDialog.dismiss();
-        }
     }
 
     @Override
     protected void onPause(){  //closes ctx if the app is minimized
-        if(ctx != null) {
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx);
         super.onPause();
     }
 
@@ -145,9 +136,7 @@ public class Stocktaking extends AppCompatActivity {
             location_textEdit.setHint("Lokalizacja");
             lockIcon.setBackgroundResource(R.drawable.ic_new_lock_icon);
         }
-        if(ctx != null) {
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx);
 
         //jeśli wraca z ArticleNameList
         if(back_article != null) {
@@ -156,8 +145,6 @@ public class Stocktaking extends AppCompatActivity {
             LoadingDialog = ProgressDialog.show(Stocktaking.this, "",
                     "Ładowanie. Proszę czekać...", true);
             isHandWritten = true;
-            Log.d("isHandWritten SetLook", isHandWritten.toString());
-
             searchArticle(back_article);
         }
     }
@@ -174,9 +161,9 @@ public class Stocktaking extends AppCompatActivity {
 
         @Override
         protected String doInBackground(String... strings) {
-            String destination = strings[0];
-            String stockID = strings[1];
-            String article = strings[2];
+            String destination = strings[0],
+                   stockID = strings[1],
+                   article = strings[2];
             setIntent(destination, stockID, article);
             return null;
         }
@@ -284,34 +271,17 @@ public class Stocktaking extends AppCompatActivity {
                 qty_textInfo.setVisibility(View.VISIBLE);
                 location_textInfo.setVisibility(View.VISIBLE);
                 String unit_text = product.getString("SU");
-                if (unit_text.equals("(20)")) {
-                    unit_text = "szt.";
-                }else if (unit_text.equals("(7)")) {
-                    unit_text = "kg";
-                }else if (unit_text.equals("(21)")) {
-                    unit_text = "kpl";
-                }else if (unit_text.equals("(1)")) {
-                    unit_text = "m";
-                }else if (unit_text.equals("(10)")) {
-                    unit_text = "tona";
-                }else if (unit_text.equals("(28)")) {
-                    unit_text = "arkusz";
-                }
+                unit_text = GlobalClass.getProperUnit(unit_text);
                 unit.setVisibility(View.VISIBLE);
                 unit.setText(unit_text);
-                Log.d("isHandWrittenSetPag ", isHandWritten.toString());
-                if(ctx != null) {
-                    ctx.close();
-                }
+                GlobalClass.ctxClose(ctx);
             } else {
                 article_textEdit.setText("");
                 GlobalClass.showDialog(Stocktaking.this, "Brak artykułu!", "W bazie nie ma takeigo artykłu!", "OK",
                 new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    if(ctx != null) {
-                        ctx.close();
-                    }
+                    GlobalClass.ctxClose(ctx);
                 }
                 });
             }
@@ -322,31 +292,25 @@ public class Stocktaking extends AppCompatActivity {
 
     @SuppressLint("HandlerLeak")
     public void catchExceptionCases (DBRuntimeException e, String function, String parameter){
-        if(e.getMessage().contains("failed")){
-            GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) { } });
-
-            //przekroczona liczba licencji
-        }else if(e.getMessage().contains("FULL")){
-            LoadingDialog = ProgressDialog.show(Stocktaking.this, "     Przekroczono liczbę licencji.",
-                    "Zwalniam miejsce w ABAS. Proszę czekać...", true);
+        GlobalClass.catchExceptionCases(e, this);
+        if (e.getMessage().contains("FULL")) {  //przekroczona liczba licencji
+            LoadingDialog = GlobalClass.getDialogForLicences(this);
+            LoadingDialog.show();
             new Thread(() -> {
                 sessionCtx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", "sesje", "mobileApp");  // hasło sesje aby mieć dostęp
                 GlobalClass.licenceCleaner(sessionCtx);
-                sessionCtx.close();
+                GlobalClass.ctxClose(sessionCtx);
                 handler.sendEmptyMessage(0);
             }).start();
             handler = new Handler() {
                 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
                 public void handleMessage(Message msg) {
-                    if(LoadingDialog != null) {
-                        LoadingDialog.dismiss();
-                    }
-                    if(function.equals("setPageLookForArticle")) {
-                        setPageLookForArticle(parameter);
-                    }else if(function.equals("LocationExists")){
-                        getLocation(parameter);
-                    }
+                GlobalClass.dismissLoadingDialog(LoadingDialog);
+                if(function.equals("setPageLookForArticle")) {
+                    setPageLookForArticle(parameter);
+                }else if(function.equals("LocationExists")){
+                    getLocation(parameter);
+                }
                 }
             };
         }
@@ -358,7 +322,7 @@ public class Stocktaking extends AppCompatActivity {
         View dialogView = LayoutInflater.from(view.getContext()).inflate(R.layout.dialog_enter_article, viewGroup, false);
         enterArticleDialog.setView(dialogView);
         AlertDialog articleDialog = enterArticleDialog.create();
-        Button button_cancel = (Button)dialogView.findViewById(R.id.button_indivStocktaking);
+        Button button_cancel = (Button)dialogView.findViewById(R.id.button_cancel);
         button_cancel .setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -395,52 +359,35 @@ public class Stocktaking extends AppCompatActivity {
         myGlob = new GlobalClass(getApplicationContext());
         try {
             ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
-            if (myGlob.FindProductByIdno(ctx, content) != null) {  //jeśli Find by IDNO nie równa się null
+            if (myGlob.FindProductByIdno(ctx, content) != null) {
                 article_textEdit.setText(content);
-                if(ctx != null) {   //zakomentować jakby cos nie działało
-                    ctx.close();    //
-                }                   //
+                GlobalClass.ctxClose(ctx);
                 setPageLookForArticle(content);
-                if (LoadingDialog != null) {
-                    LoadingDialog.dismiss();
-                }
-                //jeśli nie znajdzie by IDNO
+                GlobalClass.dismissLoadingDialog(LoadingDialog);
+
+            //jeśli nie znajdzie by IDNO
             } else if (myGlob.FindProductByDescr(ctx, content) != null) {
-                if(ctx != null) {
-                    ctx.close();
-                }
-                if (LoadingDialog != null) {
-                    LoadingDialog.dismiss();
-                }
+                GlobalClass.ctxClose(ctx);
+                GlobalClass.dismissLoadingDialog(LoadingDialog);
                 new setIntentAsyncTask().execute("ArticleNameList", stockID, content);
 
-                // jeśli nie znajdzie by DESCR
-            } else if (myGlob.FindProductBySwd(ctx, content) != null) {   //jeśli Find by SWD nie równa się null
-                if(ctx != null) {
-                    ctx.close();
-                }
-                if (LoadingDialog != null) {
-                    LoadingDialog.dismiss();
-                }
+            // jeśli nie znajdzie by DESCR
+            } else if (myGlob.FindProductBySwd(ctx, content) != null) {
+                GlobalClass.ctxClose(ctx);
+                GlobalClass.dismissLoadingDialog(LoadingDialog);
                 new setIntentAsyncTask().execute("ArticleNameList", stockID, content);
 
-                // jeśli nie znajdzie ani tu ani tu
+            // jeśli nie znajdzie ani tu ani tu
             } else {
-                if(ctx != null) {
-                    ctx.close();
-                }
-                if (LoadingDialog != null) {
-                    LoadingDialog.dismiss();
-                }
+                GlobalClass.ctxClose(ctx);
+                GlobalClass.dismissLoadingDialog(LoadingDialog);
                 GlobalClass.showDialog(Stocktaking.this, "Brak artykułu!", "W bazie nie ma takeigo artykłu!", "OK",
                 new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {}
                 });
             }
         } catch (DBRuntimeException e) {
-            if (LoadingDialog != null) {
-                LoadingDialog.dismiss();
-            }
+            GlobalClass.dismissLoadingDialog(LoadingDialog);
             catchExceptionCases(e, "getArticle", content);
         }
     }
@@ -454,9 +401,7 @@ public class Stocktaking extends AppCompatActivity {
             info_textInfo.setVisibility(View.VISIBLE);
             qty_textInfo.setVisibility(View.VISIBLE);
             location_textInfo.setVisibility(View.VISIBLE);
-            if(ctx != null) {
-                ctx.close();
-            }
+            GlobalClass.ctxClose(ctx);
         }else {
             location_textEdit.setText("");
             GlobalClass.showDialog(this, "Brak lokalizacji!", "Zeskanowana lokalizacja nie istnieje.", "OK",
@@ -472,9 +417,7 @@ public class Stocktaking extends AppCompatActivity {
             SelectionBuilder<LocationHeader> locationSB = SelectionBuilder.create(LocationHeader.class);
             locationSB.add(Conditions.eq(LocationHeader.META.swd, location));
             loc = QueryUtil.getFirst(ctx, locationSB.build());
-            if(ctx != null) {
-                ctx.close();
-            }
+            GlobalClass.ctxClose(ctx);
         } catch (DBRuntimeException e) {
             Log.d("error", e.getMessage());
             catchExceptionCases(e, "LocationExists", location);
@@ -518,24 +461,18 @@ public class Stocktaking extends AppCompatActivity {
                             equation_textView.setVisibility(View.INVISIBLE);
                             qtySum = BigDecimal.ZERO;
                             qtySumEquation = null;
-                            if(ctx != null) {
-                                ctx.close();
-                            }
+                            GlobalClass.ctxClose(ctx);
                         }
                     });
             stockAddAlert.setNegativeButton("Menu",
                     new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
-                            //dismiss the dialog
                             new setIntentAsyncTask().execute("Menu", stockID, "");
                         }
                     });
             stockAddAlert.setCancelable(true);
             stockAddAlert.create().show();
-
-            if (LoadingDialog != null) {
-                LoadingDialog.dismiss();
-            }
+            GlobalClass.dismissLoadingDialog(LoadingDialog);
         }
     }
 
@@ -591,12 +528,13 @@ public class Stocktaking extends AppCompatActivity {
     }
 
     public void enterStockRow(){
+        Product article = myGlob.FindProductByIdno(ctx, article_textEdit.getText().toString());
+        BigDecimal systemQty = getSystemQtyForArticle(article);
         stocktaking = getStocktaing();
         StocktakingProtecEditor stocktakingProtecEditor = stocktaking.createEditor();
         try {
             stocktakingProtecEditor.open(EditorAction.UPDATE);
         } catch (CommandException e){
-            Log.d("command exception", e.getMessage());
         }
         if(lockIcon.isChecked()){
             stocktakingProtecEditor.setYcurrlocation(location_textEdit.getText().toString());
@@ -605,23 +543,42 @@ public class Stocktaking extends AppCompatActivity {
         }
         stocktakingProtecEditor.table().appendRow();
         StocktakingProtecEditor.Row row =  stocktakingProtecEditor.table().getRow(stocktakingProtecEditor.getRowCount());
-        Log.d("location_textEdit", location_textEdit.getText().toString());
-        Log.d("isHandWritten", isHandWritten.toString());
         Integer rowNo = stocktaking.table().getRowCount();
         row.setString("yid", rowNo.toString());
         row.setString("yarticle", article_textEdit.getText());
         row.setString("ycountedqty", qty_textEdit.getText());
         row.setString("yunit", unit.getText());
         row.setString("ystorageplace", location_textEdit.getText().toString());
+        row.setYlocstock(systemQty); // działa tylko na erp do momentu przerzucenia bazy z erp na demo i test
         row.setYishandwritten(isHandWritten);
         row.setString("yinfo", info_textEdit.getText());
         stocktakingProtecEditor.commit();
         if(stocktakingProtecEditor.active()){
             stocktakingProtecEditor.abort();
         }
-        if(ctx != null) {
-            ctx.close();
+        GlobalClass.ctxClose(ctx);
+    }
+
+    public BigDecimal getSystemQtyForArticle(Product product){
+        BigDecimal systemQty;
+        GlobalClass.ctxClose(ctx);
+        LocationHeader location = LocationExists(location_textEdit.getText().toString());
+
+        StockLevelInformation sli = ctx.openInfosystem(StockLevelInformation.class);
+        sli.setArtikel(product);
+        sli.setKlplatz(location);
+        sli.setNullmge(false);
+        sli.invokeStart();
+        Iterable<StockLevelInformation.Row> sliRows = sli.getTableRows();
+        Integer rowCount = sli.getRowCount();
+        if(rowCount != 0) {
+            StockLevelInformation.Row firstRow = sli.table().getRow(rowCount);
+            systemQty = firstRow.getLemge();
+        }else{
+            systemQty = BigDecimal.ZERO;
         }
+        GlobalClass.ctxClose(ctx);
+        return systemQty;
     }
 
     public StocktakingProtec getStocktaing() {
@@ -630,11 +587,7 @@ public class Stocktaking extends AppCompatActivity {
             SelectionBuilder<StocktakingProtec> stocktakingSB = SelectionBuilder.create(StocktakingProtec.class);
             stocktakingSB.add(Conditions.eq(StocktakingProtec.META.idno, stockID));
             stocktaking = QueryUtil.getFirst(ctx, stocktakingSB.build());
-            if (ctx != null) {
-                ctx.close();
-            }
         }catch(DBRuntimeException e){
-            //
         }
         return stocktaking;
     }

@@ -5,8 +5,8 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -14,7 +14,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.text.InputType;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -22,6 +21,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TableLayout;
 import android.widget.TableRow;
@@ -32,6 +32,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -64,28 +65,29 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
     public void setPassword(String password) {
         this.password = password;
     }
-    DbContext ctx, sessionCtx;
-    String database, name, vendor, purchaseOrdersString, proof_Nr, back_article, userSwd, articlesForEmail;
-    AbasDate today;
-    TextView vendorNameTextView, proofNr_TextEdit;
-    Vendor vendorObject;
-    ProgressDialog LoadingDialog;
-    GlobalClass globFunctions;
-    HashMap<String, String> tableRowsHM;
-    TableLayout layoutList;
+    DbContext ctx, sessionCtx; AbasDate today;
+    String database, name, vendor, purchaseOrdersString, proof_Nr, back_article, userSwd, articlesForEmail, docQty;
+    TextView vendorNameTextView;
+    EditText docQty_TextEdit, proofNr_TextEdit; Vendor vendorObject;
+    ProgressDialog LoadingDialog; GlobalClass globFunctions;
+    HashMap<String, String> tableRowsHM; TableLayout layoutList;
     Button addArticle_btn, alertQualityControl_btn, createPZ_btn;
-    Handler handler;
-    AppConfigValues appConfigValues;
-    Intent intent;
+    Handler handler; AppConfigValues appConfigValues;
+    Intent intent; Boolean oneDocument = false;
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_income_purchase_order_list);
+        getElementsFromIntent();
+        if(new BigDecimal(docQty).compareTo(BigDecimal.ONE) == 0){ //docQty == 1
+            setContentView(R.layout.activity_income_purchase_order_list_for_1);
+            oneDocument = true;
+        }else{
+            setContentView(R.layout.activity_income_purchase_order_list_more_than_1);
+        }
         LoadingDialog = ProgressDialog.show(IncomePurchaseOrderList.this, "",
                 "Ładowanie. Proszę czekać...", true);
-        getElementsFromIntent();
         getElementsById();
         setLook();
         Thread.setDefaultUncaughtExceptionHandler(new UnCaughtException(IncomePurchaseOrderList.this, userSwd));
@@ -95,17 +97,13 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        if(ctx != null){
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx);
         new setIntentAsyncTask().execute("QualityControlIncome", "");
     }
 
     @Override
     protected void onPause(){  //closes ctx if the app is minimized
-        if(ctx != null) {
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx);
         super.onPause();
     }
 
@@ -120,6 +118,7 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
         proof_Nr = (getIntent().getStringExtra("proof_Nr"));
         back_article = (getIntent().getStringExtra("art_idno"));
         tableRowsHM = (HashMap<String, String>)getIntent().getSerializableExtra("tableRowsHM");
+        docQty = getIntent().getStringExtra("docQty");
     }
 
     public void getElementsById(){
@@ -127,7 +126,7 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
         addArticle_btn = (Button) findViewById(R.id.addArticle_btn);
         alertQualityControl_btn = (Button) findViewById(R.id.alertQualityControl_btn);
         createPZ_btn = (Button) findViewById(R.id.createPZ_btn);
-        proofNr_TextEdit = (TextView) findViewById(R.id.proofNr_TextEdit);
+        proofNr_TextEdit = (EditText) findViewById(R.id.proofNr_TextEdit);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -135,28 +134,26 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
         today = new AbasDate();
         String vendorName = getVendor().getDescrOperLang();
         vendorNameTextView.setText(vendorName);
-        proofNr_TextEdit.setText(proof_Nr);
-        if (LoadingDialog != null) {
-            LoadingDialog.dismiss();
+        if(oneDocument == true) {
+            proofNr_TextEdit.setText(proof_Nr);
         }
-        if(ctx != null){ //necessarry
-            ctx.close();
-        }
+        GlobalClass.dismissLoadingDialog(LoadingDialog);
+        GlobalClass.ctxClose(ctx);
         if(back_article != null) {
             ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
             for (Map.Entry<String, String> entryTableRowsHM : tableRowsHM.entrySet()) {
                 String productKey = entryTableRowsHM.getKey();
                 String[] qtyValues = entryTableRowsHM.getValue().split("@");
-                String toDeliverQty = qtyValues[0];
-                String deliveredQty = qtyValues[1];
+                String toDeliverQty = qtyValues[0], deliveredQty = qtyValues[1];
                 globFunctions = new GlobalClass(getApplicationContext());
-
                 Product article = globFunctions.FindProductBySwd(ctx, productKey);
-                drawTable(null, article, toDeliverQty, deliveredQty);
+                if(oneDocument == true){
+                    drawTableForOneDocument(null, article, toDeliverQty, deliveredQty);
+                }else{
+                    drawTableForMoreThanOneDocument(null, article, toDeliverQty, deliveredQty);
+                }
             }
-            if(ctx != null) {
-                ctx.close();
-            }
+            GlobalClass.ctxClose(ctx);
             searchArticle(back_article);
         }else{
             tableRowsHM = new HashMap<>();
@@ -167,9 +164,7 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
     public void hideKeyboard(View view) {
         InputMethodManager inputMethodManager =(InputMethodManager)getSystemService(Activity.INPUT_METHOD_SERVICE);
         inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
-        if(ctx != null){
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx);
     }
 
     private class setIntentAsyncTask extends AsyncTask<String, Void, String> {
@@ -206,7 +201,10 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
             intent.putExtra("content", content);
             intent.putExtra("destination", "IncomePurchaseOrderList");
             intent.putExtra("vendor", vendor);
-            intent.putExtra("proof_Nr", proofNr_TextEdit.getText().toString());
+            if(oneDocument == true){
+                intent.putExtra("proof_Nr", proofNr_TextEdit.getText().toString());
+            }
+            intent.putExtra("docQty", docQty);
             intent.putExtra("purchaseOrder", purchaseOrdersString);
             intent.putExtra("tableRowsHM", tableRowsHM);
             intent.putExtra("userSwd", userSwd);
@@ -228,14 +226,17 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
                 if(!((Vendor)poRow.getVendor()).getSwd().equals("WYBIERZ")){
                     if (poRow.getProduct() instanceof Product) {
                         if (poRow.getOutstDelQty().compareTo(BigDecimal.ZERO) != 0){
-                            drawTable(poRow,  (Product)poRow.getProduct(), "0", "empty");
+                            if(oneDocument == true){
+                                drawTableForOneDocument(poRow, (Product)poRow.getProduct(), "0", "empty");
+                            }else{
+                                drawTableForMoreThanOneDocument(poRow, (Product)poRow.getProduct(), "0", "empty");
+                            }
+
                         }
                     }
                 }
             }
-            if(ctx != null) {
-                ctx.close();
-            }
+            GlobalClass.ctxClose(ctx);
         }catch (DBRuntimeException e) {
             catchExceptionCases(e, "getChoosenVendorPurchaseOrders", "");
         }
@@ -246,80 +247,75 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
         globFunctions = new GlobalClass(getApplicationContext());
         try{
             ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
-            if(globFunctions.FindProductByIdno(ctx, content) != null) {  //jeśli Find by IDNO nie równa się null
+            if(globFunctions.FindProductByIdno(ctx, content) != null) {
                 Product article = globFunctions.FindProductByIdno(ctx, content);
-                if(ctx != null) {
-                    ctx.close();
+                GlobalClass.ctxClose(ctx);
+                if(oneDocument == true){
+                    drawTableForOneDocument(null, article, "0", "empty");
+                }else{
+                    drawTableForMoreThanOneDocument(null, article, "0", "empty");
                 }
-                drawTable(null, article, "0", "empty");
-                if (LoadingDialog != null) {
-                    LoadingDialog.dismiss();
-                }
-                //jeśli nie znajdzie by IDNO
+
+                GlobalClass.dismissLoadingDialog(LoadingDialog);
+
+            //jeśli nie znajdzie by IDNO
             }else if (globFunctions.FindProductByDescr(ctx, content) != null){
-                if(ctx != null) {
-                    ctx.close();
-                }
+                GlobalClass.ctxClose(ctx);
                 new setIntentAsyncTask().execute("ArticleNameList", content);
 
-                // jeśli nie znajdzie by DESCR
-            } else if (globFunctions.FindProductBySwd(ctx, content) != null) {   //jeśli Find by SWD nie równa się null
-                if(ctx != null) {
-                    ctx.close();
-                }
+             // jeśli nie znajdzie by DESCR
+            } else if (globFunctions.FindProductBySwd(ctx, content) != null) {
+                GlobalClass.ctxClose(ctx);
                 new setIntentAsyncTask().execute("ArticleNameList", content);
 
-                // jeśli nie znajdzie ani tu ani tu
+             // jeśli nie znajdzie ani tu ani tu
             } else {
-                if(ctx != null) {
-                    ctx.close();
-                }
-                LoadingDialog.dismiss();
+                GlobalClass.ctxClose(ctx);
+                GlobalClass.dismissLoadingDialog(LoadingDialog);
                 GlobalClass.showDialog(IncomePurchaseOrderList.this, "Brak artykułu!", "W bazie nie ma takeigo artykłu!", "OK",
                         new DialogInterface.OnClickListener() {
                             @Override public void onClick(DialogInterface dialog, int which) {} });
             }
         } catch (DBRuntimeException e) {
-            if(LoadingDialog != null) {LoadingDialog.dismiss(); }
+            GlobalClass.dismissLoadingDialog(LoadingDialog);
             catchExceptionCases(e, "searchArticle", content);
         }
     }
 
     @SuppressLint("HandlerLeak")
     public void catchExceptionCases (DBRuntimeException e, String function, String parameter){
-        if(e.getMessage().contains("failed")){
-            GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) { } });
+        GlobalClass.catchExceptionCases(e, this);
 
-            //przekroczona liczba licencji
-        }else if(e.getMessage().contains("FULL")){
-            LoadingDialog = ProgressDialog.show(IncomePurchaseOrderList.this, "     Przekroczono liczbę licencji.",
-                    "Zwalniam miejsce w ABAS. Proszę czekać...", true);
+        //przekroczona liczba licencji
+        if (e.getMessage().contains("FULL")) {
+            LoadingDialog = GlobalClass.getDialogForLicences(this);
+            LoadingDialog.show();
             new Thread(() -> {
-                sessionCtx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", "sesje", "mobileApp");  // hasło sesje i erp aby mieć dostęp
+                sessionCtx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", "sesje", "mobileApp");  // hasło sesje aby mieć dostęp
                 GlobalClass.licenceCleaner(sessionCtx);
-                sessionCtx.close();
+                GlobalClass.ctxClose(sessionCtx);
                 handler.sendEmptyMessage(0);
             }).start();
             handler = new Handler() {
                 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
                 public void handleMessage(Message msg) {
-                    LoadingDialog.dismiss();
-                    if(function.equals("getChoosenVendorPurchaseOrders")){
-                        getChoosenVendorPurchaseOrders();
-                    }else if(function.equals("searchArticle")){
-                        searchArticle(parameter);
-                    }
+                GlobalClass.dismissLoadingDialog(LoadingDialog);
+                if(function.equals("getChoosenVendorPurchaseOrders")){
+                    getChoosenVendorPurchaseOrders();
+                }else if(function.equals("searchArticle")){
+                    searchArticle(parameter);
+                }else if(function.equals("createPZInABAS")){
+                    createPZInABAS();
+                }
                 }
             };
         }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
-    public void drawTable(PurchaseOrder.Row purchaseOrderRow, Product product, String toDeliver, String deliveredEnteredQty){
-        String articleString;
+    public void drawTableForOneDocument(PurchaseOrder.Row purchaseOrderRow, Product product, String toDeliver, String deliveredEnteredQty){
+        String articleString, unitIdString, articleIdnoString = "";
         BigDecimal qtyToDeliverNr;
-        String unitIdString, articleIdnoString = "";
 
         if(purchaseOrderRow != null) {
              articleString = purchaseOrderRow.getProduct().getSwd();
@@ -327,7 +323,7 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
              qtyToDeliverNr = purchaseOrderRow.getOutstDelQty().stripTrailingZeros();
              unitIdString = purchaseOrderRow.getString("tradeUnit");
         }else{
-            if((toDeliver.equals("--------"))) {
+            if(toDeliver.equals("--------")) {
                 qtyToDeliverNr = BigDecimal.ZERO;
             }else{
                 qtyToDeliverNr = new BigDecimal(toDeliver);
@@ -338,110 +334,136 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
         }
 
         layoutList = findViewById(R.id.incomePurchaseOrderTable);
-        TableRow tableRowList = new TableRow(this);
-        TableRow.LayoutParams lp = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT);
-        tableRowList.setLayoutParams(lp);
-        tableRowList.setBackgroundColor(Color.parseColor("#BDBBBB"));
-
-        TableRow.LayoutParams params = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT);
-        params.setMargins(1, 1, 1, 1);
-
-        TextView article = new TextView(this);
-        TextView qtyToDeliver = new TextView(this);
+        TableRow tableRowList = GlobalClass.setTableRowList(this);
+        TextView article = new TextView(this), qtyToDeliver = new TextView(this), unit = new TextView(this), articleIdno = new TextView(this);
         EditText deliveredQty = new EditText(this);
-        TextView unit = new TextView(this);
-        TextView articleIdno = new TextView(this);
 
         Integer j = layoutList.getChildCount();
-        if (j % 2 == 0) {
-            article.setBackgroundColor(Color.parseColor("#E5E5E6"));
-            qtyToDeliver.setBackgroundColor(Color.parseColor("#E5E5E6"));
-            deliveredQty.setBackgroundColor(Color.parseColor("#E5E5E6"));
-            unit.setBackgroundColor(Color.parseColor("#E5E5E6"));
-        } else {
-            article.setBackgroundColor(Color.parseColor("#FFFFFF"));
-            qtyToDeliver.setBackgroundColor(Color.parseColor("#FFFFFF"));
-            deliveredQty.setBackgroundColor(Color.parseColor("#FFFFFF"));
-            unit.setBackgroundColor(Color.parseColor("#FFFFFF"));
+        TextView[] textViewArray = {article, qtyToDeliver, deliveredQty, unit, articleIdno};
+        for (TextView textView :textViewArray) {
+            if (j % 2 == 0) {
+                textView.setBackgroundColor(Color.parseColor("#E5E5E6"));
+            } else {
+                textView.setBackgroundColor(Color.parseColor("#FFFFFF"));
+            }
         }
+        //article
+        GlobalClass.setParamForTextView(article, articleString, 14, 25, 5, true);
 
-        article.setText(articleString);
-        article.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        article.setTypeface(Typeface.DEFAULT_BOLD);
-        article.setTextColor(Color.parseColor("#808080"));
-        article.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14f);
-        article.setPadding(5, 25, 5, 25);
-        article.setLayoutParams(params);
-
+        //qtyToDeliver
+        String qtyToDelivertText;
         if(qtyToDeliverNr.compareTo(BigDecimal.ZERO) !=0){
-            qtyToDeliver.setText(qtyToDeliverNr.toPlainString());
+            qtyToDelivertText = qtyToDeliverNr.toPlainString();
         }else {
-            qtyToDeliver.setText("--------");
+            qtyToDelivertText = "--------";
         }
-        qtyToDeliver.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        qtyToDeliver.setTextColor(Color.parseColor("#808080"));
-        qtyToDeliver.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14f);
-        qtyToDeliver.setPadding(5, 25, 5, 25);
-        qtyToDeliver.setLayoutParams(params);
+        GlobalClass.setParamForTextView(qtyToDeliver, qtyToDelivertText, 14, 25, 5, false);
 
+        //deliveredQty
+        String deliveredQtyText;
+        if(deliveredEnteredQty.equals("empty")){
+            deliveredQtyText = "";
+        }else {
+            deliveredQtyText = deliveredEnteredQty;
+        }
         deliveredQty.setHint("Wypisz ilość");
         deliveredQty.setHintTextColor(Color.parseColor("#a8a8a8"));
-        if(deliveredEnteredQty.equals("empty")){
-            deliveredQty.setText("");
-        }else {
-            deliveredQty.setText(deliveredEnteredQty);
-        }
         deliveredQty.setInputType(InputType.TYPE_CLASS_NUMBER);
         deliveredQty.setGravity(Gravity.CENTER);
-        deliveredQty.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        deliveredQty.setTextColor(Color.parseColor("#808080"));
-        deliveredQty.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14f);
-        deliveredQty.setPadding(5, 25, 5, 25);
-        deliveredQty.setLayoutParams(params);
+        GlobalClass.setParamForTextView(deliveredQty, deliveredQtyText, 14, 25, 5, false);
 
-        if (unitIdString.equals("(20)")) {
-            unitIdString = "szt.";
-        } else if (unitIdString.equals("(7)")) {
-            unitIdString = "kg";
-        } else if (unitIdString.equals("(21)")) {
-            unitIdString = "kpl";
-        } else if (unitIdString.equals("(1)")) {
-            unitIdString = "m";
-        }else if (unitIdString.equals("(10)")) {
-            unitIdString = "tona";
-        }else if (unitIdString.equals("(28)")) {
-            unitIdString = "arkusz";
-        }
-        unit.setText(unitIdString);
-        unit.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        unit.setTextColor(Color.parseColor("#808080"));
-        unit.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14f);
-        unit.setPadding(5, 25, 10, 25);
-        unit.setLayoutParams(params);
+        //unit
+        unitIdString = GlobalClass.getProperUnit(unitIdString);
+        GlobalClass.setParamForTextView(unit, unitIdString, 14, 25, 10, false);
 
+        //articleIdno
         articleIdno.setText(articleIdnoString);
         articleIdno.setVisibility(View.GONE);
 
-        tableRowList.addView(article);
-        tableRowList.addView(qtyToDeliver);
-        tableRowList.addView(deliveredQty);
-        tableRowList.addView(unit);
-        tableRowList.addView(articleIdno);
-        layoutList.addView(tableRowList, j);
-        if(ctx != null){
-            ctx.close();
+        for (TextView textView :textViewArray) {
+            tableRowList.addView(textView);
         }
+        layoutList.addView(tableRowList, j);
+        GlobalClass.ctxClose(ctx);
+    }
+
+    @SuppressLint("NewApi")
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+    public void drawTableForMoreThanOneDocument(PurchaseOrder.Row purchaseOrderRow, Product product, String toDeliver, String deliveredEnteredQty){
+        String articleString, unitIdString, articleIdnoString = "";
+        BigDecimal qtyToDeliverNr;
+
+        if(purchaseOrderRow != null) {
+            articleString = purchaseOrderRow.getProduct().getSwd();
+            articleIdnoString = purchaseOrderRow.getProduct().getIdno();
+            qtyToDeliverNr = purchaseOrderRow.getOutstDelQty().stripTrailingZeros();
+            unitIdString = purchaseOrderRow.getString("tradeUnit");
+        }else{
+            if(toDeliver.equals("--------")) {
+                qtyToDeliverNr = BigDecimal.ZERO;
+            }else{
+                qtyToDeliverNr = new BigDecimal(toDeliver);
+            }
+            articleString = product.getSwd();
+            unitIdString = product.getString("SU");
+            articleIdnoString = product.getIdno();
+        }
+
+        layoutList = findViewById(R.id.incomePurchaseOrderTable);
+        TableRow tableRowList = GlobalClass.setTableRowList(this);
+        TextView article = new TextView(this), qtyToDeliver = new TextView(this), unit = new TextView(this), articleIdno = new TextView(this);
+        CheckBox isDelivered = new CheckBox(this);
+
+        Integer j = layoutList.getChildCount();
+        TextView[] textViewArray = {article, qtyToDeliver, unit, isDelivered};
+        for (TextView textView :textViewArray) {
+            if (j % 2 == 0) {
+                textView.setBackgroundColor(Color.parseColor("#E5E5E6"));
+            } else {
+                textView.setBackgroundColor(Color.parseColor("#FFFFFF"));
+            }
+        }
+        //article
+        GlobalClass.setParamForTextView(article, articleString, 14, 25, 5, true);
+
+        //qtyToDeliver
+        String qtyToDelivertText;
+        if(qtyToDeliverNr.compareTo(BigDecimal.ZERO) !=0){
+            qtyToDelivertText = qtyToDeliverNr.toPlainString();
+        }else {
+            qtyToDelivertText = "--------";
+        }
+        GlobalClass.setParamForTextView(qtyToDeliver, qtyToDelivertText, 14, 25, 5, false);
+
+        //unit
+        unitIdString = GlobalClass.getProperUnit(unitIdString);
+        GlobalClass.setParamForTextView(unit, unitIdString, 14, 25, 5, false);
+
+        //is delivered checkbox
+        isDelivered.setGravity(Gravity.CENTER);
+        isDelivered.setChecked(false);
+        isDelivered.setButtonTintList(ColorStateList.valueOf(Color.parseColor(("#7580BC"))));
+        GlobalClass.setParamForTextView(isDelivered, "", 14, 25, 30, false);
+
+        //articleIdno
+        articleIdno.setText(articleIdnoString);
+        articleIdno.setVisibility(View.GONE);
+
+        for (TextView textView :textViewArray) {
+            tableRowList.addView(textView);
+        }
+        layoutList.addView(tableRowList, j);
+        GlobalClass.ctxClose(ctx);
     }
 
     public void enterArticle(View view){
-
-        createTableElementsHM();
+        createTableElementsHM(false);
         AlertDialog.Builder enterArticleDialog = new AlertDialog.Builder(new ContextThemeWrapper(IncomePurchaseOrderList.this, R.style.MyDialog));
         ViewGroup viewGroup = findViewById(android.R.id.content);
         View dialogView = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.dialog_enter_article, viewGroup, false);
         enterArticleDialog.setView(dialogView);
         AlertDialog articleDialog = enterArticleDialog.create();
-        Button button_cancel = (Button)dialogView.findViewById(R.id.button_indivStocktaking);
+        Button button_cancel = (Button)dialogView.findViewById(R.id.button_cancel);
         button_cancel .setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -470,27 +492,45 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
         articleDialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
     }
 
-    public void createTableElementsHM(){
+    public void createTableElementsHM(Boolean hashMapForCreatingPZ){
+        tableRowsHM.clear();
         articlesForEmail = "<br/>";
         for(int i = layoutList.getChildCount(), j = 1; i >=j; i--) {
             View child = layoutList.getChildAt(i);
             if (child instanceof TableRow) {
                 TableRow row = (TableRow) child;
-                TextView article_TextView = (TextView) row.getChildAt(0);
-                TextView qtyToDeliver = (TextView) row.getChildAt(1);
-                TextView qtyDelivered = (TextView) row.getChildAt(2);
-                TextView unit = (TextView) row.getChildAt(3);
-                Log.d("rowNR", "row"+i);
-                if(!article_TextView.getText().equals("") || (!article_TextView.getText().equals("0"))){
-                    articlesForEmail += "Artykuł: <b>" + article_TextView.getText().toString() + "</b><br/> Il. do dostarczenia: "
-                            + qtyToDeliver.getText().toString() + " " + unit.getText().toString() + "<br/> Il. dostarczona: "
-                            + qtyDelivered.getText().toString() + " " + unit.getText().toString() + "<br/><br/>";
-                }
-                if(!tableRowsHM.containsKey(article_TextView.getText().toString())){
-                    if(qtyDelivered.getText().toString().equals("")){
-                        tableRowsHM.put(article_TextView.getText().toString(), qtyToDeliver.getText().toString() + "@" + "empty");
-                    }else {
-                        tableRowsHM.put(article_TextView.getText().toString(), qtyToDeliver.getText().toString() + "@" + qtyDelivered.getText().toString());
+                TextView article_TextView = (TextView) row.getChildAt(0), qtyToDeliver = (TextView) row.getChildAt(1);
+                if(oneDocument == true){
+                    TextView qtyDelivered = (TextView) row.getChildAt(2), unit = (TextView) row.getChildAt(3);
+                    if(!qtyDelivered.getText().equals("") || (!qtyDelivered.getText().equals("0"))){
+                        articlesForEmail += "Artykuł: <b>" + article_TextView.getText().toString() + "</b><br/> Il. do dostarczenia: "
+                                + qtyToDeliver.getText().toString() + " " + unit.getText().toString() + "<br/> Il. dostarczona: "
+                                + qtyDelivered.getText().toString() + " " + unit.getText().toString() + "<br/><br/>";
+                    }
+                    if(!tableRowsHM.containsKey(article_TextView.getText().toString())){
+                        if(qtyDelivered.getText().toString().equals("")){
+                            tableRowsHM.put(article_TextView.getText().toString(), qtyToDeliver.getText().toString() + "@" + "empty");
+                        }else {
+                            tableRowsHM.put(article_TextView.getText().toString(), qtyToDeliver.getText().toString() + "@" + qtyDelivered.getText().toString());
+                        }
+                    }
+                }else{
+                    TextView unit = (TextView) row.getChildAt(2);
+                    CheckBox isDelivered = (CheckBox) row.getChildAt(3);
+                    if(isDelivered.isChecked()){
+                        articlesForEmail += "Artykuł: <b>" + article_TextView.getText().toString() + "</b><br/> Il. do dostarczenia: "
+                                + qtyToDeliver.getText().toString() + " " + unit.getText().toString() + "<br/><br/>";
+                    }
+                    if(!tableRowsHM.containsKey(article_TextView.getText().toString())){
+                        if(hashMapForCreatingPZ){
+                            if(isDelivered.isChecked()){
+                                tableRowsHM.put(article_TextView.getText().toString(), qtyToDeliver.getText().toString() + "@" + "true");
+                            }else{
+                                tableRowsHM.put(article_TextView.getText().toString(), qtyToDeliver.getText().toString() + "@" + "false");
+                            }
+                        }else{
+                            tableRowsHM.put(article_TextView.getText().toString(), qtyToDeliver.getText().toString() + "@" + "empty");
+                        }
                     }
                 }
             }
@@ -503,7 +543,6 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        // wysłanie e-maila
                        DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
                        Date todayDate = new Date();
                        String text = ("Dzień dobry! <br/><br/>Dostawa z dnia " + dateFormat.format(todayDate) + " od dostawcy <b>" + vendorNameTextView.getText().toString()
@@ -516,162 +555,242 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
                                     public void onClick(DialogInterface dialog, int which) {
                                     }
                                 });
-                        if(ctx != null) {
-                            ctx.close();
-                        }
+                        GlobalClass.ctxClose(ctx);
                     }
                 }, new DialogInterface.OnClickListener() { //Anuluj button
                     @Override public void onClick(DialogInterface dialogInterface, int i) { } });
     }
 
     public void createPZ(View view){
+
         GlobalClass.showDialogTwoButtons(this, "Tworzenie PZ", "Czy napewno chcesz utworzyć PZ z artykułami w tabelce?", "Utwórz", "Anuluj",
          new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                LoadingDialog = new ProgressDialog(IncomePurchaseOrderList.this, ProgressDialog.THEME_DEVICE_DEFAULT_LIGHT);
-                LoadingDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-                LoadingDialog.setTitle("");
-                LoadingDialog.setMessage("Ładowanie. Proszę czekać...");
-                LoadingDialog.show();
-                Integer abasRowCount = 0;
-                createTableElementsHM();
+
+                createTableElementsHM(true);
                 Boolean emptyFields = checkIfFieldsEmpty();
-                String purchaseOrderStringFormEmail = "";
                 today = new AbasDate();
                 if (emptyFields == false) {
-                    ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
-                    String[] purchaseOrders = purchaseOrdersString.split("@");
-                    int nrOfPurchaseOrders = purchaseOrders.length;
-                    PackingSlipEditor packingSlipEditor = (PackingSlipEditor) ctx.newObject(PackingSlipEditor.class);
-                    for (int i = 0; i < nrOfPurchaseOrders; i++){
-                        Log.d("PURCHASE ORDER NUMBER", purchaseOrders[i]);
-                        packingSlipEditor.setString("docno", purchaseOrders[i]);
-                        purchaseOrderStringFormEmail += purchaseOrders[i] + ", ";
-                    }
-                    Iterable<PackingSlipEditor.Row> slipRows = packingSlipEditor.table().getEditableRows();
-
-                    //delete from HM if it exists in ABAS and add qty to row
-                    Iterator<PackingSlipEditor.Row> iter = slipRows.iterator();
-                    while(iter.hasNext()){
-                        Iterator<Map.Entry<String, String>> iterHM = tableRowsHM.entrySet().iterator();
-                        PackingSlipEditor.Row row = iter.next();
-                        while(iterHM.hasNext()){
-                            Map.Entry entryTableRowsHM = iterHM.next();
-                            String product = entryTableRowsHM.getKey().toString();
-                            String[] qtyValues = entryTableRowsHM.getValue().toString().split("@");
-                            String deliveredQty = qtyValues[1];
-                            if (row.getProduct().getSwd().equals(entryTableRowsHM.getKey())) {
-                                if(row.getCtryOfOrigin() == null){
-                                    row.setCtryOfOrigin(row.getDestDispatchCtryPos());
-                                }
-                                if(!deliveredQty.equals("0.000")){
-                                    row.setString("unitqty", deliveredQty);
-                                }else{
-                                    row.setUnitQty(BigDecimal.ZERO);
-                                }
-                                iterHM.remove();
-                            }
-                        }
-                    }
-
-
-                    //enter other products
-                    for(Map.Entry<String, String> entryTableRowsHM : tableRowsHM.entrySet()){
-                        String product = entryTableRowsHM.getKey();
-                        String[] qtyValues = entryTableRowsHM.getValue().split("@");
-                        String deliveredQty = qtyValues[1];
-                        packingSlipEditor.table().appendRow();
-                        abasRowCount = packingSlipEditor.table().getRowCount();
-                        PackingSlipEditor.Row newRow = packingSlipEditor.table().getRow(abasRowCount);
-                        newRow.setString("product", product);
-                        newRow.setDeadlineWeekOrDay(today);
-                        if(!deliveredQty.equals("0.000")) {
-                            newRow.setString("unitqty", deliveredQty);
-                        }else{
-                            newRow.setUnitQty(BigDecimal.ZERO);
-                        }
-                    }
-                    packingSlipEditor.setDateFrom(today);
-                    packingSlipEditor.setYdeliverydate(today);
-                    packingSlipEditor.setExtDocNo(proofNr_TextEdit.getText().toString());
-
-
-                    //check how many rows have qty set 0
-                    Integer rowCount = 0;
-                    Integer qtyEqualToZero = 0;
-                    Iterable<PackingSlipEditor.Row> slipCountRows = packingSlipEditor.table().getEditableRows();
-                    for (PackingSlipEditor.Row row: slipCountRows){
-                        rowCount++;
-                        if((row.getUnitQty() == null) || row.getUnitQty().toString().equals("0.000")){
-                            qtyEqualToZero++;
-                        }
-                    }
-
-                    //check if all qty is set 0
-                    if (rowCount != qtyEqualToZero){
-                        packingSlipEditor.commit();
-                        if (packingSlipEditor.active()) {
-                            packingSlipEditor.abort();
-                        }
-                        if(ctx != null){
-                            ctx.close();
-                        }
-                        DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
-                        Date todayDate = new Date();
-                        String text = ("Dzień dobry! <br/><br/> W dniu " + dateFormat.format(todayDate) + " została utworzona nowa PZ dla dostawcy <b> "
-                                + vendorNameTextView.getText().toString()+ "</b> , numer zamówienia: <b>" + purchaseOrderStringFormEmail +
-                                "</b> </p> " + articlesForEmail);
-                        sendEmail("yincomecreatepz", "Utworzono nowy dowod przyjecia PZ!", text);
-
-                        GlobalClass.showDialog(IncomePurchaseOrderList.this, "Utworzono!", "Nowa PZ została pomyślnie utworzona.", "OK", new DialogInterface.OnClickListener() {
-                            @Override public void onClick(DialogInterface dialog, int which) {
-                                if(LoadingDialog != null) {
-                                    LoadingDialog.dismiss();
-                                }
-                                new setIntentAsyncTask().execute("Menu", "");}
-                        });
-                    }else{
-                        if(LoadingDialog != null) {
-                            LoadingDialog.dismiss();
-                        }
-                        GlobalClass.showDialog(IncomePurchaseOrderList.this, "Nie utworzono PZ!", "Nowa PZ nie została utworzona, ponieważ wszystkie artykuły mają ilość dostawy równą 0.", "OK", new DialogInterface.OnClickListener() {
-                            @Override public void onClick(DialogInterface dialog, int which) {} });
-                    }
-
+                    createPZInABAS();
                 }else{
                     tableRowsHM.clear();
                 }
             }
         }, new DialogInterface.OnClickListener() { //Anuluj button
-            @Override public void onClick(DialogInterface dialogInterface, int i) { } });
+            @Override public void onClick(DialogInterface dialogInterface, int i) {} });
+    }
+
+    public void createPZInABAS(){
+        Integer docCount = 0;
+        try {
+            ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
+        }catch (DBRuntimeException e) {
+            GlobalClass.dismissLoadingDialog(LoadingDialog);
+            catchExceptionCases(e, "createPZInABAS", "");
+        }
+        for(int i=0;  i<Integer.parseInt(docQty); i++) {
+            createTableElementsHM(true);
+            PackingSlipEditor packingSlipEditor = (PackingSlipEditor) ctx.newObject(PackingSlipEditor.class);
+            docCount++;
+            String purchaseOrdersStringForEmail = setNewPurchaseOrderFields(packingSlipEditor);
+            deleteArticleFromHMIfExistsInABASAndAddQtyToRow(packingSlipEditor);
+            enterOtherProductsIntoPZ(packingSlipEditor);
+            checkIfAllRowsAreNotSetToZero(packingSlipEditor, docCount, purchaseOrdersStringForEmail);
+
+            if (packingSlipEditor.active()) {
+                packingSlipEditor.abort();
+            }
+        }
+        GlobalClass.ctxClose(ctx);
+    }
+    public void deleteArticleFromHMIfExistsInABASAndAddQtyToRow(PackingSlipEditor packingSlipEditor){
+        Iterable<PackingSlipEditor.Row> slipRows = packingSlipEditor.table().getEditableRows();
+
+        for (PackingSlipEditor.Row row : slipRows) {
+            Iterator<Map.Entry<String, String>> iterHM = tableRowsHM.entrySet().iterator();
+            while (iterHM.hasNext()) {
+                Map.Entry entryTableRowsHM = iterHM.next();
+                String product = entryTableRowsHM.getKey().toString();
+                String[] qtyValues = entryTableRowsHM.getValue().toString().split("@");
+                String toDeliverQty = qtyValues[0], deliveredQty="", isChecked="";
+                if(oneDocument == true){
+                    deliveredQty = qtyValues[1];
+                }else{
+                    isChecked = qtyValues[1];
+                }
+
+                if (row.getProduct().getSwd().equals(product)){
+                    //add Qty to Row
+                    if(oneDocument == true){
+                        if (!deliveredQty.equals("0.000")) {
+                            row.setString("unitqty", deliveredQty);
+                        } else {
+                            row.setUnitQty(BigDecimal.ZERO);
+                        }
+                    }else{
+                        if(!isChecked.equals("false")){
+                            BigDecimal qtyPerDocument = new BigDecimal(toDeliverQty).divide(new BigDecimal(docQty), 2, RoundingMode.HALF_UP); // toDeliverQty/documentQty (for each document the same value)
+                            row.setString("unitqty", qtyPerDocument.toString());
+                        }
+                    }
+                    iterHM.remove();
+                }
+            }
+        }
+    }
+
+    public void enterOtherProductsIntoPZ(PackingSlipEditor packingSlipEditor){
+        Integer abasRowCount;
+        for (Map.Entry<String, String> entryTableRowsHM : tableRowsHM.entrySet()) {
+            String[] qtyValues = entryTableRowsHM.getValue().split("@");
+            String deliveredQty = qtyValues[1], toDeliverQty = qtyValues[0], product = entryTableRowsHM.getKey();
+            packingSlipEditor.table().appendRow();
+            abasRowCount = packingSlipEditor.table().getRowCount();
+            PackingSlipEditor.Row newRow = packingSlipEditor.table().getRow(abasRowCount);
+            newRow.setString("product", product);
+            newRow.setDeadlineWeekOrDay(today);
+            if(oneDocument == true) {
+                if (!deliveredQty.equals("0.000")) {
+                    newRow.setString("unitqty", deliveredQty);
+                } else {
+                    newRow.setUnitQty(BigDecimal.ZERO);
+                }
+            }else{
+                if(toDeliverQty.equals("--------")){
+                    newRow.setString("unitqty", "1");  //one because there is no qty to deliver and value 0 could cause problems
+                }else{
+                    BigDecimal qtyPerDocument = new BigDecimal(toDeliverQty).divide(new BigDecimal(docQty), 2, RoundingMode.HALF_UP);
+                    newRow.setString("unitqty", qtyPerDocument.toPlainString());
+                }
+            }
+        }
+    }
+
+    public String setNewPurchaseOrderFields(PackingSlipEditor packingSlipEditor){
+        String[] purchaseOrders = purchaseOrdersString.split("@");
+        int nrOfPurchaseOrders = purchaseOrders.length; String purchaseOrderStringForEmail = "";
+
+        //set docNo in Abas to import rows
+        for (int j = 0; j < nrOfPurchaseOrders; j++) {
+            packingSlipEditor.setString("docno", purchaseOrders[j]);
+            Log.d("purchaseOrders[j]", purchaseOrders[j]);
+            purchaseOrderStringForEmail += purchaseOrders[j] + ", ";
+        }
+        packingSlipEditor.setDateFrom(today);
+        packingSlipEditor.setYdeliverydate(today);
+        packingSlipEditor.setString("vendor", vendor);
+        if (oneDocument == true) {
+            packingSlipEditor.setExtDocNo(proofNr_TextEdit.getText().toString());
+        } else {
+            packingSlipEditor.setExtDocNo("UZUPELNIJ");
+        }
+        return  purchaseOrderStringForEmail;
+    }
+
+    public void checkIfAllRowsAreNotSetToZero(PackingSlipEditor packingSlipEditor, Integer docCount, String purchaseOrderStringForEmail){
+        //check how many rows have qty set 0
+        Integer rowCount = 0, qtyEqualToZero = 0;
+        Iterable<PackingSlipEditor.Row> slipCountRows = packingSlipEditor.table().getEditableRows();
+        for (PackingSlipEditor.Row row : slipCountRows) {
+            if(!row.getProduct().getSwd().equals("TR.")){ //not counting seperator row
+                rowCount++;
+                if ((row.getUnitQty() == null) || row.getUnitQty().toString().equals("0.000")) {
+                    qtyEqualToZero++;
+                }
+                //Intrastat
+                Log.d("row.getDestDispatch", row.getDestDispatchCtryPos().toString());
+                if (row.getCtryOfOrigin() == null) {
+                    Log.d("INTRASTAT", "INTRASTAT");
+                    row.setCtryOfOrigin(row.getDestDispatchCtryPos());
+                    Log.d("row.getCtryOfOrigin", row.getCtryOfOrigin().getSwd());
+                }
+                if(row.getRegIntra() == null){
+                    row.setString("regintra", "OPOLSKIE");
+                }
+                if(row.getNatureBusiness() == null){
+                    row.setString("naturebusiness", "RT11");
+                }
+            }
+        }
+
+        //check if all qty is not set 0
+        if (rowCount != qtyEqualToZero) {
+            packingSlipEditor.commit();
+            if (docCount == 1) {
+                DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+                Date todayDate = new Date();
+                String text = ("Dzień dobry! <br/><br/> W dniu " + dateFormat.format(todayDate) + " została utworzona nowa PZ dla dostawcy <b> "
+                        + vendorNameTextView.getText().toString() + "</b> , numer zamówienia: <b>" + purchaseOrderStringForEmail +
+                        "</b> </p> " + articlesForEmail);
+                GlobalClass.ctxClose(ctx);
+                sendEmail("yincomecreatepz", "Utworzono nowy dowod przyjecia PZ!", text);
+
+                GlobalClass.showDialog(IncomePurchaseOrderList.this, "Utworzono!", "Nowa PZ została pomyślnie utworzona.", "OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        GlobalClass.dismissLoadingDialog(LoadingDialog);
+                        new setIntentAsyncTask().execute("Menu", "");
+                    }
+                });
+            }
+        }else {
+            if (docCount == 1) {
+                GlobalClass.dismissLoadingDialog(LoadingDialog);
+                GlobalClass.showDialog(IncomePurchaseOrderList.this, "Nie utworzono PZ!", "Nowa PZ nie została utworzona, ponieważ wszystkie artykuły mają ilość dostawy równą 0.", "OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                });
+            }
+        }
+
     }
 
     public Boolean checkIfFieldsEmpty(){
-        Boolean emptyFields= false;
-        if (proofNr_TextEdit.getText().toString().equals("")) {
-            emptyFields = true;
-            GlobalClass.showDialog(IncomePurchaseOrderList.this, "Brak numeru dowodu!", "Proszę uzupełnić numer dowodu.", "OK", new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) {} });
-        }
-
-        for (Map.Entry<String, String> entryTableRowsHM : tableRowsHM.entrySet()) {
-            String[] qtyValues = entryTableRowsHM.getValue().split("@");
-            String deliveredQty = qtyValues[1];
-            if (!proofNr_TextEdit.getText().toString().equals("")) {
-                if (deliveredQty.equals("empty")) {
-                    emptyFields = true;
-                    if(LoadingDialog != null){
-                        LoadingDialog.dismiss();
+        Boolean emptyFields= false; Integer entryCount=0, notCheckedCount = 0;
+        if(oneDocument == true){
+            if (proofNr_TextEdit.getText().toString().equals("")) {
+                emptyFields = true;
+                GlobalClass.dismissLoadingDialog(LoadingDialog);
+                GlobalClass.showDialog(IncomePurchaseOrderList.this, "Brak numeru dowodu!", "Proszę uzupełnić numer dowodu.", "OK", new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) {} });
+            }else{
+                for (Map.Entry<String, String> entryTableRowsHM : tableRowsHM.entrySet()) {
+                    entryCount++;
+                    String[] qtyValues = entryTableRowsHM.getValue().split("@");
+                    String deliveredQty = qtyValues[1];
+                    if (deliveredQty.equals("empty")) {
+                        emptyFields = true;
+                        GlobalClass.dismissLoadingDialog(LoadingDialog);
+                        GlobalClass.showDialog(IncomePurchaseOrderList.this, "Brak ilości dostarczonej!",
+                                "Proszę uzupełnić ilość. Jeśli dany artykuł nie przyjechał, proszę w polu 'Il.dostarczona' wpisać wartość 0.", "OK", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                    }
+                                });
+                        break;
                     }
-                    GlobalClass.showDialog(IncomePurchaseOrderList.this, "Brak ilości dostarczonej!",
-                            "Proszę uzupełnić ilość. Jeśli dany artykuł nie przyjechał, proszę w polu 'Il.dostarczona' wpisać wartość 0.", "OK", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                }
-                            });
-                    break;
                 }
+            }
+        }else{
+            for (Map.Entry<String, String> entryTableRowsHM : tableRowsHM.entrySet()) {
+                entryCount++;
+                String[] qtyValues = entryTableRowsHM.getValue().split("@");
+                String isChecked = qtyValues[1];
+                if (isChecked.equals("false")) {
+                    notCheckedCount++;
+                }
+            }
+            if(entryCount == notCheckedCount){
+                emptyFields = true;
+                GlobalClass.dismissLoadingDialog(LoadingDialog);
+                GlobalClass.showDialog(IncomePurchaseOrderList.this, "Nie zaznaczono artykułu!",
+                "Proszę zaznaczyć dostarczone artykuły.", "OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                });
             }
         }
         return emptyFields;
@@ -686,19 +805,16 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
         sender.setYtrext(text);
         sender.invokeStart();
         sender.close();
-        if(ctx != null) {
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx);
     }
+
     public Vendor getVendor(){
         vendorObject = null;
         ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
         SelectionBuilder<Vendor> stocktakingSB = SelectionBuilder.create(Vendor.class);
         stocktakingSB.add(Conditions.eq(Vendor.META.id.toString(), vendor));
         vendorObject = QueryUtil.getFirst(ctx, stocktakingSB.build());
-        if(ctx != null) {
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx);
         return vendorObject;
     }
 
@@ -706,9 +822,7 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
         SelectionBuilder<AppConfigValues> stocktakingSB = SelectionBuilder.create(AppConfigValues.class);
         stocktakingSB.add(Conditions.eq(AppConfigValues.META.swd, "OGOLNE"));
         appConfigValues = QueryUtil.getFirst(ctx, stocktakingSB.build());
-        if(ctx != null) {
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx);
         return appConfigValues;
     }
 }

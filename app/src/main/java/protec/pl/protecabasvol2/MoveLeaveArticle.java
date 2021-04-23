@@ -6,7 +6,6 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -14,7 +13,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,12 +52,11 @@ public class MoveLeaveArticle extends AppCompatActivity {
     DbContext ctx, sessionCtx;
     ProgressDialog LoadingDialog;
     TextView article_textEdit, location_textEdit, unit_textView, qty_textEdit, location_textInfo, qty_textInfo, article_textInfo;
-    TableLayout WDRlayout;
+    TableLayout WDRlayout; View leave_btn, enterArticle_btn;
     String database, artIDNO, userSwd;
-    GlobalClass globFunctions;
-    View leave_btn, enterArticle_btn;
-    Handler handler;
-    Intent intent;
+    GlobalClass globFunctions; Handler handler; Intent intent;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,18 +69,14 @@ public class MoveLeaveArticle extends AppCompatActivity {
     }
     // na kliknięcie cofnij
     public void onBackPressed(){
-        super.onBackPressed();
-        if(ctx != null) {
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx);
         new setIntentAsyncTask().execute("Move");
+        super.onBackPressed();
     }
 
     @Override
     protected void onPause(){  //closes ctx if the app is minimized
-        if(ctx != null) {
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx);
         super.onPause();
     }
 
@@ -152,9 +145,7 @@ public class MoveLeaveArticle extends AppCompatActivity {
     public void hideKeyboard(View view) {
         InputMethodManager inputMethodManager =(InputMethodManager)getSystemService(Activity.INPUT_METHOD_SERVICE);
         inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
-        if(ctx != null){
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx);
     }
 
     public void scanArticle(View view){
@@ -207,12 +198,11 @@ public class MoveLeaveArticle extends AppCompatActivity {
             }
             if (requestCode == 70) {
                 if (resultCode == RESULT_OK) {
-                    String content = result.getContents();
-                    String location_name = "";
+                    String content = result.getContents(), location_name = "";
                     LocationHeader location = LocationExists(content);
                     if(location != null){
                         location_name = location.getSwd();
-                        ctx.close();
+                        GlobalClass.ctxClose(ctx);
                         location_textEdit.setText(location_name);
                         article_textInfo.setVisibility(View.VISIBLE);
                         location_textInfo.setVisibility(View.VISIBLE);
@@ -235,9 +225,7 @@ public class MoveLeaveArticle extends AppCompatActivity {
     public void checkWDRStock(String content) {
         try {
             ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
-            String articleSWD;
-            String qty;
-            String unit;
+            String articleSWD, qty, unit;
             StockLevelInformation sli = ctx.openInfosystem(StockLevelInformation.class);
             sli.setString("klplatz", "WDR");
             sli.setNullmge(false);
@@ -252,27 +240,13 @@ public class MoveLeaveArticle extends AppCompatActivity {
                         artIDNO = row.getTartikel().getIdno();
                         qty = row.getLemge().stripTrailingZeros().toPlainString();
                         unit = row.getString("leinheit");
-                        if (unit.equals("(20)")) {
-                            unit = "szt.";
-                        } else if (unit.equals("(7)")) {
-                            unit = "kg";
-                        } else if (unit.equals("(21)")) {
-                            unit = "kpl";
-                        } else if (unit.equals("(1)")) {
-                            unit = "m";
-                        }else if (unit.equals("(10)")) {
-                            unit = "tona";
-                        }else if (unit.equals("(28)")) {
-                            unit = "arkusz";
-                        }
+                        unit = GlobalClass.getProperUnit(unit);
+
                         unit_textView.setText(unit);
                         article_textEdit.setText(articleSWD);
                         unit_textView.setVisibility(View.VISIBLE);
-                        unit_textView.setText(unit);
                         qty_textEdit.setHint(qty);
-                        if(ctx != null) {
-                            ctx.close();
-                        }
+                        GlobalClass.ctxClose(ctx);
                     }
                 } else {// na WDR nie ma takiego artykułu
                     GlobalClass.showDialog(this, "Brak artykułu w WDR!", "W lokalizacji WDR nie ma takiego artykułu.", "OK",
@@ -284,15 +258,10 @@ public class MoveLeaveArticle extends AppCompatActivity {
                     new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {} });
             }
-            if (LoadingDialog != null){
-                LoadingDialog.dismiss();
-            }
-            ctx.close();
-
+            GlobalClass.dismissLoadingDialog(LoadingDialog);
+            GlobalClass.ctxClose(ctx);
         }catch (DBRuntimeException e){
-            if (LoadingDialog != null){
-                LoadingDialog.dismiss();
-            }
+            GlobalClass.dismissLoadingDialog(LoadingDialog);
             catchExceptionCases(e, "checkWDRStock", content);
         }
     }
@@ -320,71 +289,38 @@ public class MoveLeaveArticle extends AppCompatActivity {
                     wdrDialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                     WDRlayout = (TableLayout) wdrDialog.findViewById(R.id.wdrkNameTable);
 
-                    //ustawianie wyglądu dla row
-                    TableRow tableRowWDR = new TableRow(this);
-                    TableRow.LayoutParams rowParam = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT);
-                    tableRowWDR.setLayoutParams(rowParam);
-                    tableRowWDR.setBackgroundColor(Color.parseColor("#BDBBBB"));
-
-                    //ustawianie wyglądu dla table cell
-                    TableRow.LayoutParams cellParam = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT);
-                    cellParam.setMargins(1, 1, 1, 1);
-
+                    TableRow tableRowWDR = GlobalClass.setTableRowList(this);
                     TextView article_textViewTable = new TextView(this);
                     TextView qty_textViewTable = new TextView(this);
                     TextView unit_textViewTable = new TextView(this);
-
+                    TextView[] textViewArray = {article_textViewTable, qty_textViewTable, unit_textViewTable};
                     Integer j = WDRlayout.getChildCount();
-
-                    if (j % 2 == 0) {  // zmiana koloru w rowach dla parzystych
-                        article_textViewTable.setBackgroundColor(Color.parseColor("#FFFFFF"));
-                        qty_textViewTable.setBackgroundColor(Color.parseColor("#FFFFFF"));
-                        unit_textViewTable.setBackgroundColor(Color.parseColor("#FFFFFF"));
-                    } else {
-                        article_textViewTable.setBackgroundColor(Color.parseColor("#E5E5E6"));
-                        qty_textViewTable.setBackgroundColor(Color.parseColor("#E5E5E6"));
-                        unit_textViewTable.setBackgroundColor(Color.parseColor("#E5E5E6"));
+                    for (TextView textView :textViewArray) {
+                        if (j % 2 == 0) {
+                            textView.setBackgroundColor(Color.parseColor("#FFFFFF"));
+                        } else {
+                            textView.setBackgroundColor(Color.parseColor("#E5E5E6"));
+                        }
                     }
 
-
+                    //Article
                     String art = row.getTartikel().getSwd();
-                    article_textViewTable.setText(art);
-                    article_textViewTable.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                    article_textViewTable.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                    article_textViewTable.setTypeface(Typeface.DEFAULT_BOLD);
-                    article_textViewTable.setPadding(5, 20, 5, 20);
-                    article_textViewTable.setLayoutParams(cellParam);
+                    String artIdno = row.getTartikel().getIdno();
+                    GlobalClass.setParamForTextView(article_textViewTable, art, 13, 20, 5, true);
+
+                    //Unit
                     String unit = row.getString("leinheit");
-                    // String unit = row.getLeinheit().toString();
-                    if (unit.equals("(20)")) {
-                        unit = "szt.";
-                    } else if (unit.equals("(7)")) {
-                        unit = "kg";
-                    } else if (unit.equals("(21)")) {
-                        unit = "kpl";
-                    } else if (unit.equals("(1)")) {
-                        unit = "m";
-                    } else if (unit.equals("(10)")) {
-                        unit = "tona";
-                    } else if (unit.equals("(28)")) {
-                        unit = "arkusz";
-                    }
-                    unit_textViewTable.setText(unit);
-                    unit_textViewTable.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                    unit_textViewTable.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                    unit_textViewTable.setPadding(5, 20, 5, 20);
-                    unit_textViewTable.setLayoutParams(cellParam);
+                    unit = GlobalClass.getProperUnit(unit);
+                    GlobalClass.setParamForTextView(unit_textViewTable, unit, 13, 20, 5, false);
 
+                    //Qty
                     String qty = row.getLemge().stripTrailingZeros().toPlainString();  //by po przecinku usunąć niepotrzebne zera
-                    qty_textViewTable.setText(qty);
-                    qty_textViewTable.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                    qty_textViewTable.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                    qty_textViewTable.setPadding(5, 20, 5, 20);
-                    qty_textViewTable.setLayoutParams(cellParam);
+                    GlobalClass.setParamForTextView(qty_textViewTable, qty, 13, 20, 5, false);
 
-                    tableRowWDR.addView(article_textViewTable);
-                    tableRowWDR.addView(qty_textViewTable);
-                    tableRowWDR.addView(unit_textViewTable);
+                    for (TextView textView :textViewArray) {
+                        tableRowWDR.addView(textView);
+                    }
+
                     WDRlayout.addView(tableRowWDR, j);
 
                     String finalUnit = unit;
@@ -392,7 +328,7 @@ public class MoveLeaveArticle extends AppCompatActivity {
                         @Override
                         public void onClick(View view) {
                             wdrDialog.dismiss();
-                            artIDNO = row.getTartikel().getIdno();
+                            artIDNO = artIdno; //zmienione z row.getTartikle.getIdno()
                             leave_btn.setEnabled(true);
                             article_textEdit.setInputType(0);
                             article_textEdit.setText(art);
@@ -402,23 +338,21 @@ public class MoveLeaveArticle extends AppCompatActivity {
                             article_textInfo.setVisibility(View.VISIBLE);
                             location_textInfo.setVisibility(View.VISIBLE);
                             qty_textInfo.setVisibility(View.VISIBLE);
-                            ctx.close();
+                            GlobalClass.ctxClose(ctx);
                         }
                     });
                 }
             } else {
                 GlobalClass.showDialog(this, "Brak artykułów!", "Brak artykułów na miejscu składowania WDR.", "OK",
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                            }
-                        });
-                ctx.close();
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                        }
+                    });
+                GlobalClass.ctxClose(ctx);
             }
         }catch (DBRuntimeException e){
-            if (LoadingDialog != null){
-                LoadingDialog.dismiss();
-            }
+            GlobalClass.dismissLoadingDialog(LoadingDialog);
             catchExceptionCases(e, "chooseArticleFromWDRStockTable", "");
         }
     }
@@ -426,12 +360,10 @@ public class MoveLeaveArticle extends AppCompatActivity {
     @SuppressLint("HandlerLeak")
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void save(View view) {
-        String article = article_textEdit.getText().toString();
-        String location = location_textEdit.getText().toString();
-        String qty = qty_textEdit.getText().toString();
+        String article = article_textEdit.getText().toString(), location = location_textEdit.getText().toString(), qty = qty_textEdit.getText().toString();
         globFunctions = new GlobalClass(getApplicationContext());
-
         Boolean emptyFields = checkIfFieldsEmpty(article, location, qty);
+
         if(emptyFields == false){
             try {
                 leave_btn.setEnabled(false);
@@ -459,7 +391,7 @@ public class MoveLeaveArticle extends AppCompatActivity {
                             new setIntentAsyncTask().execute("Move");
                         }
                     });
-                ctx.close();
+                GlobalClass.ctxClose(ctx);
             } catch (NumberFormatException e) {
                 e.printStackTrace();
                 GlobalClass.showDialog(this, "Błąd!", "Podczas zmiany formatu wystąpił błąd.", "OK",
@@ -479,24 +411,20 @@ public class MoveLeaveArticle extends AppCompatActivity {
 
     @SuppressLint("HandlerLeak")
     public void catchExceptionCases (DBRuntimeException e, String function, String parameter){
-        if(e.getMessage().contains("failed")){
-            GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) { } });
-
-            //przekroczona liczba licencji
-        }else if(e.getMessage().contains("FULL")){
-            LoadingDialog = ProgressDialog.show(MoveLeaveArticle.this, "     Przekroczono liczbę licencji.",
-                    "Zwalniam miejsce w ABAS. Proszę czekać...", true);
+        GlobalClass.catchExceptionCases(e, this);
+        if (e.getMessage().contains("FULL")) { //przekroczona liczba licencji
+            LoadingDialog = GlobalClass.getDialogForLicences(this);
+            LoadingDialog.show();
             new Thread(() -> {
                 sessionCtx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", "sesje", "mobileApp");  // hasło sesje aby mieć dostęp
                 GlobalClass.licenceCleaner(sessionCtx);
-                sessionCtx.close();
+                GlobalClass.ctxClose(sessionCtx);
                 handler.sendEmptyMessage(0);
             }).start();
             handler = new Handler() {
                 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
                 public void handleMessage(Message msg) {
-                    LoadingDialog.dismiss();
+                    GlobalClass.dismissLoadingDialog(LoadingDialog);
                     if(function.equals("checkWDRStock")) {
                         checkWDRStock(parameter);
                     }else if(function.equals("leaveBtnCallOnClick")){
@@ -550,7 +478,7 @@ public class MoveLeaveArticle extends AppCompatActivity {
             SelectionBuilder<LocationHeader> locationSB = SelectionBuilder.create(LocationHeader.class);
             locationSB.add(Conditions.eq(LocationHeader.META.swd, location));
             loc = QueryUtil.getFirst(ctx, locationSB.build());
-            ctx.close();
+            GlobalClass.ctxClose(ctx);
         }catch (Exception e) {
             Log.d("error", e.getMessage());
         }

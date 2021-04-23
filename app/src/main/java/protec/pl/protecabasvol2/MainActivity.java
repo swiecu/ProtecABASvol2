@@ -64,13 +64,10 @@ public class MainActivity extends AppCompatActivity {
                     && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE /*AppUpdateType.FLEXIBLE*/)){
                 try {
                     mAppUpdateManager.startUpdateFlowForResult(
-                            appUpdateInfo, AppUpdateType.IMMEDIATE /*AppUpdateType.IMMEDIATE*/, MainActivity.this, 77);
+                            appUpdateInfo, AppUpdateType.IMMEDIATE /*AppUpdateType.FLEXIBLE*/, MainActivity.this, 77);
                 } catch (IntentSender.SendIntentException e) {
                     e.getMessage();
                 }
-            } else if (appUpdateInfo.installStatus() == InstallStatus.DOWNLOADED){
-               //CHECK THIS if AppUpdateType.FLEXIBLE, otherwise you can skip
-              // popupSnackbarForCompleteUpdate();
             }
         });
     }
@@ -132,9 +129,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void  onStop(){
         super.onStop();
-        if (LoadingDialog != null){
-            LoadingDialog.dismiss();
-        }
+        GlobalClass.dismissLoadingDialog(LoadingDialog);
         if (mAppUpdateManager != null) {
             mAppUpdateManager.unregisterListener(installStateUpdatedListener);
         }
@@ -142,9 +137,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPause(){  //closes ctx if the app is minimized
-        if(ctx != null) {
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx);
         super.onPause();
     }
 
@@ -208,9 +201,7 @@ public class MainActivity extends AppCompatActivity {
                StrictMode.setThreadPolicy(policy);
                ctx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", password, "mobileApp");  // musi być erp, na pierwszym logowaniu
                checkUserDatabase(ctx);
-               if(ctx != null){
-                   ctx.close();
-               }
+               GlobalClass.ctxClose(ctx);
            } catch (DBRuntimeException e) {
                catchExceptionCases(e, "loginCallOnClick");
            }
@@ -223,40 +214,27 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressLint("HandlerLeak")
     public void catchExceptionCases (DBRuntimeException e, String function){
-
-        if (e.getMessage().contains("password")) {
-            GlobalClass.showDialog(this, "Błędne hasło!", "Podane hasło jest błędne.", "OK", new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) { }
-            });
-
-        } else if (e.getMessage().contains("failed")) {
-            GlobalClass.showDialog(this, "Brak połączenia!", "Nie można się aktualnie połączyć z bazą.", "OK", new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) {}
-            });
+        GlobalClass.catchExceptionCases(e, this);
 
         //przekroczona liczba licencji
-        } else if (e.getMessage().contains("FULL")) {
-            LoadingDialog = ProgressDialog.show(MainActivity.this, "     Przekroczono liczbę licencji.",
-                    "Zwalniam miejsce w ABAS. Proszę czekać...", true);
+         if (e.getMessage().contains("FULL")) {
+             LoadingDialog = GlobalClass.getDialogForLicences(this);
+             LoadingDialog.show();
             new Thread(() -> {
                 sessionCtx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", "sesje", "mobileApp");  // hasło sesje aby mieć dostęp
                 GlobalClass.licenceCleaner(sessionCtx);
-                if(sessionCtx != null) {
-                    sessionCtx.close();
-                }
+                GlobalClass.ctxClose(sessionCtx);
                 handler.sendEmptyMessage(0);
             }).start();
             handler = new Handler() {
-                @SuppressLint("HandlerLeak")
+                @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
                 public void handleMessage(Message msg) {
-                    LoadingDialog.dismiss();
-                    if(function.equals("loginCallOnClick")) {
-                        login_btn.callOnClick();
-                    }
+                GlobalClass.dismissLoadingDialog(LoadingDialog);
+                if(function.equals("loginCallOnClick")) {
+                    login_btn.callOnClick();
+                }
                 }
             };
-        } else {
-            Log.d("error", e.getMessage());
         }
     }
 
@@ -273,18 +251,19 @@ public class MainActivity extends AppCompatActivity {
                });
            } else {
                Boolean correctDatabase = false;
-               String database="";
+               String database = employee.getYdatabase().toLowerCase();
+                switch (database){
+                    case "test":
+                        correctDatabase = true;
+                        break;
+                    case "erp":
+                        correctDatabase = true;
+                        break;
+                    case "demo":
+                        correctDatabase = true;
+                        break;
+                }
 
-               if (employee.getYdatabase().equalsIgnoreCase("test")) {
-                   correctDatabase = true;
-                   database = "test";
-               }else if (employee.getYdatabase().equalsIgnoreCase("erp")) {
-                   correctDatabase = true;
-                   database = "erp";
-               }else if (employee.getYdatabase().equalsIgnoreCase("demo")) {
-                   correctDatabase = true;
-                   database = "demo";
-               }
                if(correctDatabase == true) {
                    Intent intent = new Intent(this, Menu.class);
                    intent.putExtra("password", password);

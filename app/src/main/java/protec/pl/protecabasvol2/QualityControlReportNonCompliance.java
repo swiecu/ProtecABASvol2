@@ -6,7 +6,6 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -14,7 +13,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -53,16 +51,12 @@ public class QualityControlReportNonCompliance extends AppCompatActivity {
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
     DbContext ctx, sessionCtx;
-    ProgressDialog LoadingDialog;
-    EditText nrCard_TextEdit;
+    ProgressDialog LoadingDialog; EditText nrCard_TextEdit;
     TextView artName_TextView, article_TextView, nrZP_TextView, message;
-    WorkOrders card;
-    TableLayout controlLayout;
+    WorkOrders card; TableLayout controlLayout;
     String user, choosenEmployee, choosenDepartment, choosenOperation, choosenMachineGroup, database, userSwd;
     AppConfigValues appConfigValues;
-    View save_btn;
-    Handler handler;
-    Intent intent;
+    View save_btn; Handler handler; Intent intent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,27 +70,21 @@ public class QualityControlReportNonCompliance extends AppCompatActivity {
 
     // na kliknięcie cofnij
     public void onBackPressed() {
-        super.onBackPressed();
         new setIntentAsyncTask().execute("QualityControl");
+        super.onBackPressed();
     }
 
     // na wyjście z actvity
     @Override
     protected void onStop() {
+        GlobalClass.ctxClose(ctx);
+        GlobalClass.dismissLoadingDialog(LoadingDialog);
         super.onStop();
-        if(ctx != null){
-            ctx.close();
-        }
-        if (LoadingDialog != null) {
-            LoadingDialog.dismiss();
-        }
     }
 
     @Override
     protected void onPause(){  //closes ctx if the app is minimized
-        if(ctx != null) {
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx);
         super.onPause();
     }
 
@@ -189,10 +177,7 @@ public class QualityControlReportNonCompliance extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void checkCard(String content) {
-        String nr_card = "";
-        String article = "";
-        String article_name = "";
-        String nr_ZP = "";
+        String nr_card = "", article = "", article_name = "", nr_ZP = "";
 
         if (CardNrExists(content) != null) {
             WorkOrders card = CardNrExists(content);
@@ -206,7 +191,7 @@ public class QualityControlReportNonCompliance extends AppCompatActivity {
             article_TextView.setText(article);
             artName_TextView.setText(article_name);
             nrZP_TextView.setText(nr_ZP);
-            ctx.close();
+            GlobalClass.ctxClose(ctx);
         }
         else{
             GlobalClass.showDialog(this, "Brak karty pracy!", "Zeskanowany nr karty nie istnieje.", "OK",
@@ -224,7 +209,7 @@ public class QualityControlReportNonCompliance extends AppCompatActivity {
             SelectionBuilder<WorkOrders> prodCardSB = SelectionBuilder.create(WorkOrders.class);
             prodCardSB.add(Conditions.eq(WorkOrders.META.idno, card_nr));
             card = QueryUtil.getFirst(ctx, prodCardSB.build());
-            ctx.close();
+            GlobalClass.ctxClose(ctx);
         } catch (DBRuntimeException e) {
             nrZP_TextView.setText("");
             article_TextView.setText("");
@@ -237,27 +222,23 @@ public class QualityControlReportNonCompliance extends AppCompatActivity {
 
     @SuppressLint("HandlerLeak")
     public void catchExceptionCases (DBRuntimeException e, String function, String parameter){
-        if(e.getMessage().contains("failed")){
-            GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) {} });
-
-            //przekroczona liczba licencji
-        }else if(e.getMessage().contains("FULL")){
-            LoadingDialog = ProgressDialog.show(QualityControlReportNonCompliance.this, "     Przekroczono liczbę licencji.",
-                    "Zwalniam miejsce w ABAS. Proszę czekać...", true);
+        GlobalClass.catchExceptionCases(e, this);
+        if (e.getMessage().contains("FULL")) { //przekroczona liczba licencji
+            LoadingDialog = GlobalClass.getDialogForLicences(this);
+            LoadingDialog.show();
             new Thread(() -> {
                 sessionCtx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", "sesje", "mobileApp");  // hasło sesje aby mieć dostęp
                 GlobalClass.licenceCleaner(sessionCtx);
-                sessionCtx.close();
+                GlobalClass.ctxClose(sessionCtx);
                 handler.sendEmptyMessage(0);
             }).start();
             handler = new Handler() {
-                @SuppressLint("HandlerLeak")
+                @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
                 public void handleMessage(Message msg) {
-                    LoadingDialog.dismiss();
-                    if(function.equals("CardNrExists")){
-                        CardNrExists(parameter);
-                    }
+                GlobalClass.dismissLoadingDialog(LoadingDialog);
+                if(function.equals("CardNrExists")){
+                    CardNrExists(parameter);
+                }
                 }
             };
         }
@@ -287,62 +268,38 @@ public class QualityControlReportNonCompliance extends AppCompatActivity {
                 controlLayout = (TableLayout) controlDialog.findViewById(R.id.controlTable);
 
                 //ustawianie wyglądu dla row
-                TableRow tableRowControl = new TableRow(this);
-                TableRow.LayoutParams rowParam = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT);
-                tableRowControl.setLayoutParams(rowParam);
-                tableRowControl.setBackgroundColor(Color.parseColor("#BDBBBB"));
-
-                //ustawianie wyglądu dla table cell
-                TableRow.LayoutParams cellParam = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT);
-                cellParam.setMargins(1, 1, 1, 1);
-
+                TableRow tableRowControl = GlobalClass.setTableRowList(this);
                 TextView employee_textViewTable = new TextView(this);
                 TextView operation_textViewTable = new TextView(this);
                 TextView machineGroup_textViewTable = new TextView(this);
-
+                TextView[] textViewArray = {employee_textViewTable, operation_textViewTable, machineGroup_textViewTable};
                 Integer j = controlLayout.getChildCount();
-
-                if (j % 2 == 0) {  // zmiana koloru w rowach dla parzystych
-                    employee_textViewTable.setBackgroundColor(Color.parseColor("#FFFFFF"));
-                    operation_textViewTable.setBackgroundColor(Color.parseColor("#FFFFFF"));
-                    machineGroup_textViewTable.setBackgroundColor(Color.parseColor("#FFFFFF"));
-                } else {
-                    employee_textViewTable.setBackgroundColor(Color.parseColor("#E5E5E6"));
-                    operation_textViewTable.setBackgroundColor(Color.parseColor("#E5E5E6"));
-                    machineGroup_textViewTable.setBackgroundColor(Color.parseColor("#E5E5E6"));
+                for (TextView textView :textViewArray) {
+                    if (j % 2 == 0) {
+                        textView.setBackgroundColor(Color.parseColor("#FFFFFF"));
+                    } else {
+                        textView.setBackgroundColor(Color.parseColor("#E5E5E6"));
+                    }
                 }
 
                 //Pracownik
                 String employee = row.getYtemployee().getDescrOperLang();
-                employee_textViewTable.setText(employee);
-                employee_textViewTable.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                employee_textViewTable.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                employee_textViewTable.setTypeface(Typeface.DEFAULT_BOLD);
-                employee_textViewTable.setPadding(10, 20, 10, 20);
-                employee_textViewTable.setLayoutParams(cellParam);
+                GlobalClass.setParamForTextView(employee_textViewTable, employee, 13, 20, 10, true);
+                //employee_textViewTable.setTypeface(Typeface.DEFAULT_BOLD);
 
                 // Grupa Maszyn
                 String department = row.getYtemployeedeptdesc().getDescr6();
                 String machine_group = ((WorkCenter)row.getYtworkcenter()).getDescr6();
-                machineGroup_textViewTable.setText(machine_group);
-                machineGroup_textViewTable.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                machineGroup_textViewTable.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                machineGroup_textViewTable.setPadding(10, 20, 10, 20);
-                machineGroup_textViewTable.setLayoutParams(cellParam);
+                GlobalClass.setParamForTextView(machineGroup_textViewTable, machine_group, 13, 20, 10, false);
 
                 //  Operacja
                 String operation = row.getYoperation().getDescr6();
-                operation_textViewTable.setText(operation);
-                operation_textViewTable.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                operation_textViewTable.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                operation_textViewTable.setPadding(10, 20, 10, 20);
-                operation_textViewTable.setLayoutParams(cellParam);
+                GlobalClass.setParamForTextView(operation_textViewTable, operation, 13, 20, 10, false);
 
-                tableRowControl.addView(employee_textViewTable);
-                tableRowControl.addView(operation_textViewTable);
-                tableRowControl.addView(machineGroup_textViewTable);
+                for (TextView textView :textViewArray) {
+                    tableRowControl.addView(textView);
+                }
                 controlLayout.addView(tableRowControl, j);
-
                 tableRowControl.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
@@ -397,10 +354,10 @@ public class QualityControlReportNonCompliance extends AppCompatActivity {
         DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         Date today = new Date();
         EditText nrCard_TextEdit = findViewById(R.id.machine_TextEdit);
-        String nrCard_text = nrCard_TextEdit.getText().toString();
-        String mess_text = message.getText().toString();
-
+        String nrCard_text = nrCard_TextEdit.getText().toString(),
+               mess_text = message.getText().toString();
         Boolean emptyFields = checkIfFieldsEmpty(nrCard_text, mess_text);
+
         if(emptyFields == false){
             save_btn.setEnabled(false);
             appConfigValues = getAppConfigValues(); //podbieranie maili z abasa
@@ -410,7 +367,6 @@ public class QualityControlReportNonCompliance extends AppCompatActivity {
             }else{ // produkcja w toku
                 sender.setYto(appConfigValues.getYqualitycontrprod());
             }
-
             sender.setYsubject("Nowa wiadomosc z kontroli jakosci produkcji!");
             String text = ("Dzień dobry! <br/> Użytkownik " + user + " wysłał w dniu " + dateFormat.format(today) + " następnującą wiadomość: <br/><p> " + mess_text + "</p>Karta pracy: " +  nrCard_TextEdit.getText()
                     +"<br/>Nr zlecenia produkcyjnego: " + nrZP_TextView.getText() + "<br/> Artykuł: " + article_TextView.getText() + "<br/> Nazwa artykułu: " + artName_TextView.getText()
@@ -424,11 +380,9 @@ public class QualityControlReportNonCompliance extends AppCompatActivity {
                     new setIntentAsyncTask().execute("Menu");
                 }
             });
-            ctx.close();
+            GlobalClass.ctxClose(ctx);
         }
-        if (LoadingDialog != null) {
-            LoadingDialog.dismiss();
-        }
+        GlobalClass.dismissLoadingDialog(LoadingDialog);
     }
 
     public Boolean checkIfFieldsEmpty(String nrCard_text, String mess_text) {
@@ -455,7 +409,7 @@ public class QualityControlReportNonCompliance extends AppCompatActivity {
         SelectionBuilder<AppConfigValues> stocktakingSB = SelectionBuilder.create(AppConfigValues.class);
         stocktakingSB.add(Conditions.eq(AppConfigValues.META.swd, "OGOLNE"));
         appConfigValues = QueryUtil.getFirst(ctx, stocktakingSB.build());
-        ctx.close();
+        GlobalClass.ctxClose(ctx);
         return appConfigValues;
     }
 }

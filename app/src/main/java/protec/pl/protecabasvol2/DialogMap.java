@@ -25,12 +25,12 @@ public class DialogMap extends AppCompatActivity {
 
     Matrix matrix = new Matrix();
     Matrix savedMatrix = new Matrix();
-    // We can be in one of these 3 states
+    // Can be in one of 3 states
     static final int NONE = 0;
     static final int DRAG = 1;
     static final int ZOOM = 2;
     int mode = NONE;
-    // Remember for zooming
+    //For zooming
     PointF start = new PointF();
     PointF mid = new PointF();
     float oldDist = 1f;
@@ -47,8 +47,8 @@ public class DialogMap extends AppCompatActivity {
     }
 
     public void onBackPressed(){
-        super.onBackPressed();
         new setIntentAsyncTask().execute("Menu");
+        super.onBackPressed();
     }
 
     private class setIntentAsyncTask extends AsyncTask<String, Void, String> {
@@ -70,9 +70,6 @@ public class DialogMap extends AppCompatActivity {
 
         protected void onPostExecute(String param){
             startActivity(intent);
-//            if(loadDialog!= null){
-//                loadDialog.dismiss();
-//            }
         }
     }
 

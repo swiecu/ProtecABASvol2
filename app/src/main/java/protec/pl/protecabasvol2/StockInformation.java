@@ -6,7 +6,6 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -15,7 +14,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.text.Html;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,15 +48,10 @@ public class StockInformation extends Activity {
     public void setPassword(String password) {
         this.password = password;
     }
-    DbContext ctx, sessionCtx;
-    ProgressDialog LoadingDialog;
-    TableLayout layout;
-    TextView article_name, suma;
-    TableRow no_art;
-    GlobalClass globFunctions;  //zadeklarowanie globalnej klasy
+    DbContext ctx, sessionCtx; ProgressDialog LoadingDialog; TableLayout layout;
+    TextView article_name, suma; TableRow no_art; GlobalClass globFunctions;
     String database, back_article, userSwd;
-    Handler handler;
-    Intent intent;
+    Handler handler; Intent intent;
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
@@ -83,23 +76,19 @@ public class StockInformation extends Activity {
     // na wyjście z actvity
     @Override
     protected void onStop(){
+        GlobalClass.dismissLoadingDialog(LoadingDialog);
         super.onStop();
-        if (LoadingDialog != null){
-            LoadingDialog.dismiss();
-        }
     }
     //na cofnięcie Back do tyłu
     @Override
     public void onBackPressed(){
-        super.onBackPressed();
         new setIntentAsyncTask().execute("Menu", "");
+        super.onBackPressed();
     }
 
     @Override
     protected void onPause(){  //closes ctx if the app is minimized
-        if(ctx != null) {
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx);
         super.onPause();
     }
 
@@ -115,17 +104,14 @@ public class StockInformation extends Activity {
 
         @Override
         protected String doInBackground(String... strings) {
-            String destination = strings[0];
-            String content = strings[1];
+            String destination = strings[0],
+                   content = strings[1];
             setIntent(destination, content);
             return null;
         }
 
         protected void onPostExecute(String param){
             startActivity(intent);
-//            if(loadDialog!= null){
-//                loadDialog.dismiss();
-//            }
         }
     }
 
@@ -154,7 +140,6 @@ public class StockInformation extends Activity {
         no_art.setVisibility(View.VISIBLE);
     }
     public void getElementsFromIntent(){
-
         password = (getIntent().getStringExtra("password"));
         back_article = (getIntent().getStringExtra("art_idno"));
         database = (getIntent().getStringExtra("database"));
@@ -202,7 +187,7 @@ public class StockInformation extends Activity {
         View dialogView = LayoutInflater.from(view.getContext()).inflate(R.layout.dialog_enter_article, viewGroup, false);
         enterArticleDialog.setView(dialogView);
         AlertDialog articleDialog = enterArticleDialog.create();
-        Button button_cancel = (Button)dialogView.findViewById(R.id.button_indivStocktaking);
+        Button button_cancel = (Button)dialogView.findViewById(R.id.button_cancel);
         button_cancel .setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -241,38 +226,30 @@ public class StockInformation extends Activity {
         }
         layout.removeViews(1, (layout.getChildCount() -2)); //zmienia liczbę View dla layoutu ("Brak artykułu" jest schowane ale dalej jest child od layout)
         try{
-            ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");   //?? potrzebne policy?
-
+            ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
             if(globFunctions.FindProductByIdno(ctx, content) != null) {  //jeśli Find by IDNO nie równa się null
                 drawTable(ctx, content);
-                if (LoadingDialog != null){
-                    LoadingDialog.dismiss();
-                }
-                //jeśli nie znajdzie by IDNO
+                GlobalClass.dismissLoadingDialog(LoadingDialog);
+
+            //jeśli nie znajdzie by IDNO
             }else if (globFunctions.FindProductByDescr(ctx, content) != null){
-                if (LoadingDialog != null){
-                    LoadingDialog.dismiss();
-                }
+                GlobalClass.dismissLoadingDialog(LoadingDialog);
                 new setIntentAsyncTask().execute("ArticleNameList", content);
 
-                // jeśli nie znajdzie by DESCR
+            // jeśli nie znajdzie by DESCR
             } else if (globFunctions.FindProductBySwd(ctx, content) != null) {   //jeśli Find by SWD nie równa się null
-                if (LoadingDialog != null){
-                    LoadingDialog.dismiss();
-                }
+                GlobalClass.dismissLoadingDialog(LoadingDialog);
                 new setIntentAsyncTask().execute("ArticleNameList", content);
 
-                // jeśli nie znajdzie ani tu ani tu
+            // jeśli nie znajdzie ani tu ani tu
             } else {
-                if (LoadingDialog != null){
-                    LoadingDialog.dismiss();
-                }
+                GlobalClass.dismissLoadingDialog(LoadingDialog);
                 no_art.setVisibility(View.VISIBLE);
                 GlobalClass.showDialog(this, "Brak artykułu!", "W bazie nie ma takiego artykłu!", "OK",
                     new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {} });
             }
-            ctx.close();
+            GlobalClass.ctxClose(ctx);
         } catch (DBRuntimeException e) {
             catchExceptionCases(e, "searchArticle", content);
         }
@@ -280,30 +257,25 @@ public class StockInformation extends Activity {
 
     @SuppressLint("HandlerLeak")
     public void catchExceptionCases (DBRuntimeException e, String function, String parameter){
-        if(e.getMessage().contains("failed")){
-            GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) { } });
-        }else if(e.getMessage().contains("FULL")){
-            LoadingDialog = ProgressDialog.show(StockInformation.this, "     Przekroczono liczbę licencji.",
-                    "Zwalniam miejsce w ABAS. Proszę czekać...", true);
+        GlobalClass.catchExceptionCases(e, this);
+        if (e.getMessage().contains("FULL")) { //przekroczona liczba licencji
+            LoadingDialog = GlobalClass.getDialogForLicences(this);
+            LoadingDialog.show();
             new Thread(() -> {
                 sessionCtx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", "sesje", "mobileApp");  // hasło sesje aby mieć dostęp
                 GlobalClass.licenceCleaner(sessionCtx);
-                sessionCtx.close();
+                GlobalClass.ctxClose(sessionCtx);
                 handler.sendEmptyMessage(0);
             }).start();
             handler = new Handler() {
                 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
                 public void handleMessage(Message msg) {
-                LoadingDialog.dismiss();
+                GlobalClass.dismissLoadingDialog(LoadingDialog);
                 if(function.equals("searchArticle")) {
                     searchArticle(parameter);
                 }
                 }
             };
-        }
-        if(LoadingDialog != null){
-        LoadingDialog.dismiss();
         }
     }
 
@@ -321,93 +293,50 @@ public class StockInformation extends Activity {
         Integer nrRows = sli.getRowCount();
         if (nrRows != 0) {
             for (StockLevelInformation.Row row : sliRows) {
-                TableRow tableRow = new TableRow(this);
-                //ustawianie wyglądu dla row
-                TableRow.LayoutParams rowParam = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT);
-                tableRow.setLayoutParams(rowParam);
-                tableRow.setBackgroundColor(Color.parseColor("#BDBBBB"));
-                //ustawianie wyglądu dla table cell
-                TableRow.LayoutParams cellParam = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT);
-                cellParam.setMargins(1, 1, 1, 1);
-
-                TextView place_textViewTable = new TextView(this);
+                TableRow tableRow = GlobalClass.setTableRowList(this);
+                TextView id_textViewTable = new TextView(this);
                 TextView article_textViewTable = new TextView(this);
                 TextView qty_textViewTable = new TextView(this);
                 TextView unit_textViewTable = new TextView(this);
-                TextView id_textViewTable = new TextView(this);
-                String unit;
+                TextView place_textViewTable = new TextView(this);
+                TextView[] textViewArray = {id_textViewTable, article_textViewTable, qty_textViewTable, unit_textViewTable, place_textViewTable};
 
                 Integer j = layout.getChildCount();
                 j = j - 1; //  table header nie ma być brany pod uwagę więc -1
-
-                if (j % 2 == 0) {  // zmiana koloru w rowach dla parzystych
-                    id_textViewTable.setBackgroundColor(Color.parseColor("#E5E5E6"));
-                    place_textViewTable.setBackgroundColor(Color.parseColor("#E5E5E6"));
-                    qty_textViewTable.setBackgroundColor(Color.parseColor("#E5E5E6"));
-                    unit_textViewTable.setBackgroundColor(Color.parseColor("#E5E5E6"));
-                    article_textViewTable.setBackgroundColor(Color.parseColor("#E5E5E6"));
-                } else {
-                    id_textViewTable.setBackgroundColor(Color.parseColor("#FFFFFF"));
-                    place_textViewTable.setBackgroundColor(Color.parseColor("#FFFFFF"));
-                    qty_textViewTable.setBackgroundColor(Color.parseColor("#FFFFFF"));
-                    unit_textViewTable.setBackgroundColor(Color.parseColor("#FFFFFF"));
-                    article_textViewTable.setBackgroundColor(Color.parseColor("#FFFFFF"));
+                for (TextView textView :textViewArray) {
+                    if (j % 2 == 0) {
+                        textView.setBackgroundColor(Color.parseColor("#E5E5E6"));
+                    } else {
+                        textView.setBackgroundColor(Color.parseColor("#FFFFFF"));
+                    }
                 }
-                // Id
-                id_textViewTable.setText((j).toString());
-                id_textViewTable.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                id_textViewTable.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                id_textViewTable.setPadding(5, 20, 5, 20);
-                id_textViewTable.setLayoutParams(cellParam);
-                // Lokalizacja
-                place_textViewTable.setText(row.getLplatz().getSwd());
-                place_textViewTable.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                place_textViewTable.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                place_textViewTable.setPadding(5, 20, 5, 20);
-                place_textViewTable.setLayoutParams(cellParam);
-                //Artykuł
-                if (j == 1) {
-                    article_textViewTable.setText(FindProductByIdno(ctx, content).getSwd());
-                }  // ustawia Klucz artykułu tylko dla pierwszego wiersza
-                article_textViewTable.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                article_textViewTable.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                article_textViewTable.setTypeface(Typeface.DEFAULT_BOLD);
-                article_textViewTable.setPadding(5, 20, 5, 20);
-                article_textViewTable.setLayoutParams(cellParam);
-                //  Ilość
+
+                // id
+                GlobalClass.setParamForTextView(id_textViewTable, (j).toString(), 13, 20, 5, false);
+
+                //place
+                GlobalClass.setParamForTextView(place_textViewTable, row.getLplatz().getSwd(), 13, 20, 5, false);
+
+                //article
+                String artText = "";
+                if (j == 1) {// ustawia Klucz artykułu tylko dla pierwszego wiersza
+                    artText = FindProductByIdno(ctx, content).getSwd();
+                }
+                GlobalClass.setParamForTextView(article_textViewTable, artText, 13, 20, 5, false);
+
+                //qty
                 String Qty = row.getLemge().stripTrailingZeros().toPlainString();
-                qty_textViewTable.setText(Qty);
-                qty_textViewTable.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                qty_textViewTable.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                qty_textViewTable.setPadding(5, 20, 5, 20);
-                qty_textViewTable.setLayoutParams(cellParam);
-                //  Jednostka
-                unit_textViewTable.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                unit_textViewTable.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
-                unit_textViewTable.setPadding(5, 20, 5, 20);
-                unit_textViewTable.setLayoutParams(cellParam);
-                // Ilość i jednostka .setText na podstawie szt. kg kpl
-                    unit = row.getString("leinheit");
-                if (unit.equals("(20)")) {
-                    unit = "szt.";
-                } else if (unit.equals("(7)")) {
-                    unit = "kg";
-                } else if (unit.equals("(21)")) {
-                    unit = "kpl";
-                } else if (unit.equals("(1)")) {
-                    unit = "m";
-                }else if (unit.equals("(10)")) {
-                    unit = "tona";
-                }else if (unit.equals("(28)")) {
-                    unit = "arkusz";
-                }
-                unit_textViewTable.setText(unit);
+                GlobalClass.setParamForTextView(qty_textViewTable, Qty, 13, 20, 5, false);
 
-                tableRow.addView(id_textViewTable);
-                tableRow.addView(article_textViewTable);
-                tableRow.addView(qty_textViewTable);
-                tableRow.addView(unit_textViewTable);
-                tableRow.addView(place_textViewTable);
+                //unit
+                String unit;
+                unit = row.getString("leinheit");
+                unit = GlobalClass.getProperUnit(unit);
+                GlobalClass.setParamForTextView(unit_textViewTable, unit, 13, 20, 5, false);
+
+                for (TextView textView :textViewArray) {
+                    tableRow.addView(textView);
+                }
                 layout.addView(tableRow, j);
 
                 sum = sum.add(new BigDecimal(Qty));
@@ -415,7 +344,6 @@ public class StockInformation extends Activity {
                 String sumString = sumString = "Suma: <b> " + sum + "<b> " + unit;
                 article_name.setText(Html.fromHtml("Nazwa: <b>" + articleName));
                 article_name.setVisibility(View.VISIBLE);
-
                 suma.setText(Html.fromHtml(sumString));
                 suma.setVisibility(View.VISIBLE);
             }
@@ -424,6 +352,6 @@ public class StockInformation extends Activity {
                 @Override public void onClick(DialogInterface dialog, int which) {} });
                 no_art.setVisibility(View.VISIBLE);
         }
-        ctx.close();
+        GlobalClass.ctxClose(ctx);
     }
 }

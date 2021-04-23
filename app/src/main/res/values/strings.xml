@@ -53,8 +53,10 @@
     <string name="stocktaking">Inwentaryzacja</string>
 
     <string name="set_article">Wpisz nazwę artykułu:</string>
+    <string name="set_location">Wpisz nazwę lokalizacji:</string>
     <string name="ok">OK</string>
     <string name="cancle">Anuluj</string>
+    <string name="location_name">Nazwa lokalizacji</string>
 
     <string name="articles">Artykuły:</string>
     <string name="id_articleNameList">id</string>
@@ -142,6 +144,9 @@
     <string name="deliverQty">Ilość dostarczona:</string>
     <string name="add">Dodaj</string>
     <string name="proofNr">Nr Dowodu:</string>
+    <string name="isdelivered">Dostarczono?</string>
+    <string name="enterDocQty">Wpisz ilośc dokumentów w dostawie</string>
+
 
 
 </resources>

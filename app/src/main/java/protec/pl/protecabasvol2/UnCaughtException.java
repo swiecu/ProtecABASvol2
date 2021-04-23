@@ -58,26 +58,16 @@ public class UnCaughtException implements Thread.UncaughtExceptionHandler {
             PackageInfo pi;
             pi = pm.getPackageInfo(context.getPackageName(), 0);
             message.append("Version: ").append(pi.versionName).append("<br/>");
-            message.append("Package: ").append(pi.packageName).append("<br/>");
         } catch (Exception e) {
             Log.e("CustomExceptionHandler", "Error", e);
             message.append("Could not get Version information for ").append(context.getPackageName());
         }
-        message.append("Phone Model ").append(android.os.Build.MODEL).append("<br/>");
-        message.append("Android Version : ").append(android.os.Build.VERSION.RELEASE).append("<br/>");
-        message.append("Board: ").append(android.os.Build.BOARD).append("<br/>");
+        message.append("Phone Model: ").append(android.os.Build.MODEL).append("<br/>");
+        message.append("Android Version: ").append(android.os.Build.VERSION.RELEASE).append("<br/>");
         message.append("Brand: ").append(android.os.Build.BRAND).append("<br/>");
         message.append("Device: ").append(android.os.Build.DEVICE).append("<br/>");
         message.append("Host: ").append(android.os.Build.HOST).append("<br/>");
-        message.append("ID: ").append(android.os.Build.ID).append("<br/>");
         message.append("Model: ").append(android.os.Build.MODEL).append("<br/>");
-        message.append("Product: ").append(android.os.Build.PRODUCT).append("<br/>");
-        message.append("Type: ").append(android.os.Build.TYPE).append("<br/>");
-        StatFs stat = getStatFs();
-        message.append("Total Internal memory: ")
-                .append(getTotalInternalMemorySize(stat)).append("<br/>");
-        message.append("Available Internal memory: ")
-                .append(getAvailableInternalMemorySize(stat)).append("<br/>");
     }
 
     public void uncaughtException(Thread t, Throwable e) {
@@ -89,7 +79,7 @@ public class UnCaughtException implements Thread.UncaughtExceptionHandler {
             report.append("Informations :").append("<br/>");
             addInformation(report);
             report.append("<br/>").append("<br/>");
-            report.append("Stack: <br/>");
+            report.append("Error: <br/>");
             final Writer result = new StringWriter();
             final PrintWriter printWriter = new PrintWriter(result);
             e.printStackTrace(printWriter);
@@ -98,7 +88,9 @@ public class UnCaughtException implements Thread.UncaughtExceptionHandler {
             report.append("<br/><br/>");
             report.append("**** End of current Report ***");
             Log.e(UnCaughtException.class.getName(),"Error while sendErrorMail" + report);
-            sendErrorMail(report);
+            if(!report.toString().contains("192.168.1.3 ")){
+                sendErrorMail(report);
+            }
         } catch (Throwable ignore) {
             Log.e(UnCaughtException.class.getName(),"Error while sending error e-mail", ignore);
         }

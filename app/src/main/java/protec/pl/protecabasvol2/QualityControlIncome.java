@@ -1,6 +1,7 @@
 package protec.pl.protecabasvol2;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -10,8 +11,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.util.TypedValue;
+import android.view.ContextThemeWrapper;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -49,13 +55,10 @@ public class QualityControlIncome extends AppCompatActivity {
         this.password = password;
     }
     String database, user, userSwd;
-    DbContext ctx, sessionCtx;
-    ProgressDialog LoadingDialog;
-    AbasDate today;
-    HashMap<Vendor, String> vendorsHM;
-    Handler handler;
-    Intent intent;
-
+    DbContext ctx, sessionCtx; ProgressDialog LoadingDialog;
+    AbasDate today; HashMap<Vendor, String> vendorsHM;
+    Handler handler; Intent intent;
+    EditText docQty_TextEdit;
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,33 +72,23 @@ public class QualityControlIncome extends AppCompatActivity {
     // na kliknięcie cofnij
     @Override
     public void onBackPressed() {
+        GlobalClass.ctxClose(ctx);
+        GlobalClass.dismissLoadingDialog(LoadingDialog);
+        new setIntentAsyncTask().execute("Menu", "", "", ""); //destination, vendor, purchaseOrder
         super.onBackPressed();
-        if(ctx != null){
-            ctx.close();
-        }
-        if (LoadingDialog != null) {
-            LoadingDialog.dismiss();
-        }
-        new setIntentAsyncTask().execute("Menu", "", ""); //destination, vendor, purchaseOrder
     }
 
     // na wyjście z actvity
     @Override
     protected void onStop() {
+        GlobalClass.ctxClose(ctx);
+        GlobalClass.dismissLoadingDialog(LoadingDialog);
         super.onStop();
-        if(ctx != null){
-            ctx.close();
-        }
-        if (LoadingDialog != null) {
-            LoadingDialog.dismiss();
-        }
     }
 
     @Override
     protected void onPause(){  //closes ctx if the app is minimized
-        if(ctx != null) {
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx);
         super.onPause();
     }
 
@@ -106,7 +99,6 @@ public class QualityControlIncome extends AppCompatActivity {
         user = (getIntent().getStringExtra("user"));
         userSwd = getIntent().getStringExtra("userSwd");
     }
-
 
     private class setIntentAsyncTask extends AsyncTask<String, Void, String> {
         private ProgressDialog loadDialog = new ProgressDialog(QualityControlIncome.this);
@@ -123,10 +115,11 @@ public class QualityControlIncome extends AppCompatActivity {
 
         @Override
         protected String doInBackground(String... strings) {
-            String destination = strings[0];
-            String vendor = strings[1];
-            String purchaseOrder = strings[2];
-            setIntent(destination, vendor, purchaseOrder);
+            String destination = strings[0],
+                    vendor = strings[1],
+                    purchaseOrder = strings[2],
+                    docQty = strings[3];
+            setIntent(destination, vendor, purchaseOrder, docQty);
             return null;
         }
 
@@ -135,7 +128,7 @@ public class QualityControlIncome extends AppCompatActivity {
         }
     }
 
-    public void setIntent(String destination, String vendor, String purchaseOrders){
+    public void setIntent(String destination, String vendor, String purchaseOrders, String docQty){
         try {
             intent = new Intent(this, Class.forName("protec.pl.protecabasvol2." + destination));
             intent.putExtra("password", getPassword());
@@ -144,6 +137,7 @@ public class QualityControlIncome extends AppCompatActivity {
             intent.putExtra("vendor", vendor);
             intent.putExtra("purchaseOrder", purchaseOrders);
             intent.putExtra("userSwd", userSwd);
+            intent.putExtra("docQty", docQty);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -185,9 +179,7 @@ public class QualityControlIncome extends AppCompatActivity {
                 }
             }
             manageVendorsHashMap();
-            if(ctx != null) {
-                ctx.close();
-            }
+            GlobalClass.ctxClose(ctx);
 
         }catch (DBRuntimeException e) {
             catchExceptionCases(e, "getTableElements", "");
@@ -196,27 +188,20 @@ public class QualityControlIncome extends AppCompatActivity {
 
     @SuppressLint("HandlerLeak")
     public void catchExceptionCases (DBRuntimeException e, String function, String parameter){
-        if(e.getMessage().contains("failed")){
-            GlobalClass.showDialog(this,"Brak połączenia!","Nie można się aktualnie połączyć z bazą.", "OK",new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) { } });
-
-            //przekroczona liczba licencji
-        }else if(e.getMessage().contains("FULL")){
-            LoadingDialog = new ProgressDialog(QualityControlIncome.this, ProgressDialog.THEME_DEVICE_DEFAULT_LIGHT);
-            LoadingDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            LoadingDialog.setTitle("     Przekroczono liczbę licencji.");
-            LoadingDialog.setMessage("Zwalniam miejsce w ABAS. Proszę czekać...");
+        GlobalClass.catchExceptionCases(e, this);
+        if (e.getMessage().contains("FULL")) { //przekroczona liczba licencji
+            LoadingDialog = GlobalClass.getDialogForLicences(this);
             LoadingDialog.show();
             new Thread(() -> {
                 sessionCtx = ContextHelper.createClientContext("192.168.1.3", 6550, "erp", "sesje", "mobileApp");  // hasło sesje aby mieć dostęp
                 GlobalClass.licenceCleaner(sessionCtx);
-                sessionCtx.close();
+                GlobalClass.ctxClose(sessionCtx);
                 handler.sendEmptyMessage(0);
             }).start();
             handler = new Handler() {
                 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
                 public void handleMessage(Message msg) {
-                    LoadingDialog.dismiss();
+                    GlobalClass.dismissLoadingDialog(LoadingDialog);
                     if(function.equals("getTableElements")) {
                         getTableElements();
                     }
@@ -246,16 +231,8 @@ public class QualityControlIncome extends AppCompatActivity {
         }else{
             vendorName = vendor.getDescr6();
         }
-
         TableLayout layoutList = (TableLayout) findViewById(R.id.incomeDeliveryTable);
-        TableRow tableRowList = new TableRow(this);
-        TableRow.LayoutParams lp = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT);
-        tableRowList.setLayoutParams(lp);
-        tableRowList.setBackgroundColor(Color.parseColor("#BDBBBB"));
-
-        TableRow.LayoutParams params = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.MATCH_PARENT, 1.0f);
-        params.setMargins(1, 1, 1, 1);
-
+        TableRow tableRowList = GlobalClass.setTableRowList(this);
         TextView vendorTextView = new TextView(this);
         TextView purchasingOrderTextView = new TextView(this);
 
@@ -265,14 +242,7 @@ public class QualityControlIncome extends AppCompatActivity {
         } else {
             vendorTextView.setBackgroundColor(Color.parseColor("#FFFFFF"));
         }
-
-        vendorTextView.setText(vendorName);
-        vendorTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        vendorTextView.setTextColor(Color.parseColor("#808080"));
-        vendorTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15f);
-        vendorTextView.setPadding(5, 20, 5, 20);
-        vendorTextView.setLayoutParams(params);
-
+        GlobalClass.setParamForTextView(vendorTextView, vendorName, 15, 20, 5, false);
         purchasingOrderTextView.setVisibility(View.GONE);
         purchasingOrderTextView.setText(purchaseOrdersString);
 
@@ -280,40 +250,55 @@ public class QualityControlIncome extends AppCompatActivity {
         tableRowList.addView(purchasingOrderTextView);
         layoutList.addView(tableRowList, j);
 
-
         tableRowList.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
             @Override
             public void onClick(View view) {
-                String vendorString = vendor.toString();
-                new setIntentAsyncTask().execute("IncomePurchaseOrderList", vendorString, purchaseOrdersString);
+                showDocumentQtyDialog(purchaseOrdersString, vendor);
             }
         });
+    }
 
+        @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void showDocumentQtyDialog(String purchaseOrdersString, Vendor vendor){
+        AlertDialog.Builder docQtyDialog = new AlertDialog.Builder(new ContextThemeWrapper(QualityControlIncome.this, R.style.AppTheme));
+        ViewGroup viewGroup = findViewById(android.R.id.content);
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_enter_document_qty, viewGroup, false);
+        docQtyDialog.setView(dialogView);
+        AlertDialog docDialog = docQtyDialog.create();
+        docDialog.getWindow().setLayout(WindowManager.LayoutParams.MATCH_PARENT,WindowManager.LayoutParams.WRAP_CONTENT);
+        docQty_TextEdit = docDialog.findViewById(R.id.docQty_TextEdit);
+
+        Button button_ok = (Button)dialogView.findViewById(R.id.button_ok);
+        button_ok.setOnClickListener(new View.OnClickListener(){
+            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+            @Override
+            public void onClick(View v){
+                docQty_TextEdit = docDialog.findViewById(R.id.docQty_TextEdit);
+                if(!docQty_TextEdit.getText().toString().equals("")){
+                    String vendorString = vendor.toString();
+                    docDialog.dismiss();
+                    new setIntentAsyncTask().execute("IncomePurchaseOrderList", vendorString, purchaseOrdersString, docQty_TextEdit.getText().toString());
+                }else{
+                    GlobalClass.showDialog(QualityControlIncome.this, "Brak wpisanej ilości!", "Proszę uzupełnić ilość.", "OK",
+                            new DialogInterface.OnClickListener() {
+                            @Override public void onClick(DialogInterface dialog, int which) {} });
+                }
+            }
+        });
+        docDialog.show();
+        docDialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void drawEmptyTable(){
-
         TableLayout layoutList = (TableLayout) findViewById(R.id.incomeDeliveryTable);
-        TableRow tableRowList = new TableRow(this);
-        TableRow.LayoutParams lp = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT);
-        tableRowList.setLayoutParams(lp);
-        tableRowList.setBackgroundColor(Color.parseColor("#BDBBBB"));
-
-        TableRow.LayoutParams params = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT);
-        params.setMargins(1, 1, 1, 1);
-
+        TableRow tableRowList = GlobalClass.setTableRowList(this);
         TextView noVendorsTextView = new TextView(this);
-
         Integer j = layoutList.getChildCount();
-        noVendorsTextView.setBackgroundColor(Color.parseColor("#FFFFFF"));
-        noVendorsTextView.setText("Brak dostawców na dzisiejszy dzień.");
-        noVendorsTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        noVendorsTextView.setTextColor(Color.parseColor("#808080"));
-        noVendorsTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18f);
-        noVendorsTextView.setPadding(5, 100, 5, 100);
-        noVendorsTextView.setLayoutParams(params);
 
+        GlobalClass.setParamForTextView(noVendorsTextView, "Brak dostawców na dzisiejszy dzień.", 18, 100, 5, false);
+        noVendorsTextView.setBackgroundColor(Color.parseColor("#FFFFFF"));
         tableRowList.addView(noVendorsTextView);
         layoutList.addView(tableRowList, j);
     }

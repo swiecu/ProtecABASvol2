@@ -5,13 +5,11 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.text.Html;
-import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.widget.ImageView;
@@ -29,18 +27,13 @@ import de.abas.erp.db.schema.capacity.WorkCenter;
 import de.abas.erp.db.schema.part.Product;
 import de.abas.erp.db.util.ContextHelper;
 
-import static android.graphics.Color.parseColor;
-
 public class QualityControlToCheck extends AppCompatActivity {
     private String password;
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
-    DbContext ctx;
-    ProgressDialog LoadingDialog;
+    DbContext ctx; ProgressDialog LoadingDialog;
     String user, database, userSwd;
-    ImageView refreshIcon;
-    TableLayout layoutTable;
-    Intent intent;
+    ImageView refreshIcon; TableLayout layoutTable; Intent intent;
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
@@ -57,24 +50,20 @@ public class QualityControlToCheck extends AppCompatActivity {
 
     // na kliknięcie cofnij
     public void onBackPressed() {
-        super.onBackPressed();
         new setIntentAsyncTask().execute("QualityControl");
+        super.onBackPressed();
     }
 
     // na wyjście z actvity
     @Override
     protected void onStop() {
+        GlobalClass.dismissLoadingDialog(LoadingDialog);
         super.onStop();
-        if (LoadingDialog != null) {
-            LoadingDialog.dismiss();
-        }
     }
 
     @Override
     protected void onPause(){  //closes ctx if the app is minimized
-        if(ctx != null) {
-            ctx.close();
-        }
+        GlobalClass.ctxClose(ctx);
         super.onPause();
     }
 
@@ -133,31 +122,18 @@ public class QualityControlToCheck extends AppCompatActivity {
         for (IsPrQualityControlCheck.Row rowQuality : qualityControlRows){
             drawTable(rowQuality);
         }
-        if (LoadingDialog != null) {
-            LoadingDialog.dismiss();
-        }
+        GlobalClass.dismissLoadingDialog(LoadingDialog);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void drawTable(IsPrQualityControlCheck.Row rowQuality){
-        String workCard = rowQuality.getWorkcard().getIdno();
-        String productSwd = rowQuality.getYproduct().getSwd();
-        String productName = ((Product)rowQuality.getYproductdescr()).getDescr6();
-        String employee = rowQuality.getYemployee().getDescrOperLang();
-        String machineGroup;
-        machineGroup = ((WorkCenter)rowQuality.getYmachinegroupname()).getDescr6();
+        String workCard = rowQuality.getWorkcard().getIdno(), productSwd = rowQuality.getYproduct().getSwd(), productName = ((Product)rowQuality.getYproductdescr()).getDescr6(),
+                employee = rowQuality.getYemployee().getDescrOperLang(),
+                machineGroup = ((WorkCenter)rowQuality.getYmachinegroupname()).getDescr6();
         if(machineGroup.equals("")){
             machineGroup = ((WorkCenter)rowQuality.getYmachinegroup()).getDescrOperLang();
         }
-
-        TableRow tableRowList = new TableRow(this);
-        TableRow.LayoutParams lp = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT);
-        tableRowList.setLayoutParams(lp);
-        tableRowList.setBackgroundColor(parseColor("#BDBBBB"));
-
-        TableRow.LayoutParams params = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT);
-        params.setMargins(1, 1, 1, 1);
-
+        TableRow tableRowList = GlobalClass.setTableRowList(this);
         TextView id = new TextView(this);
         TextView workCardView = new TextView(this);
         TextView articleView = new TextView(this);
@@ -165,75 +141,26 @@ public class QualityControlToCheck extends AppCompatActivity {
         TextView employeeView = new TextView(this);
         TextView machineGroupView = new TextView(this);
 
+        TextView[] textViewArray = {id, workCardView, articleView, articleNameView, employeeView, machineGroupView};
         Integer j = layoutTable.getChildCount();
-        //j = j - 1;
-        if (j % 2 == 0) {
-            id.setBackgroundColor(parseColor("#E5E5E6"));
-            workCardView.setBackgroundColor(parseColor("#E5E5E6"));
-            articleView.setBackgroundColor(parseColor("#E5E5E6"));
-            articleNameView.setBackgroundColor(parseColor("#E5E5E6"));
-            employeeView.setBackgroundColor(parseColor("#E5E5E6"));
-            machineGroupView.setBackgroundColor(parseColor("#E5E5E6"));
 
-        } else {
-            id.setBackgroundColor(parseColor("#FFFFFF"));
-            workCardView.setBackgroundColor(parseColor("#FFFFFF"));
-            articleView.setBackgroundColor(parseColor("#FFFFFF"));
-            articleNameView.setBackgroundColor(parseColor("#FFFFFF"));
-            employeeView.setBackgroundColor(parseColor("#FFFFFF"));
-            machineGroupView.setBackgroundColor(parseColor("#FFFFFF"));
+        for (TextView textView :textViewArray) {
+            if (j % 2 == 0) {
+                textView.setBackgroundColor(Color.parseColor("#E5E5E6"));
+            } else {
+                textView.setBackgroundColor(Color.parseColor("#FFFFFF"));
+            }
         }
+        GlobalClass.setParamForTextView(id, (j).toString(), 12, 20, 10, false);
+        GlobalClass.setParamForTextView(workCardView, workCard, 12, 20, 10, true);
+        GlobalClass.setParamForTextView(articleView, productSwd, 12, 20, 10, false);
+        GlobalClass.setParamForTextView(articleNameView, productName, 12, 20, 10, false);
+        GlobalClass.setParamForTextView(employeeView, employee, 12, 20, 10, false);
+        GlobalClass.setParamForTextView(machineGroupView, machineGroup, 12, 20, 10, false);
 
-        id.setText((j).toString());
-        id.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        id.setTextColor(Color.parseColor("#808080"));
-        id.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12f);
-        id.setPadding(10, 20, 10, 20);
-        id.setLayoutParams(params);
-
-        workCardView.setText(workCard);
-        workCardView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        workCardView.setTextColor(parseColor("#808080"));
-        workCardView.setTypeface(Typeface.DEFAULT_BOLD);
-        workCardView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12f);
-        workCardView.setPadding(10, 20, 10, 20);
-        workCardView.setLayoutParams(params);
-
-        articleView.setText(productSwd);
-        articleView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        articleView.setTextColor(parseColor("#808080"));
-        articleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12f);
-        articleView.setPadding(10, 20, 10, 20);
-        articleView.setLayoutParams(params);
-
-        articleNameView.setText(productName);
-        articleNameView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        articleNameView.setTextColor(parseColor("#808080"));
-        articleNameView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12f);
-        articleNameView.setPadding(10, 20, 10, 20);
-        articleNameView.setLayoutParams(params);
-
-        employeeView.setText(employee);
-        employeeView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        employeeView.setTextColor(parseColor("#808080"));
-        employeeView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12f);
-        employeeView.setPadding(10, 20, 10, 20);
-        employeeView.setLayoutParams(params);
-
-        machineGroupView.setText(machineGroup);
-        machineGroupView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        machineGroupView.setTextColor(parseColor("#808080"));
-        machineGroupView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12f);
-        machineGroupView.setPadding(10, 20, 10, 20);
-        machineGroupView.setLayoutParams(params);
-
-        tableRowList.addView(id);
-        tableRowList.addView(workCardView);
-        tableRowList.addView(articleView);
-        tableRowList.addView(articleNameView);
-        tableRowList.addView(employeeView);
-        tableRowList.addView(machineGroupView);
-
+        for (TextView textView :textViewArray) {
+            tableRowList.addView(textView);
+        }
         layoutTable.addView(tableRowList, j);
         tableRowList.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -244,14 +171,14 @@ public class QualityControlToCheck extends AppCompatActivity {
                 addNewControlAlert.setPositiveButton("Dodaj",
                     new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
-                            ctx.close();
+                            GlobalClass.ctxClose(ctx);
                             new setIntentAsyncTask().execute("QualityControlProduction");
                         }
                     });
                 addNewControlAlert.setNegativeButton("Anuluj",
                     new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
-                            ctx.close();
+                            GlobalClass.ctxClose(ctx);
                         }
                     });
                 addNewControlAlert.setCancelable(true);
@@ -263,7 +190,6 @@ public class QualityControlToCheck extends AppCompatActivity {
     @SuppressLint("NewApi")
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void refresh (View view){
-
         LoadingDialog = new ProgressDialog(this , R.style.MyDialog);
         LoadingDialog.setMessage("Ładowanie. Proszę czekać...");
         LoadingDialog.show();
@@ -274,9 +200,7 @@ public class QualityControlToCheck extends AppCompatActivity {
                 openInfosystem();
             }
             public void onTick(long millisUntilFinished) {
-                // millisUntilFinished    The amount of time until finished.
             }
         }.start();
-
     }
 }
