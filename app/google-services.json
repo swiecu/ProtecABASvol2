@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "35524440555",
+    "project_id": "protecabasvol2-215e3",
+    "storage_bucket": "protecabasvol2-215e3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:35524440555:android:11a83ecd5103845e4a29ae",
+        "android_client_info": {
+          "package_name": "protec.pl.protecabasvol2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "35524440555-ckj3ms1p3v6608aqpo6iqqga0dq4qrj8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyByyfU8wEBfcHVPDeJLHYDvSH3-PxIFUBs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "35524440555-ckj3ms1p3v6608aqpo6iqqga0dq4qrj8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
