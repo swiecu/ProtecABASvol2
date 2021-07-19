@@ -32,11 +32,18 @@ import com.google.zxing.integration.android.IntentResult;
 import java.math.BigDecimal;
 
 import de.abas.erp.db.DbContext;
+import de.abas.erp.db.EditorAction;
+import de.abas.erp.db.exception.CommandException;
 import de.abas.erp.db.exception.DBRuntimeException;
 import de.abas.erp.db.infosystem.standard.la.StockLevelInformation;
+import de.abas.erp.db.schema.employee.Employee;
+import de.abas.erp.db.schema.employee.EmployeeEditor;
 import de.abas.erp.db.schema.part.Product;
 import de.abas.erp.db.schema.warehouse.WarehouseGroup;
+import de.abas.erp.db.selection.Conditions;
+import de.abas.erp.db.selection.SelectionBuilder;
 import de.abas.erp.db.util.ContextHelper;
+import de.abas.erp.db.util.QueryUtil;
 
 import static protec.pl.protecabasvol2.GlobalClass.FindProductByIdno;
 
@@ -105,7 +112,7 @@ public class StockInformation extends Activity {
         @Override
         protected String doInBackground(String... strings) {
             String destination = strings[0],
-                   content = strings[1];
+                    content = strings[1];
             setIntent(destination, content);
             return null;
         }
@@ -206,7 +213,7 @@ public class StockInformation extends Activity {
                         @Override public void onClick(DialogInterface dialog, int which) {} });
                 }else {
                     articleDialog.dismiss();
-                   LoadingDialog = ProgressDialog.show(StockInformation.this, "",
+                    LoadingDialog = ProgressDialog.show(StockInformation.this, "",
                             "Ładowanie. Proszę czekać...", true);
                     searchArticle(article_name);
                 }
@@ -230,24 +237,25 @@ public class StockInformation extends Activity {
             if(globFunctions.FindProductByIdno(ctx, content) != null) {  //jeśli Find by IDNO nie równa się null
                 drawTable(ctx, content);
                 GlobalClass.dismissLoadingDialog(LoadingDialog);
+                updateCheckCountOnAbas(ctx, userSwd);
 
-            //jeśli nie znajdzie by IDNO
+                //jeśli nie znajdzie by IDNO
             }else if (globFunctions.FindProductByDescr(ctx, content) != null){
                 GlobalClass.dismissLoadingDialog(LoadingDialog);
                 new setIntentAsyncTask().execute("ArticleNameList", content);
 
-            // jeśli nie znajdzie by DESCR
+                // jeśli nie znajdzie by DESCR
             } else if (globFunctions.FindProductBySwd(ctx, content) != null) {   //jeśli Find by SWD nie równa się null
                 GlobalClass.dismissLoadingDialog(LoadingDialog);
                 new setIntentAsyncTask().execute("ArticleNameList", content);
 
-            // jeśli nie znajdzie ani tu ani tu
+                // jeśli nie znajdzie ani tu ani tu
             } else {
                 GlobalClass.dismissLoadingDialog(LoadingDialog);
                 no_art.setVisibility(View.VISIBLE);
                 GlobalClass.showDialog(this, "Brak artykułu!", "W bazie nie ma takiego artykłu!", "OK",
-                    new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) {} });
+                        new DialogInterface.OnClickListener() {
+                            @Override public void onClick(DialogInterface dialog, int which) {} });
             }
             GlobalClass.ctxClose(ctx);
         } catch (DBRuntimeException e) {
@@ -270,10 +278,10 @@ public class StockInformation extends Activity {
             handler = new Handler() {
                 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
                 public void handleMessage(Message msg) {
-                GlobalClass.dismissLoadingDialog(LoadingDialog);
-                if(function.equals("searchArticle")) {
-                    searchArticle(parameter);
-                }
+                    GlobalClass.dismissLoadingDialog(LoadingDialog);
+                    if(function.equals("searchArticle")) {
+                        searchArticle(parameter);
+                    }
                 }
             };
         }
@@ -283,7 +291,6 @@ public class StockInformation extends Activity {
     public void drawTable(DbContext ctx, String content){
         BigDecimal sum = BigDecimal.ZERO;
         ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
-        Log.d("stockInfoDB", database);
         StockLevelInformation sli = ctx.openInfosystem(StockLevelInformation.class);
         sli.setArtikel(FindProductByIdno(ctx, content));
         sli.setKlgruppe((WarehouseGroup) null);
@@ -346,12 +353,47 @@ public class StockInformation extends Activity {
                 article_name.setVisibility(View.VISIBLE);
                 suma.setText(Html.fromHtml(sumString));
                 suma.setVisibility(View.VISIBLE);
+                Log.d("TEST", "BEFORE");
+                GlobalClass.sendNotification(ctx, "TO JEST POWIADOMIENIE TYLKO DLA tytytyty", "SPRAWDZONO WLASNIE STAN!", "KJ");
+                Log.d("TEST", "AFTER");
+
+
             }
         }else{
             GlobalClass.showDialog(this, "Brak stanu!", "Artykuł ten nie jest obecnie w zapasie.", "OK", new DialogInterface.OnClickListener() {
                 @Override public void onClick(DialogInterface dialog, int which) {} });
-                no_art.setVisibility(View.VISIBLE);
+            no_art.setVisibility(View.VISIBLE);
         }
         GlobalClass.ctxClose(ctx);
+    }
+
+    public void updateCheckCountOnAbas(DbContext ctx, String userSwd) {
+        Employee employee = FindEmployeeBySwd(ctx, userSwd);
+        Integer checkCount = employee.getYstockqtycheckcoun();
+        Log.d("check Count before", checkCount.toString());
+        checkCount++;
+        Log.d("check Count after", checkCount.toString());
+        EmployeeEditor employeeEditor = employee.createEditor();
+        try {
+            employeeEditor.open(EditorAction.UPDATE);
+            employeeEditor.setString("ystockqtycheckcoun", checkCount.toString());
+            employeeEditor.commit();
+            if(employeeEditor.active()){
+                employeeEditor.abort();
+            }
+        } catch (CommandException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public final Employee FindEmployeeBySwd(DbContext ctx, String name){
+        Employee employee = null;
+        SelectionBuilder<Employee> employeeSB = SelectionBuilder.create(Employee.class);
+        try {
+            employeeSB.add(Conditions.eq(Employee.META.swd, name));
+            employee = QueryUtil.getFirst(ctx, employeeSB.build());
+        } catch (Exception e) {
+        }
+        return employee;
     }
 }

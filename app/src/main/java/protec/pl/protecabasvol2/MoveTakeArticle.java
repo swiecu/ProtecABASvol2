@@ -186,15 +186,15 @@ public class MoveTakeArticle extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         IntentResult result = IntentIntegrator.parseActivityResult(IntentIntegrator.REQUEST_CODE, resultCode, data);
         if(result!= null){
-        if (requestCode == 101) {
-            if (resultCode == RESULT_OK) {
-                String content = result.getContents();
-                qty_textEdit.setText("");
-                take_btn.setEnabled(true);
-                searchArticle(content);
+            if (requestCode == 101) {
+                if (resultCode == RESULT_OK) {
+                    String content = result.getContents();
+                    qty_textEdit.setText("");
+                    take_btn.setEnabled(true);
+                    searchArticle(content);
+                }
             }
-        }
-        super.onActivityResult(requestCode, resultCode, data);
+            super.onActivityResult(requestCode, resultCode, data);
         }
     }
 
@@ -221,8 +221,8 @@ public class MoveTakeArticle extends Activity {
                 if(article_name.matches("")){ //jeśli jest pusty
                     articleDialog.dismiss();
                     GlobalClass.showDialog(MoveTakeArticle.this, "Brak wpisanego artykułu!", "Proszę wprowadzić artykuł.", "OK",
-                        new DialogInterface.OnClickListener() {
-                        @Override public void onClick(DialogInterface dialog, int which) {} });
+                            new DialogInterface.OnClickListener() {
+                                @Override public void onClick(DialogInterface dialog, int which) {} });
                 }else {
                     articleDialog.dismiss();
                     LoadingDialog = ProgressDialog.show(MoveTakeArticle.this, "",
@@ -245,25 +245,25 @@ public class MoveTakeArticle extends Activity {
                 drawTable(ctx, content);
                 GlobalClass.dismissLoadingDialog(LoadingDialog);
 
-             //jeśli nie znajdzie by IDNO
+                //jeśli nie znajdzie by IDNO
             }else if (GlobalClass.FindProductByDescr(ctx, content) != null){
                 GlobalClass.ctxClose(ctx);
                 GlobalClass.dismissLoadingDialog(LoadingDialog);
                 new setIntentAsyncTask().execute("ArticleNameList", content);
 
-            // jeśli nie znajdzie by DESCR
+                // jeśli nie znajdzie by DESCR
             } else if (GlobalClass.FindProductBySwd(ctx, content) != null) {   //jeśli Find by SWD nie równa się null
                 GlobalClass.ctxClose(ctx);
                 GlobalClass.dismissLoadingDialog(LoadingDialog);
                 new setIntentAsyncTask().execute("ArticleNameList", content);
 
-            // jeśli nie znajdzie ani tu ani tu
+                // jeśli nie znajdzie ani tu ani tu
             } else {
                 GlobalClass.ctxClose(ctx);
                 GlobalClass.dismissLoadingDialog(LoadingDialog);
                 GlobalClass.showDialog(MoveTakeArticle.this, "Brak artykułu!", "W bazie nie ma takeigo artykłu!", "OK",
-                     new DialogInterface.OnClickListener() {
-                     @Override public void onClick(DialogInterface dialog, int which) {} });
+                        new DialogInterface.OnClickListener() {
+                            @Override public void onClick(DialogInterface dialog, int which) {} });
             }
 
         } catch (DBRuntimeException e) {
@@ -394,18 +394,19 @@ public class MoveTakeArticle extends Activity {
         }
         if ((wdrRowCount == nr_Rows) || (nr_Rows == 0)){
             GlobalClass.showDialog(this, "Brak stanu!", "Artykuł ten nie jest obecnie w zapasie.", "OK",
-                new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) {
-                    location_textEdit.setText("");
-                    article_textEdit.setText("");
-                    unit_textEdit.setText("");
-                    qty_textEdit.setHint("Ilość");
-                } });
+                    new DialogInterface.OnClickListener() {
+                        @Override public void onClick(DialogInterface dialog, int which) {
+                            location_textEdit.setText("");
+                            article_textEdit.setText("");
+                            unit_textEdit.setText("");
+                            qty_textEdit.setHint("Ilość");
+                        } });
             stockDialog.dismiss();
             GlobalClass.ctxClose(ctx);
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @SuppressLint("HandlerLeak")
     public void save(View view) {
         String qty = qty_textEdit.getText().toString(), article = article_textEdit.getText().toString(), location = location_textEdit.getText().toString();
@@ -431,23 +432,24 @@ public class MoveTakeArticle extends Activity {
                 article_textEdit.setText("");
                 location_textEdit.setText("");
                 qty_textEdit.setText("");
+
                 GlobalClass.showDialog(this, "Pobrano!", "Materiał został pobrany i dodany do bazy.", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            GlobalClass.ctxClose(ctx);
-                            new setIntentAsyncTask().execute("Move", "");
-                        }
-                    });
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                GlobalClass.ctxClose(ctx);
+                                new setIntentAsyncTask().execute("Move", "");
+                            }
+                        });
 
             } catch (NumberFormatException e) {
                 e.printStackTrace();
                 GlobalClass.showDialog(this, "Błąd!", "Podczas zmiany formatu wystąpił błąd.", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override  public void onClick(DialogInterface dialog, int which) { }
-                    });
+                        new DialogInterface.OnClickListener() {
+                            @Override  public void onClick(DialogInterface dialog, int which) { }
+                        });
             } catch (DBRuntimeException e) {
-               catchExceptionCases(e, "save", "");
+                catchExceptionCases(e, "save", "");
 
             } catch (CommandException e) {
                 e.printStackTrace();
@@ -478,11 +480,11 @@ public class MoveTakeArticle extends Activity {
             if (Double.parseDouble(qty) > Double.parseDouble(qty_textEdit.getHint().toString())) {
                 emptyFields = true;
                 GlobalClass.showDialog(this, "Wykroczenie poza stan!", "Wpisana ilość przekracza ilość dostępną na stanie.", "OK",
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                    }
-                });
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        });
             }
         }
         return emptyFields;

@@ -92,9 +92,9 @@ public class ArticleNameList extends AppCompatActivity {
     }
 
     public void getElementsById(){
-         no_art = (TableRow) findViewById(R.id.no_articles);
-         article_name = (TextView) findViewById(R.id.article_name);
-         suma = (TextView) findViewById(R.id.suma);
+        no_art = (TableRow) findViewById(R.id.no_articles);
+        article_name = (TextView) findViewById(R.id.article_name);
+        suma = (TextView) findViewById(R.id.suma);
     }
 
     public void setIntent(String finalArticleIDNO) {
@@ -193,13 +193,13 @@ public class ArticleNameList extends AppCompatActivity {
             handler = new Handler() {
                 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
                 public void handleMessage(Message msg) {
-                GlobalClass.dismissLoadingDialog(LoadingDialog);
-                try {
-                    method = Class.forName("protec.pl.protecabasvol2.ArticleNameList").getMethod(function, String.class);
-                    method.invoke("protec.pl.protecabasvol2.ArticleNameList", function);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                    GlobalClass.dismissLoadingDialog(LoadingDialog);
+                    try {
+                        method = Class.forName("protec.pl.protecabasvol2.ArticleNameList").getMethod(function, String.class);
+                        method.invoke("protec.pl.protecabasvol2.ArticleNameList", function);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
                 }
             };
         }

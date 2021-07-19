@@ -65,6 +65,18 @@ public class Menu extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu);
+        Log.d("CHECKING USER NAME", LoginContextManagement.getUserName(this));
+        if(LoginContextManagement.getUserName(this).length() == 0)
+        {
+            Log.d("REDIRECTED", "TO MAINACTIVITY");
+            Intent intent = new Intent(this, MainActivity.class);
+            startActivity(intent);
+        }
+        else
+        {
+            Log.d("STAYED", "HERE");
+        }
+        Log.d("entered MENU","ENTERED MENU OPTION");
         getElementsFromIntent();
         getElementsById();
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -87,20 +99,25 @@ public class Menu extends AppCompatActivity {
     @Override
     public void onBackPressed(){
         GlobalClass.showDialogTwoButtons(this, "Wylogowanie", "Czy napewno chcesz się wylogować?", "Wyloguj", "Anuluj",
-            new DialogInterface.OnClickListener() {
-            @Override
-                public void onClick(DialogInterface dialog, int which) {
-                     Intent intent = new Intent(Menu.this, MainActivity.class);
-                     startActivity(intent);
-                }
-            }, new DialogInterface.OnClickListener() { //Anuluj button
-            @Override public void onClick(DialogInterface dialogInterface, int i) { } });
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        LoginContextManagement.setUserName(Menu.this, ""); // clear out login instance
+                        Intent intent = new Intent(Menu.this, MainActivity.class);
+                        startActivity(intent);
+                    }
+                }, new DialogInterface.OnClickListener() { //Anuluj button
+                    @Override public void onClick(DialogInterface dialogInterface, int i) { } });
     }
 
     @Override
     protected void onPause(){  //closes ctx if the app is minimized
         GlobalClass.ctxClose(ctx);
         super.onPause(); //has to be after code
+    }
+
+    protected void onResume() {
+        super.onResume();
     }
 
     public void getElementsById(){
@@ -222,9 +239,9 @@ public class Menu extends AppCompatActivity {
                 new setIntentAsyncTask().execute("Move", "");
             } else {
                 GlobalClass.showDialog(this, "Ta opcja jest niedostępna!", "Musisz być magazynierem aby korzystać z tej opcji.", "OK",
-                new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {}});
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {}});
             }
         }
     }
@@ -235,9 +252,9 @@ public class Menu extends AppCompatActivity {
                 new setIntentAsyncTask().execute("QualityControl", "");
             } else {
                 GlobalClass.showDialog(this, "Ta opcja jest niedostępna!", "Musisz być kontrolerem jakości aby korzystać z tej opcji.", "OK",
-                new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {}});
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {}});
             }
         }
     }
@@ -352,7 +369,7 @@ public class Menu extends AppCompatActivity {
                         new setIntentAsyncTask().execute("Stocktaking", stock.getIdno());
                     }else{
                         GlobalClass.showDialog(Menu.this, "Błędny numer komisji", "Podany numer komisji nie istnieje.", "OK", new DialogInterface.OnClickListener() {
-                        @Override public void onClick(DialogInterface dialog, int which) {} });
+                            @Override public void onClick(DialogInterface dialog, int which) {} });
                     }
                     GlobalClass.ctxClose(ctx);
                 }
@@ -423,8 +440,8 @@ public class Menu extends AppCompatActivity {
             handler = new Handler() {
                 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
                 public void handleMessage(Message msg) {
-                GlobalClass.dismissLoadingDialog(LoadingDialog);
-                startActivity(new Intent(Menu.this, Menu.class));
+                    GlobalClass.dismissLoadingDialog(LoadingDialog);
+                    startActivity(new Intent(Menu.this, Menu.class));
                 }
             };
         }

@@ -250,13 +250,13 @@ public class MoveLeaveArticle extends AppCompatActivity {
                     }
                 } else {// na WDR nie ma takiego artykułu
                     GlobalClass.showDialog(this, "Brak artykułu w WDR!", "W lokalizacji WDR nie ma takiego artykułu.", "OK",
-                        new DialogInterface.OnClickListener() {
-                        @Override public void onClick(DialogInterface dialog, int which) {} });
+                            new DialogInterface.OnClickListener() {
+                                @Override public void onClick(DialogInterface dialog, int which) {} });
                 }
             } else { // FindProdByIdno zwrócił null
                 GlobalClass.showDialog(this, "Nie zeskanowano artykułu!", "Proszę zeskanować nr ID artykułu.", "OK",
-                    new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) {} });
+                        new DialogInterface.OnClickListener() {
+                            @Override public void onClick(DialogInterface dialog, int which) {} });
             }
             GlobalClass.dismissLoadingDialog(LoadingDialog);
             GlobalClass.ctxClose(ctx);
@@ -344,11 +344,11 @@ public class MoveLeaveArticle extends AppCompatActivity {
                 }
             } else {
                 GlobalClass.showDialog(this, "Brak artykułów!", "Brak artykułów na miejscu składowania WDR.", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                        }
-                    });
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        });
                 GlobalClass.ctxClose(ctx);
             }
         }catch (DBRuntimeException e){
@@ -385,23 +385,23 @@ public class MoveLeaveArticle extends AppCompatActivity {
                 location_textEdit.setText("");
                 qty_textEdit.setText("");
                 GlobalClass.showDialog(this, "Odłożono!", "Materiał został odłożony i dodany do bazy.", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            new setIntentAsyncTask().execute("Move");
-                        }
-                    });
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                new setIntentAsyncTask().execute("Move");
+                            }
+                        });
                 GlobalClass.ctxClose(ctx);
             } catch (NumberFormatException e) {
                 e.printStackTrace();
                 GlobalClass.showDialog(this, "Błąd!", "Podczas zmiany formatu wystąpił błąd.", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                        }
-                    });
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        });
             } catch (DBRuntimeException e) {
-               catchExceptionCases(e, "leaveBtnCallOnClick", "");
+                catchExceptionCases(e, "leaveBtnCallOnClick", "");
 
             } catch (CommandException e) {
                 e.printStackTrace();
@@ -460,11 +460,11 @@ public class MoveLeaveArticle extends AppCompatActivity {
             if (Double.parseDouble(qty) > Double.parseDouble(qty_textEdit.getHint().toString())) {
                 emptyFields = true;
                 GlobalClass.showDialog(this, "Wykroczenie poza stan!", "Wpisana ilość przekracza ilość dostępną na stanie.", "OK",
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                    }
-                });
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        });
             }
         }
         return emptyFields;

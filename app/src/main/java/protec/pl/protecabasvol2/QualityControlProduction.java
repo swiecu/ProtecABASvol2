@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,15 +36,18 @@ import java.util.Date;
 
 import de.abas.erp.common.type.AbasDate;
 import de.abas.erp.db.DbContext;
+import de.abas.erp.db.EditorAction;
 import de.abas.erp.db.exception.DBRuntimeException;
 import de.abas.erp.db.infosystem.custom.owfe.IsApPdcAnalysis;
 import de.abas.erp.db.infosystem.custom.owpl.IsPrLoggedUser;
 import de.abas.erp.db.schema.capacity.WorkCenter;
 import de.abas.erp.db.schema.employee.Employee;
 import de.abas.erp.db.schema.part.Product;
+import de.abas.erp.db.schema.pdc.ShortProductionOrder;
 import de.abas.erp.db.schema.pdc.ShortProductionOrderEditor;
 import de.abas.erp.db.schema.workorder.WorkOrders;
 import de.abas.erp.db.selection.Conditions;
+import de.abas.erp.db.selection.Order;
 import de.abas.erp.db.selection.SelectionBuilder;
 import de.abas.erp.db.util.ContextHelper;
 import de.abas.erp.db.util.QueryUtil;
@@ -74,7 +78,7 @@ public class QualityControlProduction extends AppCompatActivity {
     // na kliknięcie cofnij
     public void onBackPressed() {
         GlobalClass.dismissLoadingDialog(LoadingDialog);
-        new setIntentAsyncTask().execute("QualityControl");
+        new setAsyncTask().execute("QualityControl", "intent");
         super.onBackPressed();
     }
 
@@ -113,7 +117,7 @@ public class QualityControlProduction extends AppCompatActivity {
         save_btn = findViewById(R.id.save_btn);
     }
 
-    private class setIntentAsyncTask extends AsyncTask<String, Void, String> {
+    private class setAsyncTask extends AsyncTask<String, Void, String[]> {
         private ProgressDialog loadDialog = new ProgressDialog(QualityControlProduction.this);
 
         @Override
@@ -124,14 +128,31 @@ public class QualityControlProduction extends AppCompatActivity {
         }
 
         @Override
-        protected String doInBackground(String... strings) {
-            String destination = strings[0];
-            setIntent(destination);
-            return null;
+        protected String[] doInBackground(String... strings) {
+            String destination = strings[0], action = strings[1];
+            if(action.equals("intent")){
+                setIntent(destination);
+            }else if(action.equals("addQualityControl")){
+                addNewProductionOrder();
+            }
+            return new String[]{destination, action};
         }
 
-        protected void onPostExecute(String param){
-            startActivity(intent);
+        protected void onPostExecute(String[] param){
+            String action = param[1];
+            if(action.equals("intent")) {
+                startActivity(intent);
+            }else if(action.equals("addQualityControl")){
+                GlobalClass.dismissLoadingDialog(loadDialog);
+                GlobalClass.showDialog(QualityControlProduction.this, "Dodano!", "Nowa kontrola produkcji została dodana do bazy.", "OK",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                GlobalClass.ctxClose(ctx);
+                                new setAsyncTask().execute("QualityControl", "intent");
+                            }
+                        });
+            }
         }
     }
 
@@ -204,9 +225,9 @@ public class QualityControlProduction extends AppCompatActivity {
         }
         else{
             GlobalClass.showDialog(this, "Brak karty pracy!", "Zeskanowany nr karty nie istnieje.", "OK",
-            new DialogInterface.OnClickListener() {
-                @Override  public void onClick(DialogInterface dialog, int which) { }
-            });
+                    new DialogInterface.OnClickListener() {
+                        @Override  public void onClick(DialogInterface dialog, int which) { }
+                    });
         }
     }
 
@@ -243,12 +264,12 @@ public class QualityControlProduction extends AppCompatActivity {
             handler = new Handler() {
                 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
                 public void handleMessage(Message msg) {
-                GlobalClass.dismissLoadingDialog(LoadingDialog);
-                if(function.equals("CardNrExists")) {
-                    CardNrExists(parameter);
-                }else if(function.equals("save")){
-                    save_btn.callOnClick();
-                }
+                    GlobalClass.dismissLoadingDialog(LoadingDialog);
+                    if(function.equals("CardNrExists")) {
+                        CardNrExists(parameter);
+                    }else if(function.equals("save")){
+                        save_btn.callOnClick();
+                    }
                 }
             };
         }
@@ -347,12 +368,12 @@ public class QualityControlProduction extends AppCompatActivity {
 
             }else{
                 GlobalClass.showDialog(this, "Brak informacji!", "Brak informacji o danym zgłoszeniu.", "OK",
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        GlobalClass.ctxClose(ctx);
-                    }
-                });
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                GlobalClass.ctxClose(ctx);
+                            }
+                        });
             }
         }
     }
@@ -363,37 +384,12 @@ public class QualityControlProduction extends AppCompatActivity {
         Boolean emptyFields = checkIfFieldsEmpty(nrCard_text);
         if(emptyFields == false){
             save_btn.setEnabled(false);
-            LoadingDialog = ProgressDialog.show(QualityControlProduction.this, "",
-                    "Ładowanie. Proszę czekać...", true);
+//            LoadingDialog = ProgressDialog.show(QualityControlProduction.this, "",
+//                    "Ładowanie. Proszę czekać...", true);
             try {
-                ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
-                AbasDate today = new AbasDate();
-                DateFormat dateFormat = new SimpleDateFormat("HH:mm");
-                Date date = new Date();
-                IsPrLoggedUser lu = ctx.openInfosystem(IsPrLoggedUser.class);
-                user_short_name = lu.getYuser();
-                employee = FindEmployeeBySwd(ctx, user_short_name);
-                lu.close();
-                ShortProductionOrderEditor shortProductionOrderEditor = ctx.newObject(ShortProductionOrderEditor.class);
-                shortProductionOrderEditor.setString("employee", employee.getSwd());
-                shortProductionOrderEditor.setString("wSlipNoText ", "  " + nrCard_TextEdit.getText().toString());
-                shortProductionOrderEditor.setString("workCenter", machine_groupSWD);
-                shortProductionOrderEditor.setStartTimePair(today);
-                shortProductionOrderEditor.setString("startTime", dateFormat.format(date));
-                shortProductionOrderEditor.setYqmqtychecked(controlledQty);
-                shortProductionOrderEditor.setYqmqtygood(goodQty);
-                shortProductionOrderEditor.setYqmqtyscrap(badQty);
-                shortProductionOrderEditor.setYqmcomments(message_MultiLine.getText().toString());
-                shortProductionOrderEditor.commit();
 
-                GlobalClass.showDialog(this, "Dodano!", "Nowa kontrola produkcji została dodana do bazy.", "OK",
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                GlobalClass.ctxClose(ctx);
-                                new setIntentAsyncTask().execute("QualityControl");
-                            }
-                        });
+                new setAsyncTask().execute("QualityControl", "addQualityControl");
+
             } catch (NumberFormatException e) {
                 e.printStackTrace();
                 GlobalClass.showDialog(this, "Błąd!", "Podczas zmiany formatu wystąpił błąd.", "OK",
@@ -404,7 +400,48 @@ public class QualityControlProduction extends AppCompatActivity {
                 catchExceptionCases(e, "save", "");
             }
         }
-        GlobalClass.dismissLoadingDialog(LoadingDialog);
+        //GlobalClass.dismissLoadingDialog(LoadingDialog);
+    }
+
+    public void addNewProductionOrder(){
+        ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
+        AbasDate today = new AbasDate();
+        DateFormat dateFormat = new SimpleDateFormat("HH:mm");
+        Date date = new Date();
+        IsPrLoggedUser lu = ctx.openInfosystem(IsPrLoggedUser.class);
+        user_short_name = lu.getYuser();
+        employee = FindEmployeeBySwd(ctx, user_short_name);
+        lu.close();
+        ShortProductionOrderEditor shortProductionOrderEditor = ctx.newObject(ShortProductionOrderEditor.class);
+        shortProductionOrderEditor.setString("employee", employee.getSwd());
+        shortProductionOrderEditor.setString("wSlipNoText ", "  " + nrCard_TextEdit.getText().toString());
+        shortProductionOrderEditor.setString("workCenter", machine_groupSWD);
+        shortProductionOrderEditor.setStartTimePair(today);
+        shortProductionOrderEditor.setString("startTime", dateFormat.format(date));
+        shortProductionOrderEditor.setYqmqtychecked(controlledQty);
+        shortProductionOrderEditor.setYqmqtygood(goodQty);
+        shortProductionOrderEditor.setYqmqtyscrap(badQty);
+        shortProductionOrderEditor.setYqmcomments("MOBILE_" + message_MultiLine.getText().toString());
+        shortProductionOrderEditor.commit();
+        reopenProductionOrderAndSetField(ctx);
+    }
+
+    public void reopenProductionOrderAndSetField(DbContext ctx){
+        ShortProductionOrder shortProductionOrder = null;
+        SelectionBuilder<ShortProductionOrder> shortProductionOrderSB = SelectionBuilder.create(ShortProductionOrder.class);
+        shortProductionOrderSB.addOrder(Order.desc(ShortProductionOrder.META.idno));
+        try {
+            shortProductionOrder = QueryUtil.getFirst(ctx, shortProductionOrderSB.build());
+            ShortProductionOrderEditor shortProductionOrderEditor = shortProductionOrder.createEditor();
+            shortProductionOrderEditor.open(EditorAction.UPDATE);
+            shortProductionOrderEditor.setPrintImmediately(true);
+            shortProductionOrderEditor.commit();
+            if(shortProductionOrderEditor.active()){
+                shortProductionOrderEditor.abort();
+            }
+        } catch (Exception e) {
+            Log.d("EXCEPTION: " , e.getMessage());
+        }
     }
 
     public Boolean checkIfFieldsEmpty(String nrCard_text) {
@@ -412,11 +449,11 @@ public class QualityControlProduction extends AppCompatActivity {
         if (nrCard_text.equals("")){
             emptyFields = true;
             GlobalClass.showDialog(this, "Brak karty pracy!", "Proszę wprowadzić nr karty.", "OK",
-            new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                }
-            });
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                        }
+                    });
         }else if(controlledQty_textEdit.getText().toString().equals("") || ((goodQty_textEdit.getText().toString().equals("")) || (badQty_textEdit.getText().toString().equals("")))){
             emptyFields = true;
             GlobalClass.showDialog(this, "Brak wprowadzonej ilości!", "Proszę uzupełnić ilości.", "OK",
@@ -432,11 +469,11 @@ public class QualityControlProduction extends AppCompatActivity {
             if ((goodQty.add(badQty)).compareTo(controlledQty) != 0) {
                 emptyFields = true;
                 GlobalClass.showDialog(this, "Niezgodność sum!", "Suma zgodnych i niezgodnych ilości się nie zgadza!", "OK",
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                    }
-                });
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        });
             }
         }
         return  emptyFields;

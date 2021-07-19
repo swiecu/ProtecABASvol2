@@ -195,9 +195,9 @@ public class QualityControlReportNonCompliance extends AppCompatActivity {
         }
         else{
             GlobalClass.showDialog(this, "Brak karty pracy!", "Zeskanowany nr karty nie istnieje.", "OK",
-            new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) {}
-            });
+                    new DialogInterface.OnClickListener() {
+                        @Override public void onClick(DialogInterface dialog, int which) {}
+                    });
         }
     }
 
@@ -235,10 +235,10 @@ public class QualityControlReportNonCompliance extends AppCompatActivity {
             handler = new Handler() {
                 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
                 public void handleMessage(Message msg) {
-                GlobalClass.dismissLoadingDialog(LoadingDialog);
-                if(function.equals("CardNrExists")){
-                    CardNrExists(parameter);
-                }
+                    GlobalClass.dismissLoadingDialog(LoadingDialog);
+                    if(function.equals("CardNrExists")){
+                        CardNrExists(parameter);
+                    }
                 }
             };
         }
@@ -308,7 +308,7 @@ public class QualityControlReportNonCompliance extends AppCompatActivity {
                         choosenDepartment = department;
                         choosenOperation = operation;
                         choosenMachineGroup = machine_group;
-                      }
+                    }
                 });
             }
         }else{ //sprawdza zgłoszenia zakończone
@@ -335,12 +335,12 @@ public class QualityControlReportNonCompliance extends AppCompatActivity {
 
             }else{
                 GlobalClass.showDialog(this, "Brak informacji!", "Brak informacji o danym zgłoszeniu.", "OK",
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        ctx.close();
-                    }
-                });
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                ctx.close();
+                            }
+                        });
             }
         }
     }
@@ -355,7 +355,7 @@ public class QualityControlReportNonCompliance extends AppCompatActivity {
         Date today = new Date();
         EditText nrCard_TextEdit = findViewById(R.id.machine_TextEdit);
         String nrCard_text = nrCard_TextEdit.getText().toString(),
-               mess_text = message.getText().toString();
+                mess_text = message.getText().toString();
         Boolean emptyFields = checkIfFieldsEmpty(nrCard_text, mess_text);
 
         if(emptyFields == false){
@@ -375,11 +375,11 @@ public class QualityControlReportNonCompliance extends AppCompatActivity {
             sender.invokeStart();
             sender.close();
             GlobalClass.showDialog(this, "Wysłano!", "Wiadomość została pomyślnie wysłana.", "OK",
-            new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) {
-                    new setIntentAsyncTask().execute("Menu");
-                }
-            });
+                    new DialogInterface.OnClickListener() {
+                        @Override public void onClick(DialogInterface dialog, int which) {
+                            new setIntentAsyncTask().execute("Menu");
+                        }
+                    });
             GlobalClass.ctxClose(ctx);
         }
         GlobalClass.dismissLoadingDialog(LoadingDialog);
@@ -397,9 +397,9 @@ public class QualityControlReportNonCompliance extends AppCompatActivity {
         } else if (mess_text.equals("")) {
             emptyFields = true;
             GlobalClass.showDialog(this, "Brak wiadomości!", "Proszę wpisać wiadomość.", "OK",
-            new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) { }
-            });
+                    new DialogInterface.OnClickListener() {
+                        @Override public void onClick(DialogInterface dialog, int which) { }
+                    });
         }
         return emptyFields;
     }

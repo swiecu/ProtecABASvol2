@@ -128,27 +128,27 @@ public class UnCaughtException implements Thread.UncaughtExceptionHandler {
                             }
                         });
                 builder.setPositiveButton("Wyślij report",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog,
-                                            int which) {
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog,
+                                                int which) {
 
-                            Intent sendIntent = new Intent(Intent.ACTION_SEND);
-                            String subject = "Your App crashed! Fix it!";
-                            StringBuilder body = new StringBuilder("Yoddle");
-                            body.append("<br/>").append("<br/>");
-                            body.append(errorContent).append("<br/>").append("<br/>");
-                            sendIntent.setType("message/rfc822");
-                            sendIntent.putExtra(Intent.EXTRA_EMAIL,new String[] { "julia.swiec@protec.pl" });
-                            sendIntent.putExtra(Intent.EXTRA_TEXT,
-                                    body.toString());
-                            sendIntent.putExtra(Intent.EXTRA_SUBJECT,
-                                    subject);
-                            sendIntent.setType("message/rfc822");
-                            context1.startActivity(sendIntent);
-                            System.exit(0);
-                        }
-                    });
+                                Intent sendIntent = new Intent(Intent.ACTION_SEND);
+                                String subject = "Your App crashed! Fix it!";
+                                StringBuilder body = new StringBuilder("Yoddle");
+                                body.append("<br/>").append("<br/>");
+                                body.append(errorContent).append("<br/>").append("<br/>");
+                                sendIntent.setType("message/rfc822");
+                                sendIntent.putExtra(Intent.EXTRA_EMAIL,new String[] { "julia.swiec@protec.pl" });
+                                sendIntent.putExtra(Intent.EXTRA_TEXT,
+                                        body.toString());
+                                sendIntent.putExtra(Intent.EXTRA_SUBJECT,
+                                        subject);
+                                sendIntent.setType("message/rfc822");
+                                context1.startActivity(sendIntent);
+                                System.exit(0);
+                            }
+                        });
                 builder.setMessage("Aplikacja Protec ABAS przestała działać. Zamknij aplikację i spróbuj ponownie za chwilę.");
                 builder.show();
                 Looper.loop();

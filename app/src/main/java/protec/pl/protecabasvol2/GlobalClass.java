@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Build;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
 import android.view.Gravity;
@@ -24,8 +25,8 @@ import java.util.Date;
 import java.util.HashMap;
 
 import de.abas.erp.db.DbContext;
-import de.abas.erp.db.Query;
 import de.abas.erp.db.exception.DBRuntimeException;
+import de.abas.erp.db.infosystem.custom.owpl.IsPrNotificationSender;
 import de.abas.erp.db.infosystem.custom.sy.IsPrDisplays;
 import de.abas.erp.db.schema.part.Product;
 import de.abas.erp.db.selection.Conditions;
@@ -35,14 +36,19 @@ import de.abas.erp.db.util.QueryUtil;
 public class GlobalClass {
     Context mContext;
     private String password;
-    public String getPassword() {return password; }
+
+    public String getPassword() {
+        return password;
+    }
+
     public void setPassword(String password) {
         this.password = password;
     }
+
     DbContext ctx;
 
     // constructor
-    public GlobalClass(Context Thiscontext){
+    public GlobalClass(Context Thiscontext) {
         this.mContext = Thiscontext;
     }
 
@@ -52,9 +58,9 @@ public class GlobalClass {
         Product product = null;
         try {
             productSB.add(Conditions.eq(Product.META.idno.toString(), idno));
-            if(QueryUtil.getFirst(ctx, productSB.build()) != null){ //jesli pierwszy nie równa się null
+            if (QueryUtil.getFirst(ctx, productSB.build()) != null) { //jesli pierwszy nie równa się null
                 product = QueryUtil.getFirst(ctx, productSB.build());
-            }else{
+            } else {
                 productSB.add(Conditions.eq(Product.META.descrOperLang.toString(), idno));
             }
         } catch (Exception e) {
@@ -65,7 +71,7 @@ public class GlobalClass {
     // Find Product By DESCR
     @SuppressLint("WrongConstant")
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
-    public final static Product FindProductByDescr(DbContext ctx, String name){
+    public final static Product FindProductByDescr(DbContext ctx, String name) {
         Product product = null;
         SelectionBuilder<Product> productSB = SelectionBuilder.create(Product.class);
         try {
@@ -79,35 +85,38 @@ public class GlobalClass {
     // Find Product By SWD
     @SuppressLint("WrongConstant")
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
-    public final static Product FindProductBySwd(DbContext ctx, String name){
+    public final static Product FindProductBySwd(DbContext ctx, String name) {
         Product product = null;
         SelectionBuilder<Product> productSB = SelectionBuilder.create(Product.class);
-        Query<Product> productQuery = ctx.createQuery(productSB.build());
         try {
-            productSB.add(Conditions.matchIgCase(Product.META.swd.toString(), name));
-            product = QueryUtil.getFirst(ctx, productSB.build());
+            if (name.contains("/")) {
+                productSB.add(Conditions.eq(Product.META.swd.toString(), name));
+            } else {
+                productSB.add(Conditions.matchIgCase(Product.META.swd.toString(), name));
+            }
         } catch (Exception e) {
         }
+        product = QueryUtil.getFirst(ctx, productSB.build());
         return product;
     }
 
-    public static void showDialog(Context context,String title,String message, String positiveButton,
-          DialogInterface.OnClickListener onClickListener) {
-          AlertDialog.Builder dialog = new AlertDialog.Builder(new ContextThemeWrapper(context, R.style.MyDialog));
-          dialog.setTitle(title);
-          dialog.setMessage(message);
-          dialog.setPositiveButton(positiveButton, onClickListener);
-          dialog.show();
+    public static void showDialog(Context context, String title, String message, String positiveButton,
+                                  DialogInterface.OnClickListener onClickListener) {
+        AlertDialog.Builder dialog = new AlertDialog.Builder(new ContextThemeWrapper(context, R.style.MyDialog));
+        dialog.setTitle(title);
+        dialog.setMessage(message);
+        dialog.setPositiveButton(positiveButton, onClickListener);
+        dialog.show();
     }
 
-    public static void showDialogTwoButtons(Context context,String title,String message, String positiveButton, String negativeButton,
-          DialogInterface.OnClickListener onClickListener, DialogInterface.OnClickListener onClickListenerNegative) {
+    public static void showDialogTwoButtons(Context context, String title, String message, String positiveButton, String negativeButton,
+                                            DialogInterface.OnClickListener onClickListener, DialogInterface.OnClickListener onClickListenerNegative) {
 
         AlertDialog.Builder dialog = new AlertDialog.Builder(new ContextThemeWrapper(context, R.style.MyDialog));
         dialog.setTitle(title);
         dialog.setMessage(message);
-        dialog.setPositiveButton(positiveButton,onClickListener);
-        dialog.setNegativeButton(negativeButton,onClickListenerNegative);
+        dialog.setPositiveButton(positiveButton, onClickListener);
+        dialog.setNegativeButton(negativeButton, onClickListenerNegative);
         dialog.show();
     }
 
@@ -162,41 +171,41 @@ public class GlobalClass {
         }
     }
 
-    public static String getProperUnit(String unit){
-        switch (unit){
-            case "(20)":
-                unit="szt.";
+    public static String getProperUnit(String unit) {
+        switch (unit) {
+            case "(179,62,0)": //(20)
+                unit = "szt.";
                 break;
-            case "(7)":
-                unit="kg";
+            case "(166,62,0)": // (7)
+                unit = "kg";
                 break;
-            case "(21)":
-                unit="kpl";
+            case "(180,62,0)": // (21)
+                unit = "kpl";
                 break;
-            case "(1)":
-                unit="m";
+            case "(160,62,0)": //(1)
+                unit = "m";
                 break;
-            case "(10)":
-                unit="tona";
+            case "(169,62,0)": //(10)
+                unit = "tona";
                 break;
-            case "(28)":
-                unit="arkusz";
+            case "(187,62,0)": //(28)
+                unit = "arkusz";
                 break;
         }
         return unit;
     }
 
-    public static TableRow setTableRowList(Context context){
+    public static TableRow setTableRowList(Context context) {
         TableRow tableRowList = new TableRow(context);
         TableRow.LayoutParams lp = new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT, TableRow.LayoutParams.WRAP_CONTENT, 1.0f);
         tableRowList.setGravity(Gravity.CENTER);
         tableRowList.setLayoutParams(lp);
         tableRowList.setBackgroundColor(Color.parseColor("#BDBBBB"));
-        return  tableRowList;
+        return tableRowList;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
-    public static void setParamForTextView(TextView textView, String text, int fontSize, int paddingTopBottom, int paddingLeftRight, Boolean boldFont){
+    public static void setParamForTextView(TextView textView, String text, int fontSize, int paddingTopBottom, int paddingLeftRight, Boolean boldFont) {
         TableRow.LayoutParams params = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.MATCH_PARENT, 1.0f);
         params.setMargins(1, 1, 1, 1);
         textView.setText(text);
@@ -205,42 +214,44 @@ public class GlobalClass {
         textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, fontSize);
         textView.setPadding(paddingLeftRight, paddingTopBottom, paddingLeftRight, paddingTopBottom);
         textView.setLayoutParams(params);
-        if(boldFont == true){
+        if (boldFont == true) {
             textView.setTypeface(Typeface.DEFAULT_BOLD);
         }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
-    public static void setParamForCheckBox(CheckBox textView, String text, int fontSize, int paddingTopBottom, int paddingLeftRight, Boolean boldFont){
+    public static void setParamForCheckBox(CheckBox textView, String text, int fontSize, int paddingTopBottom, int paddingLeftRight, Boolean boldFont) {
         TableRow.LayoutParams params = new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT, TableRow.LayoutParams.WRAP_CONTENT, 1.0f);
         params.setMargins(1, 1, 1, 1);
         textView.setPadding(paddingLeftRight, paddingTopBottom, paddingLeftRight, paddingTopBottom);
-       // textView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        // textView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
         //textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, fontSize);
         textView.setLayoutParams(params);
         textView.setGravity(Gravity.CENTER_HORIZONTAL);
     }
 
-    public static void ctxClose(DbContext ctx){
-        if(ctx != null) {
+    public static void ctxClose(DbContext ctx) {
+        if (ctx != null) {
             ctx.close();
         }
     }
 
-    public static void dismissLoadingDialog(ProgressDialog LoadingDialog){
+    public static void dismissLoadingDialog(ProgressDialog LoadingDialog) {
         if (LoadingDialog != null) {
             LoadingDialog.dismiss();
         }
     }
 
     @SuppressLint("HandlerLeak")
-    public static void catchExceptionCases (DBRuntimeException e, Context context){
-
+    public static void catchExceptionCases(DBRuntimeException e, Context context) {
+        Log.d("messageError: ", e.getMessage());
         if (e.getMessage().contains("password")) {
             GlobalClass.showDialog(context, "Błędne hasło!", "Podane hasło jest błędne.", "OK", new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) { }
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                }
             });
-        } else if(e.getMessage().contains("failed")) {
+        } else if (e.getMessage().contains("failed")) {
             GlobalClass.showDialog(context, "Brak połączenia!", "Nie można się aktualnie połączyć z bazą.", "OK", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
@@ -249,7 +260,7 @@ public class GlobalClass {
         }
     }
 
-    public static ProgressDialog getDialogForLicences(Context context){
+    public static ProgressDialog getDialogForLicences(Context context) {
         ProgressDialog LoadingDialog = new ProgressDialog(context, ProgressDialog.THEME_DEVICE_DEFAULT_LIGHT);
         LoadingDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         LoadingDialog.setTitle("     Przekroczono liczbę licencji.");
@@ -257,4 +268,13 @@ public class GlobalClass {
         return LoadingDialog;
     }
 
+    public static void sendNotification(DbContext ctx, String title, String content, String topics){
+        IsPrNotificationSender notificationSender = ctx.openInfosystem(IsPrNotificationSender.class);
+        notificationSender.setYsubject(title);
+        notificationSender.setYtrext(content);
+        notificationSender.setYgroup(topics);
+        notificationSender.invokeStart();
+        notificationSender.close();
+    }
 }
+

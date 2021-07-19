@@ -153,7 +153,7 @@ public class QualityControlIncome extends AppCompatActivity {
             RowSelectionBuilder<PurchaseOrder, PurchaseOrder.Row> purchaseOrderSB = RowSelectionBuilder.create(PurchaseOrder.class, PurchaseOrder.Row.class);
             purchaseOrderSB.add(Conditions.eq(PurchaseOrder.Row.META.deadlineWeekOrDay, today));
             purchaseOrderSB.addForHead(Conditions.eq(PurchaseOrder.META.procureMode, EnumProcurementType.ExternalProcurement));
-            purchaseOrderSB.addOrderForHead(Order.asc(PurchaseOrder.META.vendorDesrc));
+            purchaseOrderSB.addOrderForHead(Order.asc(PurchaseOrder.META.vendorDescr));
             RowQuery<PurchaseOrder, PurchaseOrder.Row> purchaseOrderRowQuery = ctx.createQuery(purchaseOrderSB.build());
             String purchaseOrdersString = "";
             List<String> purchaseOrdersList = new ArrayList<>();
@@ -259,7 +259,7 @@ public class QualityControlIncome extends AppCompatActivity {
         });
     }
 
-        @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void showDocumentQtyDialog(String purchaseOrdersString, Vendor vendor){
         AlertDialog.Builder docQtyDialog = new AlertDialog.Builder(new ContextThemeWrapper(QualityControlIncome.this, R.style.AppTheme));
         ViewGroup viewGroup = findViewById(android.R.id.content);
@@ -282,7 +282,7 @@ public class QualityControlIncome extends AppCompatActivity {
                 }else{
                     GlobalClass.showDialog(QualityControlIncome.this, "Brak wpisanej ilości!", "Proszę uzupełnić ilość.", "OK",
                             new DialogInterface.OnClickListener() {
-                            @Override public void onClick(DialogInterface dialog, int which) {} });
+                                @Override public void onClick(DialogInterface dialog, int which) {} });
                 }
             }
         });

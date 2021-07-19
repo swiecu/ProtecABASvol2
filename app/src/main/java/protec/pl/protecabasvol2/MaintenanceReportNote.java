@@ -173,11 +173,11 @@ public class MaintenanceReportNote extends AppCompatActivity {
         }
         else{
             GlobalClass.showDialog(this, "Brak maszyny!", "Zeskanowana maszyna nie isnieje.", "OK",
-            new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                }
-            });
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                        }
+                    });
         }
     }
 
@@ -213,10 +213,10 @@ public class MaintenanceReportNote extends AppCompatActivity {
             handler = new Handler() {
                 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
                 public void handleMessage(Message msg) {
-                GlobalClass.dismissLoadingDialog(LoadingDialog);
-                if(function.equals("MachineExists")) {
-                    MachineExists(parameter);
-                }
+                    GlobalClass.dismissLoadingDialog(LoadingDialog);
+                    if(function.equals("MachineExists")) {
+                        MachineExists(parameter);
+                    }
                 }
             };
         }
@@ -251,13 +251,13 @@ public class MaintenanceReportNote extends AppCompatActivity {
             sender.close();
             GlobalClass.ctxClose(ctx);
             GlobalClass.showDialog(this, "Wysłano!", "Wiadomość została pomyślnie wysłana.", "OK",
-            new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    GlobalClass.ctxClose(ctx);
-                    new setIntentAsyncTask().execute("Menu");
-                }
-            });
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            GlobalClass.ctxClose(ctx);
+                            new setIntentAsyncTask().execute("Menu");
+                        }
+                    });
             GlobalClass.ctxClose(ctx);
         }
         GlobalClass.dismissLoadingDialog(LoadingDialog);

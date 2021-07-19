@@ -169,18 +169,18 @@ public class QualityControlToCheck extends AppCompatActivity {
                 String elementeString = "<b>Dodaj nową kontrolę jakości.</b>";
                 addNewControlAlert.setMessage(Html.fromHtml(elementeString));
                 addNewControlAlert.setPositiveButton("Dodaj",
-                    new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            GlobalClass.ctxClose(ctx);
-                            new setIntentAsyncTask().execute("QualityControlProduction");
-                        }
-                    });
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                GlobalClass.ctxClose(ctx);
+                                new setIntentAsyncTask().execute("QualityControlProduction");
+                            }
+                        });
                 addNewControlAlert.setNegativeButton("Anuluj",
-                    new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            GlobalClass.ctxClose(ctx);
-                        }
-                    });
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                GlobalClass.ctxClose(ctx);
+                            }
+                        });
                 addNewControlAlert.setCancelable(true);
                 addNewControlAlert.create().show();
             }

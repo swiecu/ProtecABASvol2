@@ -113,7 +113,7 @@ public class WarehouseStockTransfer extends AppCompatActivity {
         GlobalClass.ctxClose(ctx);
         super.onPause();
     }
-    
+
     @SuppressLint("WrongViewCast")
     public void lockLocation(View view) {
         lockIcon = (CheckBox) view;
@@ -196,7 +196,7 @@ public class WarehouseStockTransfer extends AppCompatActivity {
         @Override
         protected String doInBackground(String... strings) {
             String destination = strings[0],
-                   article = strings[1];
+                    article = strings[1];
             setIntent(destination, article);
             return null;
         }
@@ -360,8 +360,8 @@ public class WarehouseStockTransfer extends AppCompatActivity {
                 if(article_name.matches("")){ //jeśli jest pusty
                     articleDialog.dismiss();
                     GlobalClass.showDialog(WarehouseStockTransfer.this, "Brak wpisanego artykułu!", "Proszę wprowadzić artykuł.", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override public void onClick(DialogInterface dialog, int which) {} });
+                            new DialogInterface.OnClickListener() {
+                                @Override public void onClick(DialogInterface dialog, int which) {} });
                 }else {
                     articleDialog.dismiss();
                     LoadingDialog = ProgressDialog.show(WarehouseStockTransfer.this, "",
@@ -384,28 +384,28 @@ public class WarehouseStockTransfer extends AppCompatActivity {
                 drawTable(ctx, content);
                 GlobalClass.dismissLoadingDialog(LoadingDialog);
 
-            //jeśli nie znajdzie by IDNO
+                //jeśli nie znajdzie by IDNO
             }else if (myGlob.FindProductByDescr(ctx, content) != null){
                 GlobalClass.ctxClose(ctx);
                 new setIntentAsyncTask().execute("ArticleNameList", content);
 
-            // jeśli nie znajdzie by DESCR
+                // jeśli nie znajdzie by DESCR
             } else if (myGlob.FindProductBySwd(ctx, content) != null) {
                 GlobalClass.ctxClose(ctx);
                 new setIntentAsyncTask().execute("ArticleNameList", content);
 
-            // jeśli nie znajdzie ani tu ani tu
+                // jeśli nie znajdzie ani tu ani tu
             } else {
                 GlobalClass.ctxClose(ctx);
                 GlobalClass.dismissLoadingDialog(LoadingDialog);
                 GlobalClass.showDialog(WarehouseStockTransfer.this, "Brak artykułu!", "W bazie nie ma takeigo artykłu!", "OK",
-                new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) {} });
+                        new DialogInterface.OnClickListener() {
+                            @Override public void onClick(DialogInterface dialog, int which) {} });
             }
 
         } catch (DBRuntimeException e) {
             GlobalClass.dismissLoadingDialog(LoadingDialog);
-           catchExceptionCases(e, "searchArticle", content, ctx);
+            catchExceptionCases(e, "searchArticle", content, ctx);
         }
     }
 
@@ -486,7 +486,7 @@ public class WarehouseStockTransfer extends AppCompatActivity {
 
                     //Artykuł
                     String art = FindProductByIdno(ctx, content).getSwd(),
-                           art_descr = FindProductByIdno(ctx, content).getDescr6();
+                            art_descr = FindProductByIdno(ctx, content).getDescr6();
                     TextView articleName_text = (TextView) stockDialog.findViewById(R.id.articleName_textView);
                     articleName_text.setText(Html.fromHtml("<b> " + art_descr + "<b> "));
                     artIDNO = FindProductByIdno(ctx, content).getIdno();
@@ -517,7 +517,7 @@ public class WarehouseStockTransfer extends AppCompatActivity {
                         @Override
                         public void onClick(View view) {
                             stockDialog.dismiss();
-                          //  String platzFrom = row.getLplatz().getSwd();
+                            //  String platzFrom = row.getLplatz().getSwd();
                             fromLocation_textEdit.setText(platzFrom);
                             article_textEdit.setText(art);
                             unit_textView.setText(finalUnit);
@@ -553,8 +553,8 @@ public class WarehouseStockTransfer extends AppCompatActivity {
         }else {
             toLocation_textEdit.setText("");
             GlobalClass.showDialog(this, "Brak lokalizacji!", "Zeskanowana lokalizacja nie istnieje.", "OK",
-            new DialogInterface.OnClickListener() {
-                @Override public void onClick(DialogInterface dialog, int which) {} });
+                    new DialogInterface.OnClickListener() {
+                        @Override public void onClick(DialogInterface dialog, int which) {} });
         }
     }
 
@@ -613,7 +613,7 @@ public class WarehouseStockTransfer extends AppCompatActivity {
                                 toLocation_textEdit.setText("");
                                 try {
                                     ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");   //?? potrzebne policy?
-                                employee = FindEmployeeBySwd(ctx, user_short_name);
+                                    employee = FindEmployeeBySwd(ctx, user_short_name);
                                 } catch (DBRuntimeException e) {
                                     catchExceptionCases(e, "save", "", null);
                                 }
@@ -655,12 +655,12 @@ public class WarehouseStockTransfer extends AppCompatActivity {
             if(!fromLocation_textEdit.getText().toString().equals("")) {
                 locationsEqual = true;
                 GlobalClass.showDialog(this, "Takie same lokalizacje!", "Nie można przeksięgować artykułu do tej samej lokalizacji.", "OK",
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        GlobalClass.dismissLoadingDialog(LoadingDialog);
-                    }
-                });
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                GlobalClass.dismissLoadingDialog(LoadingDialog);
+                            }
+                        });
             }
         }
         return locationsEqual;
@@ -710,11 +710,11 @@ public class WarehouseStockTransfer extends AppCompatActivity {
                 if (new BigDecimal(qty_textEdit.getText().toString()).compareTo(new BigDecimal(qty_textEdit.getHint().toString())) == 1) {
                     emptyFields = true;
                     GlobalClass.showDialog(this, "Wykroczenie poza stan!", "Wpisana ilość przekracza ilość dostępną na stanie.", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override  public void onClick(DialogInterface dialog, int which) {
-                            GlobalClass.dismissLoadingDialog(LoadingDialog);
-                        }
-                    });
+                            new DialogInterface.OnClickListener() {
+                                @Override  public void onClick(DialogInterface dialog, int which) {
+                                    GlobalClass.dismissLoadingDialog(LoadingDialog);
+                                }
+                            });
                 }
             }
         }else {

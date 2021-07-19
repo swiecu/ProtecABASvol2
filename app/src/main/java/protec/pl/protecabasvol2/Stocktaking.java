@@ -162,8 +162,8 @@ public class Stocktaking extends AppCompatActivity {
         @Override
         protected String doInBackground(String... strings) {
             String destination = strings[0],
-                   stockID = strings[1],
-                   article = strings[2];
+                    stockID = strings[1],
+                    article = strings[2];
             setIntent(destination, stockID, article);
             return null;
         }
@@ -278,12 +278,12 @@ public class Stocktaking extends AppCompatActivity {
             } else {
                 article_textEdit.setText("");
                 GlobalClass.showDialog(Stocktaking.this, "Brak artykułu!", "W bazie nie ma takeigo artykłu!", "OK",
-                new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    GlobalClass.ctxClose(ctx);
-                }
-                });
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                GlobalClass.ctxClose(ctx);
+                            }
+                        });
             }
         } catch (DBRuntimeException e) {
             catchExceptionCases(e, "setPageLookForArticle", content);
@@ -305,12 +305,12 @@ public class Stocktaking extends AppCompatActivity {
             handler = new Handler() {
                 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
                 public void handleMessage(Message msg) {
-                GlobalClass.dismissLoadingDialog(LoadingDialog);
-                if(function.equals("setPageLookForArticle")) {
-                    setPageLookForArticle(parameter);
-                }else if(function.equals("LocationExists")){
-                    getLocation(parameter);
-                }
+                    GlobalClass.dismissLoadingDialog(LoadingDialog);
+                    if(function.equals("setPageLookForArticle")) {
+                        setPageLookForArticle(parameter);
+                    }else if(function.equals("LocationExists")){
+                        getLocation(parameter);
+                    }
                 }
             };
         }
@@ -338,8 +338,8 @@ public class Stocktaking extends AppCompatActivity {
                 if(article_name.matches("")){ //jeśli jest pusty
                     articleDialog.dismiss();
                     GlobalClass.showDialog(Stocktaking.this, "Brak wpisanego artykułu!", "Proszę wprowadzić artykuł.", "OK",
-                        new DialogInterface.OnClickListener() {
-                        @Override public void onClick(DialogInterface dialog, int which) {} });
+                            new DialogInterface.OnClickListener() {
+                                @Override public void onClick(DialogInterface dialog, int which) {} });
                 }else {
                     articleDialog.dismiss();
                     LoadingDialog = ProgressDialog.show(Stocktaking.this, "",
@@ -365,26 +365,26 @@ public class Stocktaking extends AppCompatActivity {
                 setPageLookForArticle(content);
                 GlobalClass.dismissLoadingDialog(LoadingDialog);
 
-            //jeśli nie znajdzie by IDNO
+                //jeśli nie znajdzie by IDNO
             } else if (myGlob.FindProductByDescr(ctx, content) != null) {
                 GlobalClass.ctxClose(ctx);
                 GlobalClass.dismissLoadingDialog(LoadingDialog);
                 new setIntentAsyncTask().execute("ArticleNameList", stockID, content);
 
-            // jeśli nie znajdzie by DESCR
+                // jeśli nie znajdzie by DESCR
             } else if (myGlob.FindProductBySwd(ctx, content) != null) {
                 GlobalClass.ctxClose(ctx);
                 GlobalClass.dismissLoadingDialog(LoadingDialog);
                 new setIntentAsyncTask().execute("ArticleNameList", stockID, content);
 
-            // jeśli nie znajdzie ani tu ani tu
+                // jeśli nie znajdzie ani tu ani tu
             } else {
                 GlobalClass.ctxClose(ctx);
                 GlobalClass.dismissLoadingDialog(LoadingDialog);
                 GlobalClass.showDialog(Stocktaking.this, "Brak artykułu!", "W bazie nie ma takeigo artykłu!", "OK",
-                new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) {}
-                });
+                        new DialogInterface.OnClickListener() {
+                            @Override public void onClick(DialogInterface dialog, int which) {}
+                        });
             }
         } catch (DBRuntimeException e) {
             GlobalClass.dismissLoadingDialog(LoadingDialog);
@@ -405,8 +405,8 @@ public class Stocktaking extends AppCompatActivity {
         }else {
             location_textEdit.setText("");
             GlobalClass.showDialog(this, "Brak lokalizacji!", "Zeskanowana lokalizacja nie istnieje.", "OK",
-            new DialogInterface.OnClickListener() {
-            @Override public void onClick(DialogInterface dialog, int which) {} });
+                    new DialogInterface.OnClickListener() {
+                        @Override public void onClick(DialogInterface dialog, int which) {} });
         }
     }
 
@@ -481,20 +481,20 @@ public class Stocktaking extends AppCompatActivity {
         if (article_textEdit.getText().toString().isEmpty()) {
             emptyFields = true;
             GlobalClass.showDialog(this, "Brak artykułu!", "Proszę wprowadzić artykuł.", "OK",
-            new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                }
-            });
-        } else if ((qty_textEdit.getText().toString().isEmpty())) {
-            if (equation_textView.getText().toString().equals("suma")) {
-                emptyFields = true;
-                GlobalClass.showDialog(this, "Brak ilości!", "Proszę wprowadzić ilość.", "OK",
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                         }
                     });
+        } else if ((qty_textEdit.getText().toString().isEmpty())) {
+            if (equation_textView.getText().toString().equals("suma")) {
+                emptyFields = true;
+                GlobalClass.showDialog(this, "Brak ilości!", "Proszę wprowadzić ilość.", "OK",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        });
             }else {
                 qty_textEdit.setText(qty_textEdit.getHint().toString());
             }
@@ -515,11 +515,11 @@ public class Stocktaking extends AppCompatActivity {
             if (location_textEdit.getHint().toString().equals("Lokalizacja")) {
                 emptyFields = true;
                 GlobalClass.showDialog(this, "Brak lokalizacji!", "Proszę wprowadzić lokalizację.", "OK",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                        }
-                    });
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        });
             } else {
                 location_textEdit.setText(location_textEdit.getHint().toString());
             }

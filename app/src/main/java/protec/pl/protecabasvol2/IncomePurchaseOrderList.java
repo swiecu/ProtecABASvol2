@@ -142,11 +142,15 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
         if(back_article != null) {
             ctx = ContextHelper.createClientContext("192.168.1.3", 6550, database, getPassword(), "mobileApp");
             for (Map.Entry<String, String> entryTableRowsHM : tableRowsHM.entrySet()) {
+
                 String productKey = entryTableRowsHM.getKey();
                 String[] qtyValues = entryTableRowsHM.getValue().split("@");
                 String toDeliverQty = qtyValues[0], deliveredQty = qtyValues[1];
-                globFunctions = new GlobalClass(getApplicationContext());
-                Product article = globFunctions.FindProductBySwd(ctx, productKey);
+                Log.d("productKey", productKey);
+                Log.d("toDeliver", toDeliverQty);
+                Log.d("deliveredQty", deliveredQty);
+                Product article = GlobalClass.FindProductBySwd(ctx, productKey);
+                Log.d("product getBySwd", article.getSwd());
                 if(oneDocument == true){
                     drawTableForOneDocument(null, article, toDeliverQty, deliveredQty);
                 }else{
@@ -258,17 +262,17 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
 
                 GlobalClass.dismissLoadingDialog(LoadingDialog);
 
-            //jeśli nie znajdzie by IDNO
+                //jeśli nie znajdzie by IDNO
             }else if (globFunctions.FindProductByDescr(ctx, content) != null){
                 GlobalClass.ctxClose(ctx);
                 new setIntentAsyncTask().execute("ArticleNameList", content);
 
-             // jeśli nie znajdzie by DESCR
+                // jeśli nie znajdzie by DESCR
             } else if (globFunctions.FindProductBySwd(ctx, content) != null) {
                 GlobalClass.ctxClose(ctx);
                 new setIntentAsyncTask().execute("ArticleNameList", content);
 
-             // jeśli nie znajdzie ani tu ani tu
+                // jeśli nie znajdzie ani tu ani tu
             } else {
                 GlobalClass.ctxClose(ctx);
                 GlobalClass.dismissLoadingDialog(LoadingDialog);
@@ -299,14 +303,14 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
             handler = new Handler() {
                 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
                 public void handleMessage(Message msg) {
-                GlobalClass.dismissLoadingDialog(LoadingDialog);
-                if(function.equals("getChoosenVendorPurchaseOrders")){
-                    getChoosenVendorPurchaseOrders();
-                }else if(function.equals("searchArticle")){
-                    searchArticle(parameter);
-                }else if(function.equals("createPZInABAS")){
-                    createPZInABAS();
-                }
+                    GlobalClass.dismissLoadingDialog(LoadingDialog);
+                    if(function.equals("getChoosenVendorPurchaseOrders")){
+                        getChoosenVendorPurchaseOrders();
+                    }else if(function.equals("searchArticle")){
+                        searchArticle(parameter);
+                    }else if(function.equals("createPZInABAS")){
+                        createPZInABAS();
+                    }
                 }
             };
         }
@@ -316,12 +320,12 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
     public void drawTableForOneDocument(PurchaseOrder.Row purchaseOrderRow, Product product, String toDeliver, String deliveredEnteredQty){
         String articleString, unitIdString, articleIdnoString = "";
         BigDecimal qtyToDeliverNr;
-
+        Log.d("product", product.toString());
         if(purchaseOrderRow != null) {
-             articleString = purchaseOrderRow.getProduct().getSwd();
-             articleIdnoString = purchaseOrderRow.getProduct().getIdno();
-             qtyToDeliverNr = purchaseOrderRow.getOutstDelQty().stripTrailingZeros();
-             unitIdString = purchaseOrderRow.getString("tradeUnit");
+            articleString = purchaseOrderRow.getProduct().getSwd();
+            articleIdnoString = purchaseOrderRow.getProduct().getIdno();
+            qtyToDeliverNr = purchaseOrderRow.getOutstDelQty().stripTrailingZeros();
+            unitIdString = purchaseOrderRow.getString("tradeUnit");
         }else{
             if(toDeliver.equals("--------")) {
                 qtyToDeliverNr = BigDecimal.ZERO;
@@ -543,11 +547,11 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                       DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
-                       Date todayDate = new Date();
-                       String text = ("Dzień dobry! <br/><br/>Dostawa z dnia " + dateFormat.format(todayDate) + " od dostawcy <b>" + vendorNameTextView.getText().toString()
-                              + "</b> czeka na kontrolę jakości. </p> Powiadomienie wysłane przez użytkownika: " + userSwd + ".");
-                       sendEmail("yqualityincome", "Wezwanie do kontroli jakosci dostawy!", text);
+                        DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+                        Date todayDate = new Date();
+                        String text = ("Dzień dobry! <br/><br/>Dostawa z dnia " + dateFormat.format(todayDate) + " od dostawcy <b>" + vendorNameTextView.getText().toString()
+                                + "</b> czeka na kontrolę jakości. </p> Powiadomienie wysłane przez użytkownika: " + userSwd + ".");
+                        sendEmail("yqualityincome", "Wezwanie do kontroli jakosci dostawy!", text);
 
                         GlobalClass.showDialog(IncomePurchaseOrderList.this, "Wysłano!", "Wiadomość została pomyślnie wysłana.", "OK",
                                 new DialogInterface.OnClickListener() {
@@ -564,21 +568,21 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
     public void createPZ(View view){
 
         GlobalClass.showDialogTwoButtons(this, "Tworzenie PZ", "Czy napewno chcesz utworzyć PZ z artykułami w tabelce?", "Utwórz", "Anuluj",
-         new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
 
-                createTableElementsHM(true);
-                Boolean emptyFields = checkIfFieldsEmpty();
-                today = new AbasDate();
-                if (emptyFields == false) {
-                    createPZInABAS();
-                }else{
-                    tableRowsHM.clear();
-                }
-            }
-        }, new DialogInterface.OnClickListener() { //Anuluj button
-            @Override public void onClick(DialogInterface dialogInterface, int i) {} });
+                        createTableElementsHM(true);
+                        Boolean emptyFields = checkIfFieldsEmpty();
+                        today = new AbasDate();
+                        if (emptyFields == false) {
+                            createPZInABAS();
+                        }else{
+                            tableRowsHM.clear();
+                        }
+                    }
+                }, new DialogInterface.OnClickListener() { //Anuluj button
+                    @Override public void onClick(DialogInterface dialogInterface, int i) {} });
     }
 
     public void createPZInABAS(){
@@ -673,6 +677,7 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
 
         //set docNo in Abas to import rows
         for (int j = 0; j < nrOfPurchaseOrders; j++) {
+            Log.d("docNo", purchaseOrders[j]);
             packingSlipEditor.setString("docno", purchaseOrders[j]);
             Log.d("purchaseOrders[j]", purchaseOrders[j]);
             purchaseOrderStringForEmail += purchaseOrders[j] + ", ";
@@ -690,7 +695,7 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
 
     public void checkIfAllRowsAreNotSetToZero(PackingSlipEditor packingSlipEditor, Integer docCount, String purchaseOrderStringForEmail){
         //check how many rows have qty set 0
-        Integer rowCount = 0, qtyEqualToZero = 0;
+        Integer rowCount = 0, qtyEqualToZero = 0; Boolean intrastatSetCorreclly = false;
         Iterable<PackingSlipEditor.Row> slipCountRows = packingSlipEditor.table().getEditableRows();
         for (PackingSlipEditor.Row row : slipCountRows) {
             if(!row.getProduct().getSwd().equals("TR.")){ //not counting seperator row
@@ -699,17 +704,18 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
                     qtyEqualToZero++;
                 }
                 //Intrastat
-                Log.d("row.getDestDispatch", row.getDestDispatchCtryPos().toString());
+                Log.d("row.getDestDispatch", row.getDestDispatchCtryPos().getSwd());
                 if (row.getCtryOfOrigin() == null) {
-                    Log.d("INTRASTAT", "INTRASTAT");
                     row.setCtryOfOrigin(row.getDestDispatchCtryPos());
-                    Log.d("row.getCtryOfOrigin", row.getCtryOfOrigin().getSwd());
+                    Log.d("set new CtryOfOrigin:", row.getCtryOfOrigin().getSwd());
                 }
-                if(row.getRegIntra() == null){
-                    row.setString("regintra", "OPOLSKIE");
+                if (row.getRegIntra() == null) {
+                    row.setString("regIntra", "OPOLSKIE");
+                    Log.d("set new regintra:", "OPOLSKIE");
                 }
-                if(row.getNatureBusiness() == null){
+                if (row.getNatureBusiness() == null) {
                     row.setString("naturebusiness", "RT11");
+                    Log.d("set new naturebusiness:", "RT11");
                 }
             }
         }
@@ -786,11 +792,11 @@ public class IncomePurchaseOrderList extends AppCompatActivity {
                 emptyFields = true;
                 GlobalClass.dismissLoadingDialog(LoadingDialog);
                 GlobalClass.showDialog(IncomePurchaseOrderList.this, "Nie zaznaczono artykułu!",
-                "Proszę zaznaczyć dostarczone artykuły.", "OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                    }
-                });
+                        "Proszę zaznaczyć dostarczone artykuły.", "OK", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        });
             }
         }
         return emptyFields;

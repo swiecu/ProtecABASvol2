@@ -90,7 +90,7 @@ public class QualityControl extends AppCompatActivity {
 
     public void ToCheck(View view){
         LoadingDialog = ProgressDialog.show(QualityControl.this, "",
-            "Ładowanie. Proszę czekać...", true);
+                "Ładowanie. Proszę czekać...", true);
         new setIntentAsyncTask().execute("QualityControlToCheck");
     }
 }
