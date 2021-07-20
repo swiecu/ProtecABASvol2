@@ -14,6 +14,10 @@ import androidx.core.app.NotificationCompat;
 
 import com.google.firebase.messaging.RemoteMessage;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 
 public class FirebaseMessagingService extends com.google.firebase.messaging.FirebaseMessagingService {
     public static String database;
@@ -66,14 +70,26 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
         }
 
 
+
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
-        NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
+
+        NotificationCompat.Builder groupBuilder = new NotificationCompat.Builder(getApplicationContext(), channel_id)
+                        .setContentTitle(title)
+                        .setContentText(message)
+                        .setGroupSummary(true)
+                        .setGroup("notificationGroup")
+                        .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
+                        .setContentIntent(pendingIntent)
+                        .setSmallIcon(R.drawable.protec_logo_szare);
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), channel_id)
                 .setSmallIcon(R.drawable.protec_logo_szare)
                 .setAutoCancel(true)
                 .setVibrate(new long[]{1000, 1000, 1000, 1000, 1000})
                 .setOnlyAlertOnce(true)
-                .setContentIntent(pendingIntent);
+                .setContentIntent(pendingIntent)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
+                .setGroup("notificationGroup");
         builder = builder.setContentTitle(title).setContentText(message).setSmallIcon(R.drawable.protec_logo_szare);
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -81,7 +97,13 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
             NotificationChannel notificationChannel = new NotificationChannel(channel_id, "web_app", NotificationManager.IMPORTANCE_HIGH);
             notificationManager.createNotificationChannel(notificationChannel);
         }
-        notificationManager.notify(0, builder.build());
+        notificationManager.notify(0, groupBuilder.build());
+        notificationManager.notify(createID(), builder.build());
+    }
 
+    public int createID(){
+        Date now = new Date();
+        int id = Integer.parseInt(new SimpleDateFormat("ddHHmmss",  Locale.US).format(now));
+        return id;
     }
 }

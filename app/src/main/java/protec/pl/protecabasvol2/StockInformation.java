@@ -354,7 +354,7 @@ public class StockInformation extends Activity {
                 suma.setText(Html.fromHtml(sumString));
                 suma.setVisibility(View.VISIBLE);
                 Log.d("TEST", "BEFORE");
-                GlobalClass.sendNotification(ctx, "TO JEST POWIADOMIENIE TYLKO DLA tytytyty", "SPRAWDZONO WLASNIE STAN!", "KJ");
+               // GlobalClass.sendNotification(ctx, "TO JEST POWIADOMIENIE TYLKO DLA tytytyty", "SPRAWDZONO WLASNIE STAN!", "KJ");
                 Log.d("TEST", "AFTER");
 
 
