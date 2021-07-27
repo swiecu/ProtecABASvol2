@@ -209,7 +209,8 @@ public class MoveTakeArticle extends Activity {
         button_cancel .setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                articleDialog.dismiss();}
+                articleDialog.dismiss();
+            }
         });
         Button button_ok = (Button)dialogView.findViewById(R.id.button_ok);
         button_ok.setOnClickListener(new View.OnClickListener(){

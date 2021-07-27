@@ -11,8 +11,8 @@ android {
         applicationId "protec.pl.protecabasvol2"
         minSdkVersion 16
         targetSdkVersion 30
-        versionCode 42
-        versionName "1.42"
+        versionCode 43
+        versionName "1.43"
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
 
@@ -69,4 +69,6 @@ dependencies {
     implementation 'com.google.firebase:firebase-database:9.8.0'
     //noinspection GradleCompatible
     implementation 'com.android.support:support-v4:28.0.0'
+    compile 'com.webianks.library:scroll-choice:1.0.1'
+
 }

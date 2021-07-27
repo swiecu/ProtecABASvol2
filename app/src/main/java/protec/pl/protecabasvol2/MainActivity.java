@@ -321,7 +321,7 @@ public class MainActivity extends AppCompatActivity {
     public void setUserTopics(Employee employee, DbContext ctx) throws IOException {
         readFromTopicFileAndUnsubscribe();
         String employeeTopics = employee.getYappgroups().toUpperCase(), topicString = "";
-        String[] topics = {"KJ", "MAGAZYN", "UTRZYMANIERUCHU"};
+        String[] topics = {"KJ", "MAGAZYN", "UTRZYMANIERUCHU", "WOZKOWI"};
         for (String topic : topics) {
             if(employeeTopics.contains(topic)){
                 FirebaseMessaging.getInstance().subscribeToTopic(topic);

@@ -26,8 +26,10 @@ import java.util.HashMap;
 
 import de.abas.erp.db.DbContext;
 import de.abas.erp.db.exception.DBRuntimeException;
+import de.abas.erp.db.infosystem.custom.owpl.IsMailSender;
 import de.abas.erp.db.infosystem.custom.owpl.IsPrNotificationSender;
 import de.abas.erp.db.infosystem.custom.sy.IsPrDisplays;
+import de.abas.erp.db.schema.custom.protec.AppConfigValues;
 import de.abas.erp.db.schema.part.Product;
 import de.abas.erp.db.selection.Conditions;
 import de.abas.erp.db.selection.SelectionBuilder;
@@ -275,6 +277,24 @@ public class GlobalClass {
         notificationSender.setYgroup(topics);
         notificationSender.invokeStart();
         notificationSender.close();
+    }
+
+    public static void sendMail(DbContext ctx, String title, String content, String to){
+        IsMailSender sender = ctx.openInfosystem(IsMailSender.class);
+        sender.setYto(to); //pobieranie emaili z abasa
+        sender.setYsubject(title);
+        sender.setYtrext(content);
+        sender.invokeStart();
+        sender.close();
+    }
+
+    public static AppConfigValues getAppConfigValues(DbContext ctx){
+        AppConfigValues appConfigValues = null;
+        SelectionBuilder<AppConfigValues> stocktakingSB = SelectionBuilder.create(AppConfigValues.class);
+        stocktakingSB.add(Conditions.eq(AppConfigValues.META.swd, "OGOLNE"));
+        appConfigValues = QueryUtil.getFirst(ctx, stocktakingSB.build());
+        GlobalClass.ctxClose(ctx);
+        return appConfigValues;
     }
 }
 

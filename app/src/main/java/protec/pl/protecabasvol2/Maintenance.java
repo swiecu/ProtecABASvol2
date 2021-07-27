@@ -89,4 +89,9 @@ public class Maintenance extends AppCompatActivity {
         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
         startActivity(intent);
     }
+
+    public void service(View view){
+        new setIntentAsyncTask().execute("MaintenanceService");
+    }
+
 }

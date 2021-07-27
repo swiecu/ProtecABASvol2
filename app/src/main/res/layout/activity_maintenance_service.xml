@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    tools:context=".MaintenanceService">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#FFFFFF"
+        android:onClick="hideKeyboard">
+
+        <ImageView
+            android:id="@+id/imageView17"
+            android:layout_width="553dp"
+            android:layout_height="236dp"
+            android:adjustViewBounds="true"
+            android:cropToPadding="true"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/gray" />
+
+        <TextView
+            android:id="@+id/textView22"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginLeft="24dp"
+            android:layout_marginTop="45dp"
+            android:text="@string/machine"
+            android:textColor="#555353"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@+id/machine_textEdit"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView28" />
+
+        <EditText
+            android:id="@+id/machine_textEdit"
+            style="@style/Widget.AppCompat.AutoCompleteTextView"
+            android:layout_width="194dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="23dp"
+            android:layout_marginLeft="23dp"
+            android:editable="false"
+            android:ems="10"
+            android:focusable="auto"
+            android:focusableInTouchMode="false"
+            android:hint="@string/machine"
+            android:inputType="text"
+            android:textSize="18sp"
+            app:layout_constraintBottom_toTopOf="@+id/textView26"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView22" />
+
+        <Button
+            android:id="@+id/scanMachine_btn"
+            android:layout_width="128dp"
+            android:layout_height="51dp"
+            android:background="@color/colorBlue"
+            android:onClick="scanMachineInspection"
+            android:text="@string/machineScan"
+            android:textColor="#FFFFFF"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/machine_textEdit"
+            app:layout_constraintTop_toBottomOf="@+id/textView22" />
+
+        <TextView
+            android:id="@+id/textView23"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginLeft="24dp"
+            android:layout_marginTop="24dp"
+            android:text="@string/infoAboutService"
+            android:textColor="#555353"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@+id/infoAboutService_multiLine"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView24" />
+
+        <TextView
+            android:id="@+id/textView24"
+            android:layout_width="wrap_content"
+            android:layout_height="19dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginLeft="24dp"
+            android:layout_marginTop="24dp"
+            android:text="@string/nextServiceDate"
+            android:textColor="#555353"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@+id/textView23"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView26" />
+
+        <TextView
+            android:id="@+id/textView26"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginLeft="24dp"
+            android:layout_marginTop="24dp"
+            android:text="@string/machineName"
+            android:textColor="#555353"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@+id/textView24"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/machine_textEdit" />
+
+        <TextView
+            android:id="@+id/machineName_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginTop="24dp"
+            app:layout_constraintStart_toEndOf="@+id/textView26"
+            app:layout_constraintTop_toBottomOf="@+id/machine_textEdit" />
+
+        <TextView
+            android:id="@+id/textView28"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="45dp"
+            android:text="@string/service"
+            android:textAllCaps="true"
+            android:textColor="#000000"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@+id/textView22"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="packed" />
+
+
+        <ScrollView
+            android:id="@+id/scrollView2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:layout_weight="1"
+            android:fadeScrollbars="false"
+            android:paddingLeft="5dp"
+            android:paddingTop="1dp"
+            android:paddingRight="5dp"
+            android:paddingBottom="1dp"
+            android:scrollbarAlwaysDrawHorizontalTrack="true"
+            android:scrollbarAlwaysDrawVerticalTrack="true"
+            android:scrollbarStyle="insideInset"
+            android:scrollbars="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/imageView13"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/infoAboutService_multiLine">
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <TableLayout
+                        android:id="@+id/serviceTable"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:clipChildren="false"
+                        android:stretchColumns="*"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="1.0"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+
+                        <TableRow
+                            android:id="@+id/tablerow"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:background="#BDBBBB"
+                            android:baselineAligned="false"
+                            android:clipChildren="true"
+                            android:clipToPadding="true"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="30dp"
+                                android:layout_column="0"
+                                android:layout_margin="1dp"
+                                android:layout_weight="1"
+                                android:background="#BCB81414"
+                                android:gravity="center"
+                                android:paddingLeft="2dp"
+                                android:paddingTop="5dp"
+                                android:paddingRight="2dp"
+                                android:paddingBottom="5dp"
+                                android:singleLine="true"
+                                android:text="@string/serviceDate"
+                                android:textAllCaps="false"
+                                android:textColor="#FFFFFF"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                android:typeface="normal"></TextView>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="30dp"
+                                android:layout_column="1"
+                                android:layout_margin="1dp"
+                                android:layout_weight="1"
+                                android:background="#BCB81414"
+                                android:gravity="center"
+                                android:paddingLeft="2dp"
+                                android:paddingTop="5dp"
+                                android:paddingRight="2dp"
+                                android:paddingBottom="5dp"
+                                android:singleLine="true"
+                                android:text="@string/employeeQuality"
+                                android:textAllCaps="false"
+                                android:textColor="#FFFFFF"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                android:typeface="normal"></TextView>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="30dp"
+                                android:layout_column="2"
+                                android:layout_margin="1dp"
+                                android:layout_weight="1"
+                                android:background="#BCB81414"
+                                android:gravity="center"
+                                android:paddingLeft="2dp"
+                                android:paddingTop="5dp"
+                                android:paddingRight="2dp"
+                                android:paddingBottom="5dp"
+                                android:scrollbars="horizontal|vertical"
+                                android:text="@string/serviceDuration"
+                                android:textAllCaps="false"
+                                android:textColor="#FFFFFF"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                android:typeface="normal"></TextView>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="30dp"
+                                android:layout_column="3"
+                                android:layout_margin="1dp"
+                                android:layout_weight="1"
+                                android:background="#BCB81414"
+                                android:gravity="center"
+                                android:paddingLeft="2dp"
+                                android:paddingTop="5dp"
+                                android:paddingRight="2dp"
+                                android:paddingBottom="5dp"
+                                android:singleLine="false"
+                                android:text="@string/comment"
+                                android:textAllCaps="false"
+                                android:textColor="#FFFFFF"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                android:typeface="normal"></TextView>
+
+                        </TableRow>
+
+                        <TableRow
+                            android:id="@+id/no_articles"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="#BDBBBB"
+                            android:baselineAligned="false"
+                            android:clipChildren="true"
+                            android:clipToPadding="true"
+                            android:gravity="center">
+
+                            <TextView
+                                android:layout_width="32dp"
+                                android:layout_height="200dp"
+                                android:layout_margin="1dp"
+                                android:layout_weight="1"
+                                android:background="#FFFFFF"
+                                android:gravity="center"
+                                android:padding="6dp"
+                                android:text="@string/no_articles"
+                                android:textAllCaps="false"
+                                android:textColor="#636363"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:typeface="normal"></TextView>
+
+                        </TableRow>
+                    </TableLayout>
+                </LinearLayout>
+            </HorizontalScrollView>
+        </ScrollView>
+
+        <ImageView
+            android:id="@+id/imageView13"
+            android:layout_width="45dp"
+            android:layout_height="34dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="32dp"
+            android:onClick="addNewService"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/textView25"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/scrollView2"
+            app:srcCompat="@drawable/ic_baseline_add_24"
+            app:tint="#333232" />
+
+        <TextView
+            android:id="@+id/textView25"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="38dp"
+            android:onClick="addNewService"
+            android:text="@string/newService"
+            android:textColor="#555353"
+            android:textSize="16sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/imageView13"
+            app:layout_constraintTop_toBottomOf="@+id/scrollView2" />
+
+        <TextView
+            android:id="@+id/serviceTime_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginTop="24dp"
+            android:visibility="invisible"
+            app:layout_constraintStart_toEndOf="@+id/textView24"
+            app:layout_constraintTop_toBottomOf="@+id/textView26" />
+
+        <ImageView
+            android:id="@+id/imageView15"
+            android:layout_width="0dp"
+            android:layout_height="55dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginLeft="24dp"
+            android:layout_marginTop="9dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginRight="24dp"
+            android:tint="#555353"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView23"
+            app:srcCompat="@drawable/selector_validate_button" />
+
+        <MultiAutoCompleteTextView
+            android:id="@+id/infoAboutService_multiLine"
+            android:layout_width="0dp"
+            android:layout_height="53dp"
+            android:layout_marginStart="25dp"
+            android:layout_marginLeft="25dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="25dp"
+            android:layout_marginRight="25dp"
+            android:background="#FFFFFF"
+            android:clickable="false"
+            android:editable="false"
+            android:enabled="false"
+            android:focusable="auto"
+            android:focusableInTouchMode="false"
+            android:gravity="center_horizontal|center_vertical"
+            android:hint="Brak informacji"
+            android:textColor="#000000"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toTopOf="@+id/scrollView2"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView23" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

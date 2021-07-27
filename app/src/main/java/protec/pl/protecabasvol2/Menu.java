@@ -53,9 +53,9 @@ public class Menu extends AppCompatActivity {
     }
     String user_short_name = "", user, database, userSwd;
     DbContext ctx, sessionCtx;
-    RelativeLayout quality_relative_layout, move_relative_layout, stocktaking_relative_layout,maintenance_relative_layout, warehouseTransfer_relative_layout, stockInfo_relative_layout, income_relative_layout;
-    TextView quality_cont_textView, move_textView, stocktaking_textView, stockInfo_textView, maintenance_textView, warehosueTransfer_textView, income_textView, loggedUser;
-    ImageView quality_control, move, stocktaking, stockInfo, maintenance, warehosueTransfer, income;
+    RelativeLayout quality_relative_layout, move_relative_layout, stocktaking_relative_layout,maintenance_relative_layout, warehouseTransfer_relative_layout, stockInfo_relative_layout, income_relative_layout, materialDemand_relative_layout;
+    TextView quality_cont_textView, move_textView, stocktaking_textView, stockInfo_textView, maintenance_textView, warehosueTransfer_textView, income_textView, loggedUser, materialDemand_textView;
+    ImageView quality_control, move, stocktaking, stockInfo, maintenance, warehosueTransfer, income, materialDemand;
     Employee employee; Intent intent; Handler handler;
     ProgressDialog LoadingDialog; AppConfigValues appConfigValues;
     RelativeLayout[] relativeLayoutList; TextView[] textViewList; ImageView[] imageViewList;
@@ -128,6 +128,8 @@ public class Menu extends AppCompatActivity {
         maintenance_relative_layout = findViewById(R.id.maintenance_relative_layout);
         warehouseTransfer_relative_layout = findViewById(R.id.warehosueTransfer_relative_layout);
         income_relative_layout = findViewById(R.id.income_relative_layout);
+        materialDemand_relative_layout = findViewById(R.id.materialDemand_relative_layout);
+
 
         quality_cont_textView = findViewById((R.id.quality_cont_textView));
         move_textView = findViewById((R.id.move_textView));
@@ -136,6 +138,8 @@ public class Menu extends AppCompatActivity {
         maintenance_textView = findViewById(R.id.maintenance_textView);
         warehosueTransfer_textView = findViewById(R.id.warehosueTransfer_textView);
         income_textView = findViewById(R.id.income_textView);
+        materialDemand_textView = findViewById(R.id.materialDemand_textView);
+
 
         quality_control= findViewById((R.id.quality_control));
         move = findViewById((R.id.move));
@@ -145,6 +149,7 @@ public class Menu extends AppCompatActivity {
         warehosueTransfer = findViewById((R.id.warehosueTransfer));
         loggedUser = findViewById(R.id.loggedUser);
         income = findViewById(R.id.income);
+        materialDemand = findViewById(R.id.materialDemand);
     }
 
     public void setMenuLook(Employee employee){
@@ -155,9 +160,9 @@ public class Menu extends AppCompatActivity {
         Log.d("userSwdMenu", userSwd);
         Log.d("databaseMenu", database);
         loggedUser.setText(user);
-        relativeLayoutList = new RelativeLayout[] {quality_relative_layout, move_relative_layout, stocktaking_relative_layout, maintenance_relative_layout, warehouseTransfer_relative_layout, stockInfo_relative_layout, income_relative_layout};
-        textViewList = new TextView[] {quality_cont_textView, move_textView, stocktaking_textView, stockInfo_textView, maintenance_textView, warehosueTransfer_textView, income_textView, loggedUser};
-        imageViewList = new ImageView[]{quality_control, move, stocktaking, stockInfo, maintenance, warehosueTransfer, income};
+        relativeLayoutList = new RelativeLayout[] {quality_relative_layout, move_relative_layout, stocktaking_relative_layout, maintenance_relative_layout, warehouseTransfer_relative_layout, stockInfo_relative_layout, income_relative_layout, materialDemand_relative_layout};
+        textViewList = new TextView[] {quality_cont_textView, move_textView, stocktaking_textView, stockInfo_textView, maintenance_textView, warehosueTransfer_textView, income_textView, loggedUser, materialDemand_textView};
+        imageViewList = new ImageView[]{quality_control, move, stocktaking, stockInfo, maintenance, warehosueTransfer, income, materialDemand};
         for(int i=0; i<relativeLayoutList.length; i++){
             if(appConfigValues.getYstocktakinglock() == false) { //diabling while inventory
                 setLookForMenuOption(relativeLayoutList[i], textViewList[i], imageViewList[i], "#FFFFFF", (float) 1, (float) 1); //enable
@@ -277,6 +282,10 @@ public class Menu extends AppCompatActivity {
 
     public void showMap(View view){
         new setIntentAsyncTask().execute("DialogMap", "");
+    }
+
+    public void materialDemand(View view){
+        new setIntentAsyncTask().execute("MaterialDemand", "");
     }
 
     public void stocktaking (View view){

@@ -17,13 +17,19 @@
         android:roundIcon="@mipmap/protec_logo_round"
         android:screenOrientation="portrait"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-        <activity android:name=".IncomePurchaseOrderList"
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+        tools:replace="android:label">
+
+        <activity android:name=".MaintenanceService"></activity>
+        <activity android:name=".MaterialDemand" />
+        <activity
+            android:name=".IncomePurchaseOrderList"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.AppCompat.Translucent"/>
-        <activity android:name=".QualityControlIncome"
+            android:theme="@style/Theme.AppCompat.Translucent" />
+        <activity
+            android:name=".QualityControlIncome"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.AppCompat.Translucent"/>
+            android:theme="@style/Theme.AppCompat.Translucent" />
         <activity
             android:name=".QualityControlToCheck"
             android:screenOrientation="portrait"
@@ -83,15 +89,20 @@
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <service android:name=".FirebaseMessagingService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-        <uses-library android:name="org.apache.http.legacy" android:required="false" />
+
+        <uses-library
+            android:name="org.apache.http.legacy"
+            android:required="false" />
     </application>
 
 </manifest>

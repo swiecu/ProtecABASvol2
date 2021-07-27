@@ -147,6 +147,25 @@
     <string name="isdelivered">Dostarczono?</string>
     <string name="enterDocQty">Wpisz ilośc dokumentów w dostawie</string>
 
+    <string name="materialDemand">Zapotrzebowania materiałowe</string>
 
+    <string name="service">Serwis maszyny</string>
+    <string name="newService">Dodaj nowy serwis</string>
+    <string name="infoAboutService">Informacja dot. przeglądu:</string>
+    <string name="nextServiceDate">Data nast. przeglądu:</string>
+    <string name="serviceDate">Data przeglądu</string>
+    <string name="comment">Komentarz</string>
+    <string name="serviceDuration">Czas trwania przeglądu</string>
+
+    <string name="materialDemandModule">Zapotrzebowanie na materiał</string>
+    <string name="zp">ZP</string>
+    <string name="createdArticle">Wyrób:</string>
+    <string name="material">Materiał</string>
+    <string name="materialName">Nazwa materiału</string>
+    <string name="comments">Uwagi</string>
+    <string name="chooseMaterial">Wybierz materiał</string>
+    <string name="ZPscan">Zeskanuj</string>
+    <string name="materialWithDots">Materiał:</string>
+    <string name="materialNameWithDots">Nazwa materiału:</string>
 
 </resources>
